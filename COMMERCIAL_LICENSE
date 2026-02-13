@@ -1,0 +1,350 @@
+PEL COMMERCIAL LICENSE AGREEMENT
+
+Version 1.0, Effective February 13, 2026
+
+Copyright (c) 2026 PEL Project Contributors
+
+NOTICE: This is a commercial/proprietary license for PEL (Programmable Economic 
+Language). It is an alternative to the GNU Affero General Public License v3.0 
+(AGPL-3.0) under which PEL is also available. This Commercial License allows you 
+to use, modify, and distribute PEL in proprietary applications without the 
+source code disclosure obligations of the AGPL-3.0.
+
+================================================================================
+DEFINITIONS
+================================================================================
+
+"Software" means the PEL (Programmable Economic Language) software, including 
+all source code, object code, documentation, and associated materials.
+
+"License Holder" means PEL Project Contributors, represented by David Travers.
+
+"You" or "Licensee" means the individual or legal entity exercising rights 
+under this Commercial License.
+
+"Commercial Use" means any use of the Software in exchange for financial 
+compensation, including but not limited to: incorporating the Software into 
+commercial products, providing services using the Software, or operating the 
+Software as part of a commercial offering.
+
+"Derivative Work" means any work based upon the Software or any portion thereof, 
+including modifications, enhancements, translations, or other adaptations.
+
+"Proprietary Software" means software for which the source code is not publicly 
+available or is not licensed under an open source license.
+
+================================================================================
+1. GRANT OF COMMERCIAL LICENSE
+================================================================================
+
+Subject to the terms of this Agreement and payment of applicable license fees, 
+License Holder grants Licensee a non-exclusive, worldwide, perpetual (subject 
+to termination provisions) license to:
+
+a) Use the Software for any Commercial Use without limitation;
+
+b) Modify the Software and create Derivative Works without disclosure 
+   obligations;
+
+c) Distribute the Software and Derivative Works as part of Proprietary Software 
+   without source code disclosure requirements;
+
+d) Offer services based on the Software (including SaaS, hosting, or managed 
+   services) without making source code available to end users;
+
+e) Sublicense the Software as part of a larger proprietary application, 
+   provided that direct competitors may not be granted sublicenses without 
+   prior written consent from License Holder.
+
+================================================================================
+2. WAIVER OF AGPL-3.0 OBLIGATIONS
+================================================================================
+
+This Commercial License specifically waives the following AGPL-3.0 requirements:
+
+a) Source code disclosure obligations under Section 6 (Conveying Non-Source 
+   Forms) and Section 13 (Remote Network Interaction);
+
+b) Copyleft provisions requiring Derivative Works to be licensed under 
+   AGPL-3.0;
+
+c) Requirements to provide Corresponding Source to users interacting with the 
+   Software over a network;
+
+d) Obligations to retain and display Appropriate Legal Notices regarding 
+   AGPL-3.0 licensing (though copyright notices must be retained);
+
+e) Restrictions on incorporating the Software into Proprietary Software.
+
+================================================================================
+3. INTELLECTUAL PROPERTY AND ATTRIBUTION
+================================================================================
+
+a) All intellectual property rights in the Software remain with License Holder 
+   and contributors.
+
+b) Licensee must retain all copyright notices, trademark notices, and 
+   attribution statements present in the Software.
+
+c) Licensee may not use the names, trademarks, or logos of License Holder or 
+   PEL Project Contributors to endorse or promote products derived from the 
+   Software without prior written permission.
+
+d) Licensee may not misrepresent the origin of the Software or claim authorship 
+   of the original Software.
+
+================================================================================
+4. LICENSE FEES AND PAYMENT TERMS
+================================================================================
+
+a) License fees, payment terms, and pricing structure are determined on a 
+   case-by-case basis and must be agreed upon in writing before this Commercial 
+   License becomes effective.
+
+b) Failure to pay agreed license fees within 30 days of the due date 
+   constitutes a material breach of this Agreement.
+
+c) License Holder reserves the right to modify pricing for future license 
+   periods with 90 days written notice.
+
+d) For pricing information and license fee negotiations, contact:
+   
+   David Travers
+   Email: davidtraversmailbox@gmail.com
+   
+   Include in your inquiry:
+   - Description of intended use
+   - Expected scale (users, deployments, revenue)
+   - Whether this is for internal use, product embedding, or service offering
+   - Timeline for commercial deployment
+
+================================================================================
+5. LICENSE SCOPE AND RESTRICTIONS
+================================================================================
+
+a) This license is granted for the specific use case and scope agreed upon in 
+   writing. Changes to use case or significant increases in scale may require 
+   license renegotiation.
+
+b) Licensee may not:
+   - Remove or alter any copyright, trademark, or attribution notices;
+   - Sublicense the Software as a standalone product competing with PEL;
+   - Reverse engineer the Software for the purpose of creating a competing 
+     product;
+   - Use the Software in any manner that violates applicable laws or 
+     regulations.
+
+c) This license does not grant rights to any patents, trademarks, or other 
+   intellectual property except as expressly stated.
+
+================================================================================
+6. TERM AND TERMINATION
+================================================================================
+
+a) This Agreement is effective upon payment of initial license fees and 
+   continues perpetually unless terminated as provided herein.
+
+b) License Holder may terminate this Agreement immediately upon written notice 
+   if Licensee:
+   - Breaches any material term of this Agreement and fails to cure within 30 
+     days of written notice;
+   - Fails to pay license fees as agreed;
+   - Uses the Software beyond the scope of the granted license;
+   - Becomes insolvent, files for bankruptcy, or ceases business operations.
+
+c) Licensee may terminate this Agreement at any time by ceasing all use of the 
+   Software and destroying all copies in Licensee's possession.
+
+d) Upon termination:
+   - Licensee must immediately cease all use of the Software;
+   - Licensee must destroy or return all copies of the Software;
+   - Licensee may continue to support previously deployed products for a 
+     reasonable transition period (not to exceed 180 days);
+   - No refund of license fees will be provided except in cases of termination 
+     by License Holder without cause.
+
+e) Sections 3, 7, 8, 9, and 10 survive termination.
+
+================================================================================
+7. WARRANTY DISCLAIMER
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+LICENSE HOLDER DOES NOT WARRANT THAT:
+a) The Software will meet Licensee's requirements;
+b) The Software will operate uninterrupted or error-free;
+c) All errors in the Software will be corrected;
+d) The Software is free from viruses or other harmful components.
+
+LICENSEE ASSUMES ALL RISK ASSOCIATED WITH THE USE, QUALITY, AND PERFORMANCE OF 
+THE SOFTWARE.
+
+Optional support and maintenance agreements may be available separately. Contact 
+License Holder for details.
+
+================================================================================
+8. LIMITATION OF LIABILITY
+================================================================================
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSE 
+HOLDER OR PEL PROJECT CONTRIBUTORS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, 
+INDIRECT, PUNITIVE, OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, WITHOUT 
+LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS 
+OF BUSINESS INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF 
+OR INABILITY TO USE THE SOFTWARE, EVEN IF LICENSE HOLDER HAS BEEN ADVISED OF 
+THE POSSIBILITY OF SUCH DAMAGES.
+
+IN NO EVENT SHALL LICENSE HOLDER'S TOTAL AGGREGATE LIABILITY TO LICENSEE FOR 
+ALL DAMAGES, LOSSES, AND CAUSES OF ACTION (WHETHER IN CONTRACT, TORT, INCLUDING 
+NEGLIGENCE, OR OTHERWISE) EXCEED THE TOTAL AMOUNT OF LICENSE FEES ACTUALLY PAID 
+BY LICENSEE TO LICENSE HOLDER IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+
+Some jurisdictions do not allow the exclusion or limitation of incidental or 
+consequential damages, so the above limitations may not apply to You.
+
+================================================================================
+9. INDEMNIFICATION
+================================================================================
+
+Licensee agrees to indemnify, defend, and hold harmless License Holder and PEL 
+Project Contributors from and against any and all claims, damages, liabilities, 
+costs, and expenses (including reasonable attorneys' fees) arising from:
+
+a) Licensee's use of the Software;
+b) Licensee's violation of this Agreement;
+c) Licensee's violation of any third-party rights;
+d) Any product or service Licensee provides using the Software.
+
+================================================================================
+10. GENERAL PROVISIONS
+================================================================================
+
+10.1 Entire Agreement
+This Agreement constitutes the entire agreement between the parties concerning 
+the subject matter hereof and supersedes all prior agreements and 
+understandings, whether written or oral.
+
+10.2 Amendments
+This Agreement may be amended only by a written document signed by both parties. 
+License Holder may update the standard terms for new licenses but such updates 
+do not affect existing licenses.
+
+10.3 Governing Law
+This Agreement shall be governed by and construed in accordance with the laws 
+of the State of California, USA, without regard to its conflict of law 
+provisions.
+
+10.4 Dispute Resolution
+Any disputes arising from this Agreement shall be resolved through good faith 
+negotiation. If negotiation fails, disputes shall be resolved through binding 
+arbitration in accordance with the Commercial Arbitration Rules of the American 
+Arbitration Association (AAA). The arbitration shall be conducted in California, 
+USA, and judgment on the award rendered by the arbitrator(s) may be entered in 
+any court having jurisdiction thereof.
+
+10.5 Severability
+If any provision of this Agreement is held to be unenforceable or invalid, such 
+provision shall be changed and interpreted to accomplish the objectives of such 
+provision to the greatest extent possible under applicable law, and the 
+remaining provisions shall continue in full force and effect.
+
+10.6 Waiver
+No waiver of any term or condition of this Agreement shall be deemed a 
+continuing waiver or waiver of any other term or condition. Failure to enforce 
+any provision shall not constitute a waiver.
+
+10.7 Assignment
+Licensee may not assign this Agreement without prior written consent of License 
+Holder. License Holder may assign this Agreement without restriction. Any 
+attempted assignment in violation of this section is void.
+
+10.8 Independent Contractors
+The parties are independent contractors. Nothing in this Agreement creates a 
+partnership, joint venture, agency, or employment relationship.
+
+10.9 Export Compliance
+Licensee agrees to comply with all applicable export and import laws and 
+regulations. Licensee shall not export or re-export the Software in violation 
+of such laws.
+
+10.10 Force Majeure
+Neither party shall be liable for failure to perform obligations due to causes 
+beyond reasonable control, including acts of God, war, terrorism, labor 
+disputes, or internet service failures.
+
+10.11 Notices
+All notices under this Agreement must be in writing and delivered to:
+
+License Holder:
+David Travers
+davidtraversmailbox@gmail.com
+
+Licensee: [Address to be specified in executed agreement]
+
+================================================================================
+11. OBTAINING A COMMERCIAL LICENSE
+================================================================================
+
+To obtain a Commercial License for PEL:
+
+1. Contact License Holder at davidtraversmailbox@gmail.com
+
+2. Provide the following information:
+   - Your company name and contact information
+   - Detailed description of how you intend to use PEL
+   - Scale of deployment (number of users, servers, or instances)
+   - Whether for internal use, product integration, or service offering
+   - Expected timeline for deployment
+
+3. License Holder will provide:
+   - Custom pricing based on your use case
+   - Specific terms and scope for your license
+   - A formal license agreement for execution
+
+4. Upon agreement and payment of license fees, you will receive:
+   - Executed Commercial License Agreement
+   - Full rights to use PEL as specified in the agreement
+   - Optional: Support and maintenance agreements
+   - Optional: Custom development services
+
+================================================================================
+12. COMPARISON: AGPL-3.0 vs. COMMERCIAL LICENSE
+================================================================================
+
+AGPL-3.0 (Free):
+✓ Free to use for any purpose
+✓ Full access to source code
+✗ Must disclose source code when offering as network service
+✗ Derivative works must be licensed under AGPL-3.0
+✗ Cannot incorporate into proprietary software
+✗ No warranty or support
+
+Commercial License (Paid):
+✓ Use in proprietary/commercial software
+✓ No source code disclosure obligations
+✓ Offer as SaaS without sharing source
+✓ Keep modifications private
+✓ Sublicense as part of your product
+✓ Optional support and maintenance
+✗ Requires payment of license fees
+
+================================================================================
+ACCEPTANCE
+================================================================================
+
+BY USING THE SOFTWARE UNDER THIS COMMERCIAL LICENSE, YOU ACKNOWLEDGE THAT YOU 
+HAVE READ THIS AGREEMENT, UNDERSTAND IT, AND AGREE TO BE BOUND BY ITS TERMS AND 
+CONDITIONS.
+
+This Commercial License supersedes the AGPL-3.0 license for the specific 
+Licensee named in the executed agreement.
+
+For questions about this Commercial License, contact:
+David Travers - davidtraversmailbox@gmail.com
+
+================================================================================
+END OF COMMERCIAL LICENSE AGREEMENT
+================================================================================

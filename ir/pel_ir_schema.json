@@ -1,0 +1,459 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://spec.pel-lang.org/v0.1/ir/pel-ir.schema.json",
+  "title": "PEL Intermediate Representation (PEL-IR) v0.1.0",
+  "description": "Canonical JSON representation of compiled PEL models",
+  "type": "object",
+  "required": ["version", "model", "metadata"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^0\\.1\\.\\d+$",
+      "description": "PEL-IR schema version"
+    },
+    "model": {
+      "$ref": "#/definitions/Model"
+    },
+    "metadata": {
+      "$ref": "#/definitions/Metadata"
+    }
+  },
+
+  "definitions": {
+    "Model": {
+      "type": "object",
+      "required": ["name", "nodes"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Model identifier"
+        },
+        "time_horizon": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total simulation timesteps (optional, can be dynamic)"
+        },
+        "time_unit": {
+          "type": "string",
+          "enum": ["Second", "Minute", "Hour", "Day", "Week", "Month", "Quarter", "Year"],
+          "description": "Base time unit for simulation"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Node"
+          },
+          "description": "All declarations in dependency order"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Policy"
+          }
+        }
+      }
+    },
+
+    "Node": {
+      "type": "object",
+      "required": ["node_id", "node_type", "name", "type_annotation"],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "description": "Unique node identifier"
+        },
+        "node_type": {
+          "type": "string",
+          "enum": ["param", "var", "func"],
+          "description": "Declaration type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Variable/parameter name"
+        },
+        "type_annotation": {
+          "$ref": "#/definitions/Type"
+        },
+        "value": {
+          "$ref": "#/definitions/Expression",
+          "description": "Initialization expression"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance",
+          "description": "Required for params, optional for vars"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Node IDs this node depends on"
+        }
+      }
+    },
+
+    "Type": {
+      "type": "object",
+      "required": ["type_kind"],
+      "properties": {
+        "type_kind": {
+          "type": "string",
+          "enum": [
+            "Currency", "Rate", "Duration", "Capacity", "Count", "Fraction",
+            "Distribution", "TimeSeries", "Scoped", "CohortSeries",
+            "Record", "Enum", "Array", "Function"
+          ]
+        },
+        "currency_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "ISO 4217 currency code (for Currency type)"
+        },
+        "rate_unit": {
+          "type": "string",
+          "enum": ["Second", "Minute", "Hour", "Day", "Week", "Month", "Quarter", "Year"],
+          "description": "Time denominator for Rate type"
+        },
+        "resource_type": {
+          "type": "string",
+          "description": "Resource identifier for Capacity type"
+        },
+        "entity_type": {
+          "type": "string",
+          "description": "Entity identifier for Count type"
+        },
+        "scope_entity": {
+          "type": "string",
+          "description": "Scope identifier for Scoped type"
+        },
+        "inner_type": {
+          "$ref": "#/definitions/Type",
+          "description": "Element type for composite types"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Type"
+          },
+          "description": "Field types for Record"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Enum variants"
+        }
+      }
+    },
+
+    "Expression": {
+      "type": "object",
+      "required": ["expr_type"],
+      "properties": {
+        "expr_type": {
+          "type": "string",
+          "enum": [
+            "Literal", "Variable", "BinaryOp", "UnaryOp", "FunctionCall",
+            "Indexing", "Distribution", "IfThenElse", "Aggregation"
+          ]
+        },
+        "literal_value": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "string"},
+            {"type": "boolean"}
+          ]
+        },
+        "literal_type": {
+          "$ref": "#/definitions/Type"
+        },
+        "variable_name": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["+", "-", "*", "/", "^", "%", "==", "!=", "<", "<=", ">", ">=", "&&", "||", "!"]
+        },
+        "left": {
+          "$ref": "#/definitions/Expression"
+        },
+        "right": {
+          "$ref": "#/definitions/Expression"
+        },
+        "operand": {
+          "$ref": "#/definitions/Expression"
+        },
+        "function_name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Expression"
+          }
+        },
+        "base": {
+          "$ref": "#/definitions/Expression"
+        },
+        "index": {
+          "$ref": "#/definitions/Expression"
+        },
+        "distribution": {
+          "$ref": "#/definitions/Distribution"
+        },
+        "condition": {
+          "$ref": "#/definitions/Expression"
+        },
+        "then_branch": {
+          "$ref": "#/definitions/Expression"
+        },
+        "else_branch": {
+          "$ref": "#/definitions/Expression"
+        },
+        "aggregation_type": {
+          "type": "string",
+          "enum": ["sum", "avg", "min", "max", "count"]
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "start": {"$ref": "#/definitions/Expression"},
+            "end": {"$ref": "#/definitions/Expression"}
+          }
+        }
+      }
+    },
+
+    "Distribution": {
+      "type": "object",
+      "required": ["distribution_type", "parameters"],
+      "properties": {
+        "distribution_type": {
+          "type": "string",
+          "enum": ["Beta", "Normal", "LogNormal", "Uniform", "Triangular", "Pareto"]
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Distribution-specific parameters (e.g., mu, sigma for Normal)"
+        }
+      }
+    },
+
+    "Constraint": {
+      "type": "object",
+      "required": ["constraint_id", "name", "condition", "severity"],
+      "properties": {
+        "constraint_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/Expression"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["fatal", "warning"]
+        },
+        "message": {
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/definitions/Scope"
+        },
+        "slack_variable": {
+          "type": "string",
+          "description": "For soft constraints"
+        }
+      }
+    },
+
+    "Policy": {
+      "type": "object",
+      "required": ["policy_id", "name", "trigger", "action"],
+      "properties": {
+        "policy_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "trigger": {
+          "$ref": "#/definitions/Trigger"
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        }
+      }
+    },
+
+    "Trigger": {
+      "type": "object",
+      "required": ["trigger_type", "condition"],
+      "properties": {
+        "trigger_type": {
+          "type": "string",
+          "enum": ["time", "threshold", "event", "composite"]
+        },
+        "condition": {
+          "$ref": "#/definitions/Expression"
+        }
+      }
+    },
+
+    "Action": {
+      "type": "object",
+      "required": ["action_type"],
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "enum": ["assign", "multiply", "add", "block", "conditional", "emit_event"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Variable name to modify"
+        },
+        "value": {
+          "$ref": "#/definitions/Expression"
+        },
+        "statements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Action"
+          }
+        },
+        "event_name": {
+          "type": "string"
+        }
+      }
+    },
+
+    "Scope": {
+      "type": "object",
+      "properties": {
+        "temporal": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["all", "range", "specific"]
+            },
+            "start": {"type": "integer"},
+            "end": {"type": "integer"},
+            "timestep": {"type": "integer"}
+          }
+        },
+        "entity": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["all", "specific"]
+            },
+            "entities": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "Provenance": {
+      "type": "object",
+      "required": ["source", "method", "confidence"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Data origin"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["observed", "fitted", "derived", "expert_estimate", "external_research", "assumption"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "freshness": {
+          "type": "string",
+          "pattern": "^P(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?$",
+          "description": "ISO 8601 duration"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Email or identifier"
+        },
+        "correlated_with": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["variable", "coefficient"],
+            "properties": {
+              "variable": {"type": "string"},
+              "coefficient": {
+                "type": "number",
+                "minimum": -1.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+
+    "Metadata": {
+      "type": "object",
+      "required": ["model_hash", "compiled_at", "compiler_version"],
+      "properties": {
+        "model_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of normalized IR"
+        },
+        "assumption_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of all provenance blocks"
+        },
+        "compiled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "compiler_version": {
+          "type": "string",
+          "description": "PEL compiler version (e.g., pel-0.1.0)"
+        },
+        "source_file": {
+          "type": "string",
+          "description": "Original .pel source file path"
+        },
+        "assumption_completeness": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "error_codes_referenced": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^E\\d{4}$"
+          },
+          "description": "All error codes schema was validated against"
+        }
+      }
+    }
+  }
+}

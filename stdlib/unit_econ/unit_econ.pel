@@ -1,0 +1,217 @@
+// PEL Standard Library - Unit Economics Module
+// Common unit economics calculations for business models
+
+// === SaaS Unit Economics ===
+
+func ltv_simple(
+  arpu: Currency<USD> per Month,
+  churn_rate: Rate per Month
+) -> Currency<USD> {
+  // Simple LTV: ARPU / churn rate
+  // Assumes constant ARPU and churn
+  return arpu / churn_rate
+}
+
+func ltv_with_discount(
+  arpu: Currency<USD> per Month,
+  churn_rate: Rate per Month,
+  discount_rate: Rate per Month
+) -> Currency<USD> {
+  // LTV with discount: ARPU / (churn_rate + discount_rate)
+  return arpu / (churn_rate + discount_rate)
+}
+
+func payback_period(
+  cac: Currency<USD> per Customer,
+  monthly_margin: Currency<USD> per Month per Customer
+) -> Duration<Month> {
+  // Payback period = CAC / monthly margin
+  return cac / monthly_margin
+}
+
+func ltv_to_cac_ratio(
+  ltv: Currency<USD> per Customer,
+  cac: Currency<USD> per Customer
+) -> Fraction {
+  // LTV:CAC ratio (healthy if >= 3.0)
+  return ltv / cac
+}
+
+func customer_lifetime(
+  churn_rate: Rate per Month
+) -> Duration<Month> {
+  // Expected customer lifetime = 1 / churn_rate
+  return 1.0 / churn_rate
+}
+
+func breakeven_customer_count(
+  fixed_costs: Currency<USD> per Month,
+  unit_margin: Currency<USD> per Month per Customer
+) -> Count<Customer> {
+  // Customers needed to break even
+  return fixed_costs / unit_margin
+}
+
+// === E-commerce / Marketplace Unit Economics ===
+
+func contribution_margin_pct(
+  revenue_per_unit: Currency<USD>,
+  cogs_per_unit: Currency<USD>
+) -> Fraction {
+  // Contribution margin %
+  return (revenue_per_unit - cogs_per_unit) / revenue_per_unit
+}
+
+func customer_acquisition_efficiency(
+  new_customers: Count<Customer> per Month,
+  marketing_spend: Currency<USD> per Month
+) -> Fraction {
+  // Customers acquired per $ spent (inverse of CAC)
+  return new_customers / marketing_spend
+}
+
+// === Multi-Product Unit Economics ===
+
+func weighted_average_margin(
+  product_margins: Array<Currency<USD> per Unit>,
+  product_volumes: Array<Count<Unit>>
+) -> Currency<USD> per Unit {
+  // Weighted average margin across products
+  var total_margin: Currency<USD> = sum(product_margins * product_volumes)
+  var total_volume: Count<Unit> = sum(product_volumes)
+  return total_margin / total_volume
+}
+
+// === Growth Metrics ===
+
+func quick_ratio(
+  new_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Quick ratio = (new + expansion) / (churned + contraction)
+  // Healthy if >= 4.0
+  var positive_mrr = new_mrr + expansion_mrr
+  var negative_mrr = churned_mrr + contraction_mrr
+  return positive_mrr / negative_mrr
+}
+
+func net_dollar_retention(
+  starting_cohort_mrr: Currency<USD>,
+  expansion_mrr: Currency<USD>,
+  churned_mrr: Currency<USD>,
+  contraction_mrr: Currency<USD>
+) -> Fraction {
+  // NDR = (starting + expansion - churned - contraction) / starting
+  var ending_mrr = starting_cohort_mrr + expansion_mrr - churned_mrr - contraction_mrr
+  return ending_mrr / starting_cohort_mrr
+}
+
+// === Capacity-Based Unit Economics ===
+
+func revenue_per_employee(
+  annual_revenue: Currency<USD> per Year,
+  employee_count: Count<Employee>
+) -> Currency<USD> per Year per Employee {
+  return annual_revenue / employee_count
+}
+
+func utilization_rate(
+  billable_hours: Duration<Hour> per Month,
+  available_hours: Duration<Hour> per Month
+) -> Fraction {
+  // Utilization % (typical target: 70-80%)
+  return billable_hours / available_hours
+}
+
+func revenue_per_seat(
+  total_revenue: Currency<USD> per Month,
+  seat_capacity: Capacity<Seat>
+) -> Currency<USD> per Month per Seat {
+  // Revenue per seat (for coworking, SaaS, etc.)
+  return total_revenue / seat_capacity
+}
+
+// === Cohort Economics ===
+
+func cohort_payback(
+  cohort_cac: Currency<USD> per Customer,
+  cohort_monthly_margin: TimeSeries<Currency<USD> per Month per Customer>,
+  months: Count<Month>
+) -> Duration<Month> {
+  // Calculate when cumulative margin exceeds CAC
+  var cumulative_margin: Currency<USD> = $0
+  
+  for m in 0..months {
+    cumulative_margin = cumulative_margin + cohort_monthly_margin[m]
+    
+    if cumulative_margin >= cohort_cac {
+      return m * 1mo
+    }
+  }
+  
+  // Not recovered in time horizon
+  return months * 1mo
+}
+
+// === Health Metrics ===
+
+func magic_number(
+  net_new_arr_this_quarter: Currency<USD> per Quarter,
+  sales_marketing_spend_last_quarter: Currency<USD> per Quarter
+) -> Fraction {
+  // Magic number = net new ARR / S&M spend
+  // Healthy if >= 0.75
+  return net_new_arr_this_quarter / sales_marketing_spend_last_quarter
+}
+
+func burn_multiple(
+  net_burn: Currency<USD> per Month,
+  net_new_arr: Currency<USD> per Year per Month
+) -> Fraction {
+  // Burn multiple = monthly burn / monthly net new ARR
+  // Lower is better (< 1.5 is excellent)
+  return net_burn / (net_new_arr / 12mo)
+}
+
+func rule_of_40(
+  revenue_growth_rate: Rate per Year,
+  profit_margin: Fraction
+) -> Fraction {
+  // Rule of 40: growth% + profit margin% should be >= 40%
+  return revenue_growth_rate + profit_margin
+}
+
+// === Usage-Based Pricing ===
+
+func usage_based_revenue(
+  usage_quantity: Count<Unit> per Month,
+  price_per_unit: Currency<USD> per Unit
+) -> Currency<USD> per Month {
+  return usage_quantity * price_per_unit
+}
+
+func tiered_pricing_revenue(
+  usage: Count<Unit> per Month,
+  tier_thresholds: Array<Count<Unit>>,
+  tier_prices: Array<Currency<USD> per Unit>
+) -> Currency<USD> per Month {
+  // Calculate revenue using tiered pricing
+  // This is simplified; full implementation would handle ranges
+  
+  var total_revenue: Currency<USD> per Month = $0/1mo
+  var remaining_usage = usage
+  
+  for i in 0..length(tier_thresholds) {
+    var tier_usage = min(remaining_usage, tier_thresholds[i])
+    total_revenue = total_revenue + (tier_usage * tier_prices[i])
+    remaining_usage = remaining_usage - tier_usage
+    
+    if remaining_usage <= 0 {
+      break
+    }
+  }
+  
+  return total_revenue
+}
