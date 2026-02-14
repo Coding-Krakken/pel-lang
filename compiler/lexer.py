@@ -154,6 +154,8 @@ class Lexer:
         'TimeSeries': TokenType.TIMESERIES_TYPE,
         'Distribution': TokenType.DISTRIBUTION_TYPE,
     }
+
+    DURATION_UNITS = ("mo", "yr", "q", "w", "d")
     
     def __init__(self, source: str, filename: str = "<input>"):
         self.source = source
@@ -202,15 +204,48 @@ class Lexer:
         """Read number literal (integer or decimal)."""
         start_line, start_col = self.line, self.column
         num_str = ''
-        
-        while self.peek() and (self.peek().isdigit() or self.peek() in '._'):
+
+        # Integer part (allow '_' as a separator).
+        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
             num_str += self.advance()
+
+        # Decimal part: only treat '.' as decimal if followed by a digit.
+        # This avoids lexing `0..time_horizon` as NUMBER("0.."), which should be
+        # NUMBER("0") DOT DOT IDENTIFIER(...).
+        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
+            num_str += self.advance()  # '.'
+            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
+                num_str += self.advance()
         
-        # Check for currency suffix
-        if self.peek() in 'kdmМMBТ':  # k, m, M, B suffixes
+        # Check for numeric suffix (k, m, M, B, T)
+        # NOTE: 'd' is reserved for duration literals (e.g., 30d).
+        if self.peek() in 'kmМMBТ':
             num_str += self.advance()
+
+        # Percentage literal (e.g., 5%)
+        if self.peek() == '%':
+            self.advance()
+            return Token(TokenType.PERCENTAGE, num_str + '%', start_line, start_col)
         
         return Token(TokenType.NUMBER, num_str, start_line, start_col)
+
+    def read_number_or_duration(self) -> Token:
+        """Read either a duration literal (e.g., 30d, 1mo) or a number literal."""
+        start_line, start_col = self.line, self.column
+
+        # Duration literals are integer + unit, and must be delimited (not followed by identifier chars).
+        # Match longest units first to avoid consuming 'm' as numeric suffix when 'mo' is intended.
+        remaining = self.source[self.pos :]
+        unit_pattern = "|".join(self.DURATION_UNITS)
+        match = re.match(rf"(\d+)({unit_pattern})(?![A-Za-z0-9_])", remaining)
+        if match:
+            literal = match.group(0)
+            for _ in range(len(literal)):
+                self.advance()
+            return Token(TokenType.DURATION, literal, start_line, start_col)
+
+        # Fallback: ordinary number literal (may include decimals and numeric suffixes)
+        return self.read_number()
     
     def read_currency(self) -> Token:
         """Read currency literal ($100, €50)."""
@@ -219,8 +254,13 @@ class Lexer:
         
         # Read amount
         amount = ''
-        while self.peek() and (self.peek().isdigit() or self.peek() in '.,_'):
+        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
             amount += self.advance()
+
+        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
+            amount += self.advance()  # '.'
+            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
+                amount += self.advance()
         
         # Check for unit suffix (k, m, M, B)
         if self.peek() and self.peek() in 'kmМMBТ':
@@ -289,7 +329,7 @@ class Lexer:
             
             # Numbers
             elif char.isdigit():
-                self.tokens.append(self.read_number())
+                self.tokens.append(self.read_number_or_duration())
             
             # Identifiers and keywords
             elif char.isalpha() or char == '_':

@@ -1,0 +1,76 @@
+# ============================================================================
+# PEL API CONTRACTS
+# ============================================================================
+# Purpose: Canonical public-facing API contracts (compiler + runtime)
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  scope:
+    - "compiler pipeline API"
+    - "runtime execution API"
+  implementation_hint:
+    compiler: "compiler/compiler.py"
+    runtime: "runtime/runtime.py"
+
+compiler:
+  compile:
+    signature: "compile(source: str) -> IRDocument"
+    inputs:
+      source:
+        type: "string"
+        encoding: "utf-8"
+    outputs:
+      ir:
+        type: "object"
+        schema: "ir/pel_ir_schema.json"
+    determinism:
+      - "Must be deterministic for identical source"
+      - "Must not read ambient randomness"
+    errors:
+      raises:
+        - "LexicalError"
+        - "ParseError"
+        - "TypeError"
+        - "ProvenanceError"
+        - "CompilationError"
+      contract: "contracts/errors.yaml#error_reporting_contract"
+
+runtime:
+  run:
+    signature: "run(ir: IRDocument, *, seed: int | None = None, mode: 'deterministic'|'monte_carlo'='deterministic') -> RuntimeResult"
+    inputs:
+      ir:
+        type: "object"
+        schema: "ir/pel_ir_schema.json"
+      seed:
+        type: "integer|null"
+        description: "If mode=monte_carlo, seed MUST be provided for reproducibility"
+      mode:
+        type: "string"
+        allowed: ["deterministic", "monte_carlo"]
+    outputs:
+      result:
+        type: "object"
+        description: "Deterministic outputs or distribution summaries"
+    determinism:
+      deterministic_mode:
+        - "Bitwise-identical outputs for same IR"
+      monte_carlo_mode:
+        - "Reproducible given same seed + same version"
+    errors:
+      contract: "contracts/errors.yaml#error_reporting_contract"
+
+ir_document:
+  name: "IRDocument"
+  schema: "ir/pel_ir_schema.json"
+
+runtime_result:
+  name: "RuntimeResult"
+  fields:
+    - "outputs"
+    - "metrics"
+    - "warnings (optional)"

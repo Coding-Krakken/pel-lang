@@ -1,0 +1,58 @@
+# ============================================================================
+# PEL COMPILER API CONTRACTS
+# ============================================================================
+# Purpose: Canonical interface contract for compiler pipeline
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  implementation_location: "compiler/"
+
+compiler_api:
+  compile:
+    signature: "compile(source: str) -> IRDocument"
+    entry_point: "compiler/compiler.py"
+    preconditions:
+      - "source is valid UTF-8"
+      - "source is not empty"
+    postconditions_success:
+      - "Returns valid PEL-IR JSON"
+      - "IR conforms to ir/pel_ir_schema.json"
+      - "IR passes semantic validation V001-V015"
+      - "Compilation deterministic"
+    postconditions_error:
+      - "Raises CompilationError subclass"
+      - "Error includes code/message/location"
+
+lexer_api:
+  tokenize:
+    signature: "tokenize(source: str) -> List[Token]"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+parser_api:
+  parse:
+    signature: "parse(tokens: List[Token]) -> Model"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+typechecker_api:
+  check:
+    signature: "check(model: Model) -> Model"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+provenance_checker_api:
+  check:
+    signature: "check(model: Model) -> Tuple[Model, float]"
+    determinism: "MUST be deterministic"
+    complexity: "O(p)"
+
+ir_generator_api:
+  generate:
+    signature: "generate(model: Model) -> Dict"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"

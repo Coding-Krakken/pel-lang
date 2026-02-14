@@ -1,0 +1,229 @@
+# ============================================================================
+# PEL DEPENDENCY GOVERNANCE MODEL
+# ============================================================================
+# Purpose: Define rules for dependencies to minimize supply-chain risk and drift
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical - dependency changes must comply
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  scope: "Python dependencies (runtime + dev + docs)"
+  goal: "Deterministic, secure, minimal dependency graph"
+
+principles:
+  - "Prefer stdlib over external dependencies"
+  - "Dependencies must be justified by a contract requirement"
+  - "Avoid heavy dependencies unless required (numpy/scipy only when needed)"
+  - "Pin minimum versions, allow patch updates"
+  - "No unreviewed dependency updates"
+  - "No dependencies with incompatible licensing"
+  - "All dependencies must be tracked and audited"
+
+# ============================================================================
+# DEPENDENCY CLASSES
+# ============================================================================
+
+dependency_classes:
+  runtime:
+    description: "Required to run PEL compiler/runtime"
+    policy: "Keep minimal; avoid unless required"
+    allowed_categories:
+      - "JSON schema validation"
+      - "Numerical computing (if Monte Carlo requires)"
+      - "Security sandboxing (if required)"
+  
+  development:
+    description: "Required for development (tests, linting, typing)"
+    policy: "Allowed if increases determinism and quality"
+    allowed_tools:
+      - "pytest"
+      - "pytest-cov"
+      - "mypy"
+      - "black"
+      - "ruff"
+      - "pre-commit"
+  
+  documentation:
+    description: "Required to build documentation"
+    policy: "Allowed if docs build is automated"
+    allowed_tools:
+      - "sphinx"
+      - "sphinx-rtd-theme"
+
+# ============================================================================
+# CURRENT STATE (AS-IS)
+# ============================================================================
+
+current_state:
+  runtime_dependencies_declared: []
+  development_dependencies_declared:
+    - name: "pytest"
+      min_version: ">=7.0.0"
+      purpose: "Unit/integration testing"
+    - name: "pytest-cov"
+      min_version: ">=4.0.0"
+      purpose: "Coverage measurement"
+    - name: "mypy"
+      min_version: ">=1.0.0"
+      purpose: "Static typing"
+    - name: "black"
+      min_version: ">=23.0.0"
+      purpose: "Deterministic formatting"
+    - name: "ruff"
+      min_version: ">=0.1.0"
+      purpose: "Linting"
+    - name: "pre-commit"
+      min_version: ">=3.0.0"
+      purpose: "Local quality gates"
+  documentation_dependencies_declared:
+    - name: "sphinx"
+      min_version: ">=6.0.0"
+      purpose: "Docs generation"
+    - name: "sphinx-rtd-theme"
+      min_version: ">=1.2.0"
+      purpose: "Docs theme"
+
+# ============================================================================
+# PLANNED DEPENDENCIES (JUSTIFIED)
+# ============================================================================
+
+planned_dependencies:
+  
+  numpy:
+    class: "runtime"
+    status: "PLANNED"
+    justification: "Monte Carlo sampling performance, correlation (Cholesky)"
+    contracts_supported:
+      - "MONTE_CARLO_SAMPLING"
+      - "CORRELATION_VALIDATION"
+    risks:
+      - "Large binary dependency"
+      - "Different BLAS backends may affect floating determinism"
+    mitigations:
+      - "Fix PRNG seed"
+      - "Document float determinism expectations"
+      - "Lock numpy version in CI"
+  
+  scipy:
+    class: "runtime"
+    status: "PLANNED"
+    justification: "Statistical distributions, calibration tests"
+    contracts_supported:
+      - "DISTRIBUTION_VALIDATION"
+      - "Calibration spec statistical tests"
+    risks:
+      - "Large dependency"
+      - "May introduce non-determinism in some numerical methods"
+    mitigations:
+      - "Use only deterministic sampling functions"
+      - "Pin versions"
+  
+  jsonschema:
+    class: "runtime"
+    status: "OPTIONAL"
+    justification: "Validate IR against pel_ir_schema.json"
+    contracts_supported:
+      - "IR structural validation"
+    risks:
+      - "Moderate dependency"
+    mitigations:
+      - "Use only for validation tooling (not runtime hot path)"
+
+# ============================================================================
+# GOVERNANCE RULES
+# ============================================================================
+
+governance_rules:
+  
+  adding_dependency:
+    requirements:
+      - "WorkItem must be created in delivery_state_model.yaml"
+      - "Justification must cite contract(s) that require it"
+      - "License compatibility verified (AGPL/commercial)"
+      - "Security review performed"
+      - "Version constraints specified"
+      - "CI must pass with new dependency"
+    
+  updating_dependency:
+    requirements:
+      - "Changelog reviewed"
+      - "Security advisories checked"
+      - "CI run on all supported Python versions"
+      - "No breaking changes to public APIs"
+    
+  removing_dependency:
+    requirements:
+      - "Confirm no contracts depend on it"
+      - "Remove from pyproject.toml"
+      - "Update docs"
+      - "CI passes"
+
+# ============================================================================
+# LICENSE POLICY
+# ============================================================================
+
+license_policy:
+  allowed_licenses:
+    - "MIT"
+    - "BSD-2-Clause"
+    - "BSD-3-Clause"
+    - "Apache-2.0"
+    - "PSF"
+  disallowed_licenses:
+    - "GPL-2.0-only"  # Incompatible with AGPL/commercial dual licensing goals
+    - "Unknown/Unlicensed"
+  review_required_for:
+    - "LGPL"
+    - "MPL-2.0"
+
+# ============================================================================
+# SUPPLY CHAIN SECURITY
+# ============================================================================
+
+supply_chain_security:
+  
+  tooling:
+    - "Dependabot (weekly)"
+    - "pip-audit (optional)"
+    - "GitHub Advisory Database"
+  
+  requirements:
+    - "No dependency introduced without review"
+    - "Track CVEs and patch promptly"
+    - "Prefer packages with active maintenance"
+    - "Avoid abandoned packages"
+  
+  pinning_policy:
+    runtime:
+      style: ">=min_version,<next_major"
+      example: "numpy>=1.24,<2"
+    dev:
+      style: ">=min_version,<next_major"
+    docs:
+      style: ">=min_version,<next_major"
+
+# ============================================================================
+# DETERMINISM POLICY
+# ============================================================================
+
+determinism_policy:
+  
+  requirement: "Dependencies MUST not break reproducibility guarantees"
+  
+  evaluation:
+    - "Does dependency affect floating-point computations?"
+    - "Does it use nondeterministic algorithms?"
+    - "Does it use system randomness implicitly?"
+    - "Does it depend on OS/CPU features?"
+  
+  mitigation_strategies:
+    - "Fix seeds explicitly"
+    - "Use deterministic algorithms only"
+    - "Pin versions in CI"
+    - "Document platform constraints"
+
+# ============================================================================
+# END OF DEPENDENCY GOVERNANCE MODEL
+# ============================================================================

@@ -45,6 +45,12 @@ class Expression(ASTNode):
 
 
 @dataclass
+class Statement(ASTNode):
+    """Base class for statements (used in blocks and top-level model body)."""
+    pass
+
+
+@dataclass
 class Literal(Expression):
     """Literal value."""
     value: Any
@@ -122,6 +128,42 @@ class Distribution(Expression):
 
 
 @dataclass
+class Assignment(Statement):
+    """Assignment statement (e.g., x = expr, ts[t] = expr)."""
+    target: Expression
+    value: Expression
+
+
+@dataclass
+class Return(Statement):
+    """Return statement inside a block expression."""
+    value: Optional[Expression] = None
+
+
+@dataclass
+class IfStmt(Statement):
+    """If statement with a block body (if cond { ... } else { ... })."""
+    condition: Expression
+    then_body: List[Statement] = field(default_factory=list)
+    else_body: Optional[List[Statement]] = None
+
+
+@dataclass
+class ForStmt(Statement):
+    """For loop statement (for t in start..end { ... })."""
+    var_name: str
+    start: Expression
+    end: Expression
+    body: List[Statement] = field(default_factory=list)
+
+
+@dataclass
+class BlockExpr(Expression):
+    """Block expression (e.g., { ... return expr })."""
+    statements: List[Statement] = field(default_factory=list)
+
+
+@dataclass
 class Provenance(ASTNode):
     """Provenance metadata block."""
     source: str
@@ -148,6 +190,7 @@ class VarDecl(ASTNode):
     name: str
     type_annotation: Optional[TypeAnnotation]  # Can be inferred
     value: Optional[Expression] = None
+    is_mutable: bool = False
 
 
 @dataclass
@@ -192,6 +235,7 @@ class Action(ASTNode):
     value: Optional[Expression] = None
     statements: Optional[List['Action']] = None  # For block actions
     event_name: Optional[str] = None  # For emit_event
+    args: Dict[str, Expression] = field(default_factory=dict)
 
 
 @dataclass
@@ -213,6 +257,7 @@ class Model(ASTNode):
     funcs: List[FuncDecl] = field(default_factory=list)
     constraints: List[Constraint] = field(default_factory=list)
     policies: List[Policy] = field(default_factory=list)
+    statements: List[Statement] = field(default_factory=list)
 
 
 # === Typed AST (after type checking) ===

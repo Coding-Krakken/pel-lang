@@ -1,0 +1,43 @@
+# ============================================================================
+# PEL METRICS CATALOG
+# ============================================================================
+# Purpose: Define canonical metrics for CI health and runtime correctness
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+metrics:
+  ci:
+    - name: "ci.success_rate"
+      type: "ratio"
+      target: ">0.95"
+    - name: "ci.duration_p95_ms"
+      type: "gauge"
+      target: "<300000"  # 5 minutes
+    - name: "ci.flaky_tests"
+      type: "count"
+      target: "0"
+    - name: "coverage.total"
+      type: "ratio"
+      target: ">=0.80"
+
+  compiler:
+    - name: "compile.duration_ms"
+      type: "histogram"
+    - name: "compile.errors"
+      type: "count"
+      dimensions: ["category", "code"]
+
+  runtime:
+    - name: "run.duration_ms"
+      type: "histogram"
+    - name: "constraints.violations"
+      type: "count"
+      dimensions: ["severity"]
+    - name: "determinism.regressions"
+      type: "count"
+      description: "Detected differences for identical inputs"

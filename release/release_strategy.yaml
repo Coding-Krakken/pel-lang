@@ -1,0 +1,31 @@
+# ============================================================================
+# PEL RELEASE STRATEGY
+# ============================================================================
+# Purpose: Define versioning, release gating, and artifact expectations
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+versioning:
+  scheme: "SemVer"
+  pre_1_0_policy:
+    - "Minor version may include breaking changes"
+
+release_gates:
+  - "CI green (all required checks)"
+  - "Coverage >= 80%"
+  - "IR schema unchanged or migration documented"
+  - "Changelog updated"
+
+artifacts:
+  - "Source distribution"
+  - "Wheel"
+  - "Release notes"
+
+rollback:
+  strategy: "Revert to previous tag"
+  requirement: "Releases must be reproducible"

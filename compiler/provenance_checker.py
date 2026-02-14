@@ -85,6 +85,8 @@ class ProvenanceChecker:
                 fields_present += 1
                 if field == 'confidence':
                     self.check_confidence_field(param.name, provenance[field])
+                elif field == 'method':
+                    self.check_method_field(param.name, provenance[field])
         
         # Check recommended fields
         for field in self.RECOMMENDED_FIELDS:
@@ -92,6 +94,19 @@ class ProvenanceChecker:
                 fields_present += 1
         
         return fields_present
+
+    def check_method_field(self, param_name: str, method: any):
+        """Validate method field."""
+        if not isinstance(method, str) or not method.strip():
+            self.errors.append(ProvenanceError(
+                f"Parameter '{param_name}' method must be a non-empty string"
+            ))
+            return
+
+        if method not in self.VALID_METHODS:
+            self.errors.append(ProvenanceError(
+                f"Parameter '{param_name}' method must be one of {self.VALID_METHODS}, got {method!r}"
+            ))
     
     def check_confidence_field(self, param_name: str, confidence: any):
         """Validate confidence field."""

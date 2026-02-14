@@ -1,0 +1,93 @@
+# ============================================================================
+# PEL ERROR CONTRACTS MODEL
+# ============================================================================
+# Purpose: Canonical catalog of error categories and contract requirements
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical - implementation error reporting must conform
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  source_of_truth:
+    - "compiler/errors.py"
+    - "spec/pel_language_spec.md"
+    - "spec/pel_type_system.md"
+    - "spec/pel_governance_spec.md"
+
+error_reporting_contract:
+  required_fields:
+    - name: "code"
+      type: "string"
+      description: "Error code identifier (E0001-E9999)"
+    - name: "message"
+      type: "string"
+      description: "Human-readable error message"
+    - name: "location"
+      type: "object"
+      description: "Source location"
+      fields:
+        - "file (optional)"
+        - "line (required)"
+        - "column (required)"
+    - name: "hint"
+      type: "string"
+      description: "Actionable remediation hint"
+      optional: true
+  invariants:
+    - "message MUST be non-empty"
+    - "line and column MUST be 1-indexed"
+    - "code MUST exist in documented catalog"
+    - "hint SHOULD be present for common user errors"
+
+categories:
+  lexical:
+    code_range: "E0001-E0199"
+    stage: "lexer"
+    description: "Tokenization and lexical analysis failures"
+    handling:
+      - "Fail-fast"
+      - "Report location"
+      - "No recovery"
+  syntax:
+    code_range: "E0200-E0299"
+    stage: "parser"
+    description: "Grammar and syntax parsing failures"
+    handling:
+      - "Fail-fast"
+      - "Report expected vs got"
+      - "No recovery (current implementation)"
+  type:
+    code_range: "E0300-E0399"
+    stage: "type_checker"
+    description: "Type system violations"
+    handling:
+      - "Fail-fast"
+      - "Report inferred vs expected types"
+      - "Provide hint"
+  provenance:
+    code_range: "E0400-E0499"
+    stage: "provenance_checker"
+    description: "Provenance metadata validation failures"
+    handling:
+      - "Report all missing fields when possible"
+      - "Fail compilation"
+  constraint:
+    code_range: "E0500-E0599"
+    stage: "runtime | validation"
+    description: "Constraint definition and evaluation failures"
+    handling:
+      - "Compile-time validation when possible"
+      - "Runtime violations logged"
+  policy:
+    code_range: "E0600-E0699"
+    stage: "runtime | validation"
+    description: "Policy definition and execution failures"
+    handling:
+      - "Fail compilation for invalid policy"
+      - "Runtime execution deterministic"
+
+exit_codes:
+  success: 0
+  compilation_or_validation_error: 1
+  internal_error: 2

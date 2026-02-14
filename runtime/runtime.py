@@ -13,7 +13,6 @@ Reference implementation v0.1.0
 import argparse
 import json
 import random
-import numpy as np
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
@@ -41,8 +40,7 @@ class PELRuntime:
     
     def __init__(self, config: RuntimeConfig):
         self.config = config
-        self.rng = np.random.RandomState(config.seed)  # Seeded RNG
-        random.seed(config.seed)
+        self.rng = random.Random(config.seed)
     
     def load_ir(self, ir_path: Path) -> Dict[str, Any]:
         """Load PEL-IR document."""
@@ -219,7 +217,7 @@ class PELRuntime:
                 if dist_type == "Normal":
                     mu = params.get("mu", 0)
                     sigma = params.get("sigma", 1)
-                    return self.rng.normal(mu, sigma)
+                    return self.rng.gauss(mu, sigma)
                 elif dist_type == "Uniform":
                     low = params.get("low", 0)
                     high = params.get("high", 1)

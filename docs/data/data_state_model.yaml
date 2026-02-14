@@ -1,0 +1,77 @@
+# ============================================================================
+# PEL DATA STATE MODEL
+# ============================================================================
+# Purpose: Canonical model of persistent and transient data shapes across system
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  scope:
+    - "Source text"
+    - "Tokens"
+    - "AST"
+    - "Typed AST"
+    - "Provenance-validated AST"
+    - "PEL-IR"
+    - "Runtime results"
+
+artifacts:
+  source:
+    type: "string"
+    invariants:
+      - "utf-8"
+      - "non-empty"
+
+  tokens:
+    type: "List[Token]"
+    invariants:
+      - "stable ordering"
+      - "each token has (kind, lexeme, location)"
+
+  ast:
+    type: "Model AST"
+    invariants:
+      - "tree is acyclic"
+      - "locations preserved"
+
+  typed_ast:
+    type: "Model AST with types"
+    invariants:
+      - "each expression has a PEL type"
+      - "units/currencies consistent"
+
+  provenance_validated_ast:
+    type: "Model AST + provenance annotations"
+    invariants:
+      - "required provenance fields present per spec"
+
+  pel_ir:
+    type: "JSON object"
+    schema: "ir/pel_ir_schema.json"
+    invariants:
+      - "conforms to schema"
+      - "passes validation rules V001-V015"
+
+  runtime_result:
+    type: "object"
+    invariants:
+      - "deterministic mode reproducible"
+      - "monte carlo mode reproducible given seed"
+
+serialization:
+  ir:
+    format: "json"
+    canonicalization:
+      - "stable key ordering for hashing"
+      - "no NaN/Infinity"
+
+hashes:
+  model_hash:
+    input: "canonicalized IR"
+    algorithm: "sha256"
+  assumption_hash:
+    input: "assumption registry"
+    algorithm: "sha256"

@@ -1,0 +1,936 @@
+# ============================================================================
+# PEL DELIVERY STATE MODEL
+# ============================================================================
+# Purpose: Governs alignment work execution and project state management
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Active - WorkItems tracked against this model
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  model_date: "2026-02-13"
+  purpose: "Define lifecycle, artifacts, and governance for conversion work"
+  scope: "Model-first governance conversion (Phases 0-7)"
+  
+# ============================================================================
+# WORKITEM LIFECYCLE - Canonical States
+# ============================================================================
+
+workitem_lifecycle:
+  
+  states:
+    - name: "DEFINED"
+      description: "WorkItem scoped and documented, not yet started"
+      entry_criteria:
+        - "Requirements clear"
+        - "Scope boundaries defined"
+        - "Dependencies identified"
+        - "Acceptance criteria defined"
+        - "Risk assessment complete"
+      exit_criteria:
+        - "Assignee designated"
+        - "Start date set"
+      
+    - name: "IN_PROGRESS"
+      description: "Active work underway"
+      entry_criteria:
+        - "DEFINED state complete"
+        - "Assignee confirmed"
+      activities:
+        - "Implementation"
+        - "Testing"
+        - "Documentation"
+      exit_criteria:
+        - "Implementation complete"
+        - "Tests passing"
+        - "Documentation updated"
+        - "Ready for review"
+      
+    - name: "REVIEW"
+      description: "Code review and validation in progress"
+      entry_criteria:
+        - "All IN_PROGRESS activities complete"
+        - "Self-review done"
+      activities:
+        - "Code review (if applicable)"
+        - "Contract verification"
+        - "Spec alignment check"
+        - "Diff minimization review"
+      exit_criteria:
+        - "All reviewers approve"
+        - "No blocking issues"
+      
+    - name: "MERGED"
+      description: "Changes integrated into codebase"
+      entry_criteria:
+        - "REVIEW approved"
+        - "CI checks passing"
+      activities:
+        - "Merge to main branch"
+        - "Update tracking"
+      exit_criteria:
+        - "Code in main branch"
+        - "Tests passing in main"
+      
+    - name: "VALIDATED"
+      description: "Post-merge validation complete"
+      entry_criteria:
+        - "MERGED complete"
+      activities:
+        - "Integration testing"
+        - "Regression testing"
+        - "Contract adherence verified"
+      exit_criteria:
+        - "All validation checks pass"
+        - "No regressions detected"
+      terminal: true  # Final state for WorkItem
+      
+    - name: "BLOCKED"
+      description: "Work cannot proceed due to dependency or issue"
+      entry_from: ["DEFINED", "IN_PROGRESS", "REVIEW"]
+      criteria:
+        - "Dependency not met"
+        - "Blocking issue discovered"
+        - "Resource unavailable"
+      resolution:
+        - "Remove blocker"
+        - "Adjust plan"
+        - "Escalate"
+      
+    - name: "CANCELLED"
+      description: "WorkItem no longer needed"
+      entry_from: ["DEFINED", "BLOCKED"]
+      terminal: true
+  
+  transitions:
+    - from: "DEFINED"
+      to: "IN_PROGRESS"
+      trigger: "Work started"
+      
+    - from: "IN_PROGRESS"
+      to: "REVIEW"
+      trigger: "Implementation complete"
+      
+    - from: "REVIEW"
+      to: "IN_PROGRESS"
+      trigger: "Changes requested"
+      
+    - from: "REVIEW"
+      to: "MERGED"
+      trigger: "Approved and merged"
+      
+    - from: "MERGED"
+      to: "VALIDATED"
+      trigger: "Validation complete"
+      
+    - from: ["DEFINED", "IN_PROGRESS", "REVIEW"]
+      to: "BLOCKED"
+      trigger: "Blocker identified"
+      
+    - from: "BLOCKED"
+      to: ["DEFINED", "IN_PROGRESS", "REVIEW"]
+      trigger: "Blocker resolved"
+      
+    - from: ["DEFINED", "BLOCKED"]
+      to: "CANCELLED"
+      trigger: "No longer needed"
+
+# ============================================================================
+# WORKITEM SCHEMA - Required Artifacts
+# ============================================================================
+
+workitem_schema:
+  
+  identification:
+    id: "Unique identifier (e.g., WI-001)"
+    title: "Brief descriptive title (≤ 60 chars)"
+    phase: "Phase number (0-7)"
+    category: "bug_fix | test_infrastructure | ci_cd | stdlib | documentation | governance"
+    
+  scope:
+    description: "Detailed description of work"
+    objectives: "List of specific objectives"
+    scope_boundaries:
+      included: "What is in scope"
+      excluded: "What is explicitly out of scope"
+    diff_boundaries: "Files and line ranges affected"
+    
+  dependencies:
+    blocks: "List of WorkItem IDs this blocks"
+    blocked_by: "List of WorkItem IDs blocking this"
+    requires_artifacts: "List of required artifacts from other WorkItems"
+    
+  risk_management:
+    risk_level: "LOW | MEDIUM | HIGH | CRITICAL"
+    risks: "List of identified risks"
+    mitigation: "Mitigation strategies"
+    rollback_plan: "How to undo if needed"
+    
+  acceptance_criteria:
+    functional: "List of functional requirements"
+    non_functional: "List of non-functional requirements (performance, security, etc.)"
+    tests_required: "Types of tests required"
+    documentation_required: "Documentation that must be updated"
+    
+  complexity_budget:
+    estimated_lines_changed: "int (target)"
+    estimated_files_changed: "int (target)"
+    estimated_effort_hours: "float (target)"
+    
+  entropy_budget:
+    max_new_abstractions: "int (limit on new classes/functions)"
+    max_refactor_scope: "Scope limit (no unrelated changes)"
+    formatting_changes: "allowed | not_allowed"
+
+# ============================================================================
+# WORKITEMS - Defined Alignment Tasks
+# ============================================================================
+
+workitems:
+  
+  # --------------------------------------------------------------------------
+  # PHASE 5: INCREMENTAL ALIGNMENT - CRITICAL PATH
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-001"
+    title: "Fix Duration Literal Tokenization"
+    phase: 5
+    category: "bug_fix"
+    state: "VALIDATED"
+    priority: "CRITICAL"
+    
+    description: |
+      Complete tokenization of duration literals (1mo, 30d, 1yr) in lexer.
+      Currently incompletely implemented, breaking rate expressions like $500/1mo.
+    
+    objectives:
+      - "Tokenize duration literals correctly"
+      - "Support all time units: d, w, mo, q, yr"
+      - "Generate DURATION token type"
+    
+    scope_boundaries:
+      included:
+        - "compiler/lexer.py lines 195-210"
+        - "Duration literal recognition"
+        - "Error handling for invalid durations"
+      excluded:
+        - "Parser changes (separate WorkItem)"
+        - "Type checking changes"
+        - "Unrelated lexer improvements"
+    
+    dependencies:
+      blocks: ["WI-002"]
+      blocked_by: []
+    
+    risk_management:
+      risk_level: "MEDIUM"
+      risks:
+        - "Breaking existing tokenization"
+        - "Incomplete time unit coverage"
+      mitigation:
+        - "Add comprehensive unit tests first"
+        - "Test all time units explicitly"
+      rollback_plan: "Revert lexer.py changes, keep tests"
+    
+    acceptance_criteria:
+      functional:
+        - "1mo tokenizes as DURATION('1', 'mo')"
+        - "30d tokenizes as DURATION('30', 'd')"
+        - "All time units supported: d, w, mo, q, yr"
+        - "Invalid durations produce LexicalError"
+      tests_required:
+        - "Unit tests for each time unit"
+        - "Error case tests"
+        - "Integration test with parser"
+      documentation_required:
+        - "Update lexer.py docstrings"
+        - "Add example to README if needed"
+    
+    complexity_budget:
+      estimated_lines_changed: 30
+      estimated_files_changed: 1
+      estimated_effort_hours: 2
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: "lexer.py duration tokenization only"
+      formatting_changes: "not_allowed"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-002"
+    title: "Fix Per-Duration Expression Parsing"
+    phase: 5
+    category: "bug_fix"
+    state: "VALIDATED"
+    priority: "CRITICAL"
+    
+    description: |
+      Complete parsing of per-duration expressions ($500/1mo) for Rate per TimeUnit types.
+      Parser needs to recognize Division(Currency, Duration) → Rate per TimeUnit.
+    
+    objectives:
+      - "Parse $500/1mo as Rate per Month"
+      - "Generate correct AST for per-duration expressions"
+      - "Handle all time units"
+    
+    scope_boundaries:
+      included:
+        - "compiler/parser.py binary operation parsing"
+        - "Rate per TimeUnit AST generation"
+      excluded:
+        - "Type checking (already works)"
+        - "Unrelated parser improvements"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-001"]  # Needs duration tokenization working
+    
+    risk_management:
+      risk_level: "MEDIUM"
+      risks:
+        - "Breaking existing division parsing"
+        - "Operator precedence issues"
+      mitigation:
+        - "Add tests before changes"
+        - "Preserve existing division behavior"
+      rollback_plan: "Revert parser.py changes"
+    
+    acceptance_criteria:
+      functional:
+        - "$500/1mo parses correctly"
+        - "AST represents Rate per Month type"
+        - "Type checker accepts result"
+        - "saas_subscription.pel compiles successfully"
+      tests_required:
+        - "Unit tests for per-duration parsing"
+        - "Integration test with type checker"
+        - "Test saas_subscription.pel end-to-end"
+      documentation_required:
+        - "Update parser.py docstrings"
+    
+    complexity_budget:
+      estimated_lines_changed: 40
+      estimated_files_changed: 1
+      estimated_effort_hours: 3
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: "parser.py division operation only"
+      formatting_changes: "not_allowed"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-003"
+    title: "Verify Distribution Named Arguments"
+    phase: 5
+    category: "bug_fix"
+    state: "VALIDATED"
+    priority: "HIGH"
+    
+    description: |
+      Verify and fix (if needed) parsing of distribution named arguments.
+      Syntax: ~Normal(μ=0.12, σ=0.03)
+      Status uncertain - needs verification.
+    
+    objectives:
+      - "Verify named argument parsing works"
+      - "Fix if broken"
+      - "Add tests to prevent regression"
+    
+    scope_boundaries:
+      included:
+        - "compiler/parser.py function call parsing"
+        - "Distribution expression parsing"
+      excluded:
+        - "Distribution validation (already works)"
+    
+    dependencies:
+      blocks: []
+      blocked_by: []
+    
+    risk_management:
+      risk_level: "LOW"
+      risks:
+        - "May already work (no fix needed)"
+      mitigation:
+        - "Test first to determine if fix needed"
+      rollback_plan: "N/A if already working, otherwise revert"
+    
+    acceptance_criteria:
+      functional:
+        - "~Normal(μ=0.12, σ=0.03) parses correctly"
+        - "~Beta(α=2, β=38) parses correctly"
+        - "Keyword argument order flexible"
+      tests_required:
+        - "Unit tests for each distribution with named args"
+      documentation_required:
+        - "Examples in spec if not already present"
+    
+    complexity_budget:
+      estimated_lines_changed: 20
+      estimated_files_changed: 1
+      estimated_effort_hours: 1
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: "parser.py function call parsing only"
+      formatting_changes: "not_allowed"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-004"
+    title: "Implement Unit Test Infrastructure"
+    phase: 5
+    category: "test_infrastructure"
+    state: "IN_PROGRESS"
+    priority: "CRITICAL"
+    
+    description: |
+      Create comprehensive unit test infrastructure using pytest.
+      Target: 80%+ code coverage for compiler and runtime.
+    
+    objectives:
+      - "Set up pytest configuration"
+      - "Create test fixtures"
+      - "Implement tests for all compiler stages"
+      - "Implement tests for runtime"
+      - "Achieve 80%+ coverage"
+    
+    scope_boundaries:
+      included:
+        - "tests/ directory (create)"
+        - "tests/unit/test_lexer.py"
+        - "tests/unit/test_parser.py"
+        - "tests/unit/test_typechecker.py"
+        - "tests/unit/test_provenance_checker.py"
+        - "tests/unit/test_ir_generator.py"
+        - "tests/unit/test_runtime.py"
+        - "tests/fixtures.py"
+        - "pytest.ini"
+      excluded:
+        - "Integration tests (separate WorkItem)"
+        - "Conformance tests (future)"
+        - "Performance tests (future)"
+    
+    dependencies:
+      blocks: ["WI-006"]  # CI/CD needs tests
+      blocked_by: ["WI-001", "WI-002"]  # Need parser working
+    
+    risk_management:
+      risk_level: "HIGH"
+      risks:
+        - "Low coverage due to time constraints"
+        - "Test brittleness (over-specification)"
+      mitigation:
+        - "Focus on critical paths first"
+        - "Test contracts, not implementation details"
+      rollback_plan: "Keep all tests (no rollback needed)"
+    
+    acceptance_criteria:
+      functional:
+        - "pytest runs all tests"
+        - "Coverage report generated"
+        - "Coverage ≥ 80% for compiler/"
+        - "Coverage ≥ 80% for runtime/"
+      tests_required:
+        - "Lexer: 30+ tests"
+        - "Parser: 50+ tests"
+        - "TypeChecker: 60+ tests"
+        - "ProvenanceChecker: 20+ tests"
+        - "IRGenerator: 20+ tests"
+        - "Runtime: 40+ tests"
+      documentation_required:
+        - "tests/README.md (how to run tests)"
+        - "Update CONTRIBUTING.md with test guidelines"
+    
+    complexity_budget:
+      estimated_lines_changed: 2000  # New test code
+      estimated_files_changed: 10
+      estimated_effort_hours: 40
+    
+    entropy_budget:
+      max_new_abstractions: 5  # Test fixtures, helpers
+      max_refactor_scope: "tests/ only (no production code changes)"
+      formatting_changes: "allowed (in tests/)"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-005"
+    title: "Implement Integration Tests"
+    phase: 5
+    category: "test_infrastructure"
+    state: "DEFINED"
+    priority: "HIGH"
+    
+    description: |
+      Create integration tests covering full pipeline: source → IR → results.
+      Use saas_subscription.pel as primary test case.
+    
+    objectives:
+      - "End-to-end compilation test"
+      - "End-to-end runtime test (deterministic)"
+      - "End-to-end runtime test (Monte Carlo)"
+      - "Determinism verification test"
+    
+    scope_boundaries:
+      included:
+        - "tests/integration/test_end_to_end.py"
+        - "tests/integration/test_determinism.py"
+        - "Test data fixtures"
+      excluded:
+        - "Unit tests (separate WorkItem)"
+        - "Performance benchmarks"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-004"]  # Needs test infrastructure
+    
+    risk_management:
+      risk_level: "MEDIUM"
+      risks:
+        - "Flaky tests due to floating point variance"
+      mitigation:
+        - "Fix PRNG seed"
+        - "Use appropriate float comparison tolerance"
+      rollback_plan: "Keep all tests"
+    
+    acceptance_criteria:
+      functional:
+        - "saas_subscription.pel compiles to IR"
+        - "Runtime executes deterministically"
+        - "Same seed → bit-identical results (verified)"
+        - "Monte Carlo produces statistics"
+      tests_required:
+        - "Compilation integration test"
+        - "Deterministic execution test"
+        - "Monte Carlo execution test"
+        - "Reproducibility test (run twice, compare)"
+      documentation_required:
+        - "Update tests/README.md"
+    
+    complexity_budget:
+      estimated_lines_changed: 500
+      estimated_files_changed: 3
+      estimated_effort_hours: 16
+    
+    entropy_budget:
+      max_new_abstractions: 2
+      max_refactor_scope: "tests/integration/ and fixtures only"
+      formatting_changes: "allowed (in tests/)"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-006"
+    title: "Implement CI/CD Pipeline"
+    phase: 5
+    category: "ci_cd"
+    state: "DEFINED"
+    priority: "HIGH"
+    
+    description: |
+      Set up GitHub Actions workflows for continuous integration.
+      Enforce quality gates: tests, coverage, linting, type checking.
+    
+    objectives:
+      - "Create test workflow"
+      - "Configure quality gates"
+      - "Set up coverage reporting"
+      - "Configure pre-commit hooks"
+    
+    scope_boundaries:
+      included:
+        - ".github/workflows/test.yml"
+        - ".pre-commit-config.yaml"
+        - "Update pyproject.toml (tool configs)"
+      excluded:
+        - "Release workflow (future)"
+        - "Deployment automation"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-004"]  # Needs tests to run
+    
+    risk_management:
+      risk_level: "LOW"
+      risks:
+        - "CI configuration errors"
+        - "Slow CI runs"
+      mitigation:
+        - "Test workflows locally first"
+        - "Parallelize where possible"
+      rollback_plan: "Disable workflows temporarily"
+    
+    acceptance_criteria:
+      functional:
+        - "Workflow runs on push and PR"
+        - "Tests run in CI"
+        - "Coverage report generated"
+        - "Linting (ruff, black) enforced"
+        - "Type checking (mypy) enforced"
+        - "Quality gates block merge if failing"
+      non_functional:
+        - "CI run completes in < 5 minutes"
+      documentation_required:
+        - "README.md updated with CI badge"
+        - "CONTRIBUTING.md updated with CI info"
+    
+    complexity_budget:
+      estimated_lines_changed: 150
+      estimated_files_changed: 3
+      estimated_effort_hours: 6
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: ".github/ and config files only"
+      formatting_changes: "not_applicable"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-007"
+    title: "Implement stdlib/demand Module"
+    phase: 5
+    category: "stdlib"
+    state: "DEFINED"
+    priority: "MEDIUM"
+    
+    description: |
+      Create demand forecasting standard library module.
+      Include lead generation, seasonality functions.
+    
+    objectives:
+      - "Implement 10+ demand functions"
+      - "Add provenance examples"
+      - "Create tests"
+      - "Write documentation"
+    
+    scope_boundaries:
+      included:
+        - "stdlib/demand/demand.pel"
+        - "stdlib/demand/README.md"
+      excluded:
+        - "Other stdlib modules"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-001", "WI-002"]  # Need parser working
+    
+    risk_management:
+      risk_level: "LOW"
+      risks:
+        - "Domain expertise required"
+      mitigation:
+        - "Reference industry standard models"
+      rollback_plan: "Remove module if quality insufficient"
+    
+    acceptance_criteria:
+      functional:
+        - "≥ 10 functions implemented"
+        - "All functions have provenance examples"
+        - "Functions compile successfully"
+        - "Tests for each function"
+      documentation_required:
+        - "stdlib/demand/README.md with usage examples"
+    
+    complexity_budget:
+      estimated_lines_changed: 300
+      estimated_files_changed: 2
+      estimated_effort_hours: 24
+    
+    entropy_budget:
+      max_new_abstractions: 0  # Pure PEL functions
+      max_refactor_scope: "stdlib/demand/ only"
+      formatting_changes: "allowed"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-008"
+    title: "Implement stdlib/funnel Module"
+    phase: 5
+    category: "stdlib"
+    state: "DEFINED"
+    priority: "MEDIUM"
+    
+    description: |
+      Create conversion funnel standard library module.
+      Include multi-stage conversion, drop-off analysis.
+    
+    objectives:
+      - "Implement 10+ funnel functions"
+      - "Add provenance examples"
+      - "Create tests"
+    
+    scope_boundaries:
+      included:
+        - "stdlib/funnel/funnel.pel"
+        - "stdlib/funnel/README.md"
+      excluded:
+        - "Other stdlib modules"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-001", "WI-002"]
+    
+    risk_management:
+      risk_level: "LOW"
+      risks:
+        - "Domain expertise required"
+      mitigation:
+        - "Reference industry standard models"
+      rollback_plan: "Remove module if quality insufficient"
+    
+    acceptance_criteria:
+      functional:
+        - "≥ 10 functions implemented"
+        - "All functions have provenance examples"
+        - "Functions compile successfully"
+        - "Tests for each function"
+      documentation_required:
+        - "stdlib/funnel/README.md with usage examples"
+    
+    complexity_budget:
+      estimated_lines_changed: 300
+      estimated_files_changed: 2
+      estimated_effort_hours: 24
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: "stdlib/funnel/ only"
+      formatting_changes: "allowed"
+  
+  # --------------------------------------------------------------------------
+  
+  - id: "WI-009"
+    title: "Implement stdlib/cashflow Module"
+    phase: 5
+    category: "stdlib"
+    state: "DEFINED"
+    priority: "MEDIUM"
+    
+    description: |
+      Create cashflow modeling standard library module.
+      Include AR/AP timing, payroll, collections.
+    
+    objectives:
+      - "Implement 10+ cashflow functions"
+      - "Add provenance examples"
+      - "Create tests"
+    
+    scope_boundaries:
+      included:
+        - "stdlib/cashflow/cashflow.pel"
+        - "stdlib/cashflow/README.md"
+      excluded:
+        - "Other stdlib modules"
+    
+    dependencies:
+      blocks: []
+      blocked_by: ["WI-001", "WI-002"]
+    
+    risk_management:
+      risk_level: "LOW"
+      risks:
+        - "Domain expertise required"
+      mitigation:
+        - "Reference industry standard models"
+      rollback_plan: "Remove module if quality insufficient"
+    
+    acceptance_criteria:
+      functional:
+        - "≥ 10 functions implemented"
+        - "All functions have provenance examples"
+        - "Functions compile successfully"
+        - "Tests for each function"
+      documentation_required:
+        - "stdlib/cashflow/README.md with usage examples"
+    
+    complexity_budget:
+      estimated_lines_changed: 300
+      estimated_files_changed: 2
+      estimated_effort_hours: 24
+    
+    entropy_budget:
+      max_new_abstractions: 0
+      max_refactor_scope: "stdlib/cashflow/ only"
+      formatting_changes: "allowed"
+
+# ============================================================================
+# QUALITY GATES - Enforcement Points
+# ============================================================================
+
+quality_gates:
+  
+  gate_1_code_complete:
+    name: "Code Complete"
+    applies_to: "All WorkItems with code changes"
+    criteria:
+      - "All objectives met"
+      - "Code compiles/runs without errors"
+      - "No obvious bugs"
+      - "Self-review complete"
+    blocking: true
+  
+  gate_2_tested:
+    name: "Tested"
+    applies_to: "All WorkItems"
+    criteria:
+      - "Unit tests written and passing"
+      - "Integration tests passing (if applicable)"
+      - "Test coverage meets target (80%+)"
+      - "No test skips without justification"
+    blocking: true
+  
+  gate_3_reviewed:
+    name: "Reviewed"
+    applies_to: "All WorkItems with code changes"
+    criteria:
+      - "Code review complete (if team > 1)"
+      - "Contracts verified"
+      - "Spec alignment checked"
+      - "Diff minimized"
+      - "No formatting-only changes"
+    blocking: true
+  
+  gate_4_ci_passing:
+    name: "CI Passing"
+    applies_to: "All WorkItems after WI-006"
+    criteria:
+      - "All CI checks pass"
+      - "Tests pass"
+      - "Coverage ≥ 80%"
+      - "Linting clean"
+      - "Type checking clean"
+    blocking: true
+  
+  gate_5_documented:
+    name: "Documented"
+    applies_to: "All WorkItems"
+    criteria:
+      - "Required documentation updated"
+      - "Docstrings added/updated"
+      - "Examples provided (if applicable)"
+    blocking: false  # Warning only
+  
+  gate_6_no_regressions:
+    name: "No Regressions"
+    applies_to: "All WorkItems"
+    criteria:
+      - "All existing tests still pass"
+      - "No new errors in unrelated code"
+      - "Performance not degraded"
+    blocking: true
+
+# ============================================================================
+# TRACKING AND REPORTING
+# ============================================================================
+
+tracking:
+  
+  metrics:
+    - name: "WorkItems Completed"
+      formula: "COUNT(state = VALIDATED)"
+      target: "9 (all critical WorkItems)"
+      
+    - name: "Code Coverage"
+      formula: "lines_covered / total_lines"
+      target: "≥ 0.80"
+      
+    - name: "Test Pass Rate"
+      formula: "tests_passed / total_tests"
+      target: "1.00 (100%)"
+      
+    - name: "Diff Size"
+      formula: "SUM(lines_changed) across WorkItems"
+      target: "< 5000 (minimize entropy)"
+      
+    - name: "Spec Alignment"
+      formula: "contracts_verified / total_contracts"
+      target: "1.00 (all contracts verified)"
+  
+  reporting_frequency: "Weekly"
+  
+  report_contents:
+    - "WorkItem status (state distribution)"
+    - "Blockers and risks"
+    - "Metrics vs targets"
+    - "Upcoming work"
+    - "Decisions needed"
+
+# ============================================================================
+# COMPLETION CRITERIA - Model-First Governance Achieved
+# ============================================================================
+
+completion_criteria:
+  
+  critical_must_have:
+    - "All CRITICAL WorkItems (WI-001, WI-002, WI-004, WI-006) VALIDATED"
+    - "Test coverage ≥ 80%"
+    - "CI/CD pipeline operational"
+    - "All CI checks passing"
+    - "3 parser bugs fixed"
+    - "No known blocking bugs"
+    
+  important_should_have:
+    - "All HIGH priority WorkItems VALIDATED"
+    - "≥ 3 stdlib modules complete"
+    - "Integration tests passing"
+    - "Determinism verified"
+    
+  governance_established:
+    - "All models created (Phase 0-3)"
+    - "Contracts extracted and documented"
+    - "Alignment plan complete"
+    - "Guardrails in place (Phase 6)"
+    - "Conversion report written (Phase 7)"
+    
+  sustainability:
+    - "Pre-commit hooks configured"
+    - "CI prevents future drift"
+    - "Documentation updated"
+    - "Team trained (if > 1 person)"
+
+# ============================================================================
+# RISK REGISTER
+# ============================================================================
+
+risks:
+  
+  - id: "R-001"
+    name: "Parser fixes break existing functionality"
+    probability: "MEDIUM"
+    impact: "HIGH"
+    mitigation: "Comprehensive tests before and after changes"
+    contingency: "Rollback to previous version, investigate"
+    
+  - id: "R-002"
+    name: "Test coverage target not achievable in timeline"
+    probability: "MEDIUM"
+    impact: "HIGH"
+    mitigation: "Focus on critical paths, accept lower coverage for edge cases"
+    contingency: "Extend timeline or reduce scope"
+    
+  - id: "R-003"
+    name: "CI/CD configuration issues delay integration"
+    probability: "LOW"
+    impact: "MEDIUM"
+    mitigation: "Test workflows locally, use proven patterns"
+    contingency: "Manual testing temporarily"
+    
+  - id: "R-004"
+    name: "Stdlib modules require domain expertise not available"
+    probability: "MEDIUM"
+    impact: "LOW"
+    mitigation: "Reference industry standards, simplify if needed"
+    contingency: "Defer modules to future release"
+    
+  - id: "R-005"
+    name: "Determinism test reveals non-deterministic behavior"
+    probability: "LOW"
+    impact: "CRITICAL"
+    mitigation: "Fix PRNG seeding, eliminate non-determinism sources"
+    contingency: "Deep investigation required, may block release"
+
+# ============================================================================
+# END OF DELIVERY STATE MODEL
+# ============================================================================

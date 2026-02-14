@@ -10,6 +10,7 @@ Implements type system from spec/pel_type_system.md
 """
 
 from typing import Dict, Optional, Set, Tuple, List
+import re
 from dataclasses import dataclass
 from compiler.ast_nodes import *
 from compiler.errors import TypeError, type_mismatch, undefined_variable, dimensional_mismatch, SourceLocation
@@ -119,6 +120,10 @@ class Dimension:
         # Currency / Duration = Currency per time
         if 'currency' in self.units and 'time' in other.units:
             return Dimension({'currency': self.units['currency'], 'per_time': other.units['time']})
+
+        # Currency / Rate = Currency (e.g., $/churn_rate -> LTV)
+        if 'currency' in self.units and 'rate' in other.units:
+            return Dimension.currency(self.units['currency'])
         
         # Currency / Count = Currency per entity (scoped)
         if 'currency' in self.units and 'count' in other.units:
@@ -268,6 +273,22 @@ class TypeChecker:
         self.env = TypeEnvironment()
         self.errors: List[TypeError] = []
         self.warnings: List[str] = []
+
+        # Built-ins used by the language surface syntax.
+        # `t` is the implicit time index in TimeSeries expressions.
+        self.env.bind("t", PELType.fraction())
+        # `time_horizon` is often referenced in examples; treat as dimensionless.
+        self.env.bind("time_horizon", PELType.fraction())
+
+    def check(self, model: Model) -> Model:
+        """Type-check a model and raise on the first error.
+
+        The compiler pipeline expects this method.
+        """
+        typed = self.check_model(model)
+        if self.has_errors():
+            raise self.errors[0]
+        return typed
     
     def check_model(self, model: Model) -> Model:
         """Type check entire model."""
@@ -277,9 +298,11 @@ class TypeChecker:
             self.env.bind(param.name, param_type)
             
             # Type check parameter value
-            value_type = self.infer_expression(param.value)
-            if not self.types_compatible(param_type, value_type):
-                self.errors.append(type_mismatch(str(param_type), str(value_type)))
+            # Distributions in surface syntax are treated as generators of the declared type.
+            if not isinstance(param.value, Distribution):
+                value_type = self.infer_expression(param.value)
+                if not self.types_compatible(param_type, value_type):
+                    self.errors.append(type_mismatch(str(param_type), str(value_type)))
         
         # Phase 2: Type check variables (with type inference if needed)
         for var in model.vars:
@@ -287,15 +310,20 @@ class TypeChecker:
                 var_type = self.ast_type_to_pel_type(var.type_annotation)
             else:
                 # Infer type from value
-                var_type = self.infer_expression(var.value)
+                if var.value is None:
+                    var_type = PELType.fraction()
+                else:
+                    var_type = self.infer_expression(var.value)
                 var.type_annotation = self.pel_type_to_ast_type(var_type)
             
             self.env.bind(var.name, var_type)
             
             # Type check value
-            value_type = self.infer_expression(var.value)
-            if not self.types_compatible(var_type, value_type):
-                self.errors.append(type_mismatch(str(var_type), str(value_type)))
+            if var.value is not None:
+                if not isinstance(var.value, Distribution):
+                    value_type = self.infer_expression(var.value)
+                    if not self.types_compatible(var_type, value_type):
+                        self.errors.append(type_mismatch(str(var_type), str(value_type)))
         
         # Phase 3: Type check constraints
         for constraint in model.constraints:
@@ -313,6 +341,9 @@ class TypeChecker:
     
     def infer_expression(self, expr: Expression) -> PELType:
         """Infer type of expression (synthesis)."""
+        if isinstance(expr, BlockExpr):
+            return self.infer_block_expr(expr)
+
         if isinstance(expr, Literal):
             return self.infer_literal(expr)
         
@@ -347,6 +378,25 @@ class TypeChecker:
         else:
             # Fallback
             return PELType.fraction()
+
+    def infer_block_expr(self, expr: BlockExpr) -> PELType:
+        """Infer type of a block expression from its return statements."""
+
+        def find_returns(statements: List[Statement]) -> Optional[PELType]:
+            for stmt in statements:
+                if isinstance(stmt, Return):
+                    return self.infer_expression(stmt.value) if stmt.value is not None else PELType.fraction()
+                if isinstance(stmt, IfStmt):
+                    then_t = find_returns(stmt.then_body)
+                    else_t = find_returns(stmt.else_body or [])
+                    return then_t or else_t
+                if isinstance(stmt, ForStmt):
+                    body_t = find_returns(stmt.body)
+                    if body_t is not None:
+                        return body_t
+            return None
+
+        return find_returns(expr.statements) or PELType.fraction()
     
     def infer_literal(self, lit: Literal) -> PELType:
         """Infer type from literal."""
@@ -368,15 +418,21 @@ class TypeChecker:
             return PELType.fraction()
         
         elif lit.literal_type == "duration":
-            # Parse duration (e.g., "30d", "18mo")
-            if 'd' in str(lit.value):
-                return PELType.duration("Day")
-            elif 'mo' in str(lit.value):
-                return PELType.duration("Month")
-            elif 'y' in str(lit.value):
-                return PELType.duration("Year")
-            else:
+            # Parse duration (e.g., "30d", "18mo", "2w", "1q", "1yr")
+            text = str(lit.value)
+            match = re.match(r"^(\d+)(d|w|mo|q|yr)$", text)
+            if not match:
                 return PELType.duration()
+
+            unit = match.group(2)
+            unit_map = {
+                "d": "Day",
+                "w": "Week",
+                "mo": "Month",
+                "q": "Quarter",
+                "yr": "Year",
+            }
+            return PELType.duration(unit_map[unit])
         
         elif lit.literal_type == "string":
             return PELType(type_kind="String", params={}, dimension=Dimension.dimensionless())
@@ -401,6 +457,12 @@ class TypeChecker:
         
         # Multiplication: dimensional multiplication
         elif operator == '*':
+            # Duration * scalar = Duration
+            if left_type.type_kind == "Duration" and not right_type.dimension.units:
+                return left_type
+            if right_type.type_kind == "Duration" and not left_type.dimension.units:
+                return right_type
+
             result_dim = left_type.dimension.multiply(right_type.dimension)
             
             # Determine result type kind
@@ -414,6 +476,11 @@ class TypeChecker:
         
         # Division: dimensional division
         elif operator == '/':
+            # Dimensionless per Duration => Rate per time unit (e.g., 0.30/1mo)
+            if not left_type.dimension.units and right_type.type_kind == "Duration":
+                time_unit = right_type.dimension.units.get("time", "generic")
+                return PELType.rate(time_unit)
+
             result_dim = left_type.dimension.divide(right_type.dimension)
             
             # Determine result type kind
@@ -431,7 +498,12 @@ class TypeChecker:
         # Exponentiation: exponent must be dimensionless
         elif operator == '^':
             if right_type.dimension.units:
-                self.errors.append(TypeError(f"Exponent must be dimensionless, got {right_type}"))
+                self.errors.append(
+                    TypeError(
+                        "E0100",
+                        f"Exponent must be dimensionless, got {right_type}",
+                    )
+                )
             
             # Result has same dimension as base (for integer exponents)
             return left_type
@@ -478,14 +550,24 @@ class TypeChecker:
         # Built-in functions
         if expr.function_name == 'sqrt':
             if len(expr.arguments) != 1:
-                self.errors.append(TypeError(f"sqrt expects 1 argument, got {len(expr.arguments)}"))
+                self.errors.append(
+                    TypeError(
+                        "E0100",
+                        f"sqrt expects 1 argument, got {len(expr.arguments)}",
+                    )
+                )
             arg_type = self.infer_expression(expr.arguments[0])
             # sqrt preserves dimension (with exponent adjustment)
             return arg_type
         
         elif expr.function_name == 'sum':
             if len(expr.arguments) != 1:
-                self.errors.append(TypeError(f"sum expects 1 argument, got {len(expr.arguments)}"))
+                self.errors.append(
+                    TypeError(
+                        "E0100",
+                        f"sum expects 1 argument, got {len(expr.arguments)}",
+                    )
+                )
             arg_type = self.infer_expression(expr.arguments[0])
             # sum of array returns element type
             if arg_type.type_kind == "Array":
@@ -513,18 +595,13 @@ class TypeChecker:
     
     def infer_distribution(self, expr: Distribution) -> PELType:
         """Infer type of distribution expression."""
-        # Distribution parameters determine inner type
-        # For now, assume distributions are over Fraction
+        # In PEL surface syntax, distributions act as values of their inner type.
+        # Example: param x: Rate per Month = ~Normal(mu=..., sigma=...)
         inner_type = PELType.fraction()
-        
-        # Parse parameters to infer inner type
-        for param_name, param_value in expr.params.items():
-            param_type = self.infer_expression(param_value)
-            # Use first parameter's type as inner type
-            inner_type = param_type
+        for _param_name, param_value in expr.params.items():
+            inner_type = self.infer_expression(param_value)
             break
-        
-        return PELType.distribution(inner_type)
+        return inner_type
     
     def infer_array_literal(self, expr: ArrayLiteral) -> PELType:
         """Infer type of array literal."""
@@ -561,8 +638,8 @@ class TypeChecker:
             return array_type.params.get("element_type", PELType.fraction())
         
         else:
-            # Generic indexing
-            return PELType.fraction()
+            # Indexing a scalar (e.g., param x: T; x[t]) is treated as the same scalar.
+            return array_type
     
     # ===== Type Conversion and Compatibility =====
     
@@ -633,7 +710,14 @@ class TypeChecker:
     
     def dimensions_compatible(self, d1: Dimension, d2: Dimension) -> bool:
         """Check if two dimensions are compatible for operations like addition."""
-        return d1 == d2
+        if d1 == d2:
+            return True
+
+        # Allow generic Duration to be compatible with unit-specific Duration.
+        if set(d1.units.keys()) == {"time"} and set(d2.units.keys()) == {"time"}:
+            return d1.units.get("time") == "generic" or d2.units.get("time") == "generic"
+
+        return False
     
     def has_errors(self) -> bool:
         """Check if type checking produced errors."""

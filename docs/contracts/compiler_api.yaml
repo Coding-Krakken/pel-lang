@@ -1,0 +1,89 @@
+# ============================================================================
+# PEL COMPILER API CONTRACTS
+# ============================================================================
+# Purpose: Canonical interface contract for compiler pipeline
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  implementation_location: "compiler/"
+
+compiler_api:
+  
+  compile:
+    signature: "compile(source: str) -> IRDocument"
+    entry_point: "compiler/compiler.py"
+    
+    preconditions:
+      - "source is valid UTF-8"
+      - "source is not empty"
+    
+    postconditions_success:
+      - "Returns valid PEL-IR JSON"
+      - "IR conforms to ir/pel_ir_schema.json"
+      - "IR passes semantic validation V001-V015"
+      - "Compilation deterministic"
+    
+    postconditions_error:
+      - "Raises CompilationError subclass"
+      - "Error includes code/message/location"
+    
+    stages:
+      - name: "lex"
+        function: "Lexer.tokenize"
+        input: "source text"
+        output: "List[Token]"
+        errors: "LexicalError (E00xx)"
+      - name: "parse"
+        function: "Parser.parse"
+        input: "List[Token]"
+        output: "AST Model"
+        errors: "ParseError (E02xx)"
+      - name: "type_check"
+        function: "TypeChecker.check"
+        input: "AST Model"
+        output: "Typed AST Model"
+        errors: "TypeError (E03xx)"
+      - name: "provenance_check"
+        function: "ProvenanceChecker.check"
+        input: "Typed AST Model"
+        output: "Validated AST + score"
+        errors: "ProvenanceError (E04xx)"
+      - name: "ir_generate"
+        function: "IRGenerator.generate"
+        input: "Validated AST"
+        output: "PEL-IR JSON"
+        errors: "InternalError"
+
+lexer_api:
+  tokenize:
+    signature: "tokenize(source: str) -> List[Token]"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+parser_api:
+  parse:
+    signature: "parse(tokens: List[Token]) -> Model"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+typechecker_api:
+  check:
+    signature: "check(model: Model) -> Model"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"
+
+provenance_checker_api:
+  check:
+    signature: "check(model: Model) -> Tuple[Model, float]"
+    determinism: "MUST be deterministic"
+    complexity: "O(p)"
+
+ir_generator_api:
+  generate:
+    signature: "generate(model: Model) -> Dict"
+    determinism: "MUST be deterministic"
+    complexity: "O(n)"

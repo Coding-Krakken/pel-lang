@@ -93,12 +93,14 @@ class Parser:
                 model.constraints.append(item)
             elif isinstance(item, Policy):
                 model.policies.append(item)
+            elif isinstance(item, Statement):
+                model.statements.append(item)
             # TODO: record_decl, enum_decl, simulate_decl
         
         self.expect(TokenType.RBRACE)
         return model
     
-    def parse_model_item(self) -> Union[ParamDecl, VarDecl, FuncDecl, Constraint, Policy]:
+    def parse_model_item(self) -> Union[ParamDecl, VarDecl, FuncDecl, Constraint, Policy, Statement]:
         """Parse a single model item."""
         if self.match(TokenType.PARAM):
             return self.parse_param()
@@ -110,6 +112,8 @@ class Parser:
             return self.parse_constraint()
         elif self.match(TokenType.POLICY):
             return self.parse_policy()
+        elif self.match(TokenType.IDENTIFIER, TokenType.IF, TokenType.FOR, TokenType.RETURN):
+            return self.parse_statement()
         else:
             raise syntax_error(
                 f"Expected model item (param, var, func, constraint, policy), got {self.current().type.name}",
@@ -140,9 +144,10 @@ class Parser:
         if self.consume_if(TokenType.COLON):
             type_ann = self.parse_type()
         
-        self.expect(TokenType.ASSIGN)
-        value = self.parse_expression()
-        
+        value = None
+        if self.consume_if(TokenType.ASSIGN):
+            value = self.parse_expression()
+
         return VarDecl(name=name, type_annotation=type_ann, value=value, is_mutable=is_mutable)
     
     def parse_func(self) -> FuncDecl:
@@ -161,7 +166,7 @@ class Parser:
         return_type = self.parse_type()
         body = self.parse_block()
         
-        return FuncDecl(name=name, params=params, return_type=return_type, body=body)
+        return FuncDecl(name=name, parameters=params, return_type=return_type, body=body)
     
     def parse_param_list(self) -> List[tuple]:
         """Parse function parameter list: name: type, ..."""
@@ -218,6 +223,69 @@ class Parser:
         
         trigger = Trigger(trigger_type="condition", condition=trigger_condition)
         return Policy(name=name, trigger=trigger, action=action)
+
+    # ===== Statements and Blocks =====
+
+    def parse_statement(self) -> Statement:
+        """Parse a statement (assignment, for/if, return)."""
+        if self.match(TokenType.RETURN):
+            self.advance()
+            value = None
+            if not self.match(TokenType.RBRACE, TokenType.SEMICOLON):
+                value = self.parse_expression()
+            self.consume_if(TokenType.SEMICOLON)
+            return Return(value=value)
+
+        if self.match(TokenType.FOR):
+            return self.parse_for_stmt()
+
+        if self.match(TokenType.IF):
+            # Prefer statement-if when followed by a block, otherwise fall back to if-expression.
+            checkpoint = self.pos
+            self.advance()
+            condition = self.parse_expression()
+            if self.match(TokenType.LBRACE):
+                then_body = self.parse_statement_block()
+                else_body = None
+                if self.consume_if(TokenType.ELSE):
+                    else_body = self.parse_statement_block()
+                return IfStmt(condition=condition, then_body=then_body, else_body=else_body)
+            self.pos = checkpoint
+
+        # Assignment or expression statement
+        expr = self.parse_expression()
+        if self.consume_if(TokenType.ASSIGN):
+            value = self.parse_expression()
+            self.consume_if(TokenType.SEMICOLON)
+            return Assignment(target=expr, value=value)
+
+        self.consume_if(TokenType.SEMICOLON)
+        return Assignment(target=Variable(name="_"), value=Literal(value=0.0, literal_type="number"))
+
+    def parse_for_stmt(self) -> ForStmt:
+        """Parse for loop statement: for t in start..end { ... }"""
+        self.expect(TokenType.FOR)
+        var_name = self.expect(TokenType.IDENTIFIER).value
+
+        in_token = self.expect(TokenType.IDENTIFIER)
+        if in_token.value != "in":
+            raise syntax_error("Expected 'in' in for statement", self.current_location())
+
+        start = self.parse_expression()
+        self.expect(TokenType.DOT)
+        self.expect(TokenType.DOT)
+        end = self.parse_expression()
+        body = self.parse_statement_block()
+        return ForStmt(var_name=var_name, start=start, end=end, body=body)
+
+    def parse_statement_block(self) -> List[Statement]:
+        """Parse a statement block: { stmt* }"""
+        self.expect(TokenType.LBRACE)
+        statements: List[Statement] = []
+        while not self.match(TokenType.RBRACE, TokenType.EOF):
+            statements.append(self.parse_statement())
+        self.expect(TokenType.RBRACE)
+        return statements
     
     # ===== Types =====
     
@@ -308,6 +376,9 @@ class Parser:
             
             # Check for member access: expr.member
             elif self.match(TokenType.DOT):
+                # Distinguish member access from range syntax (..)
+                if self.peek().type != TokenType.IDENTIFIER:
+                    break
                 self.advance()
                 member = self.expect(TokenType.IDENTIFIER).value
                 left = MemberAccess(expression=left, member=member)
@@ -352,6 +423,10 @@ class Parser:
         # Array literal: [1, 2, 3]
         elif self.match(TokenType.LBRACKET):
             return self.parse_array_literal()
+
+        # Block expression: { ... }
+        elif self.match(TokenType.LBRACE):
+            return self.parse_block_expression()
         
         # Parenthesized expression or lambda
         elif self.match(TokenType.LPAREN):
@@ -380,6 +455,11 @@ class Parser:
         
         else:
             raise syntax_error(f"Expected expression, got {self.current().type.name}", self.current_location())
+
+    def parse_block_expression(self) -> BlockExpr:
+        """Parse a block expression: { statements }"""
+        statements = self.parse_statement_block()
+        return BlockExpr(statements=statements)
     
     def parse_distribution(self) -> Distribution:
         """Parse distribution literal: ~ Beta(α=2, β=8)"""
@@ -558,6 +638,18 @@ class Parser:
     
     def parse_action(self) -> Action:
         """Parse policy action."""
+        if self.match(TokenType.LBRACE):
+            self.advance()
+            actions: List[Action] = []
+            while not self.match(TokenType.RBRACE, TokenType.EOF):
+                actions.append(self.parse_action())
+                self.consume_if(TokenType.SEMICOLON)
+            self.expect(TokenType.RBRACE)
+            return Action(action_type="block", statements=actions)
+
+        if self.match(TokenType.EMIT):
+            return self.parse_emit_action()
+
         # Simple actions: var = expr, var *= expr, emit event(...)
         if self.match(TokenType.IDENTIFIER):
             target = self.advance().value
@@ -570,6 +662,25 @@ class Parser:
         
         # Fallback: parse as expression (block)
         return Action(action_type="block", value=self.parse_expression())
+
+    def parse_emit_action(self) -> Action:
+        """Parse emit event(...)."""
+        self.expect(TokenType.EMIT)
+        self.expect(TokenType.EVENT)
+        self.expect(TokenType.LPAREN)
+
+        event_name = self.expect(TokenType.STRING).value
+        args: Dict[str, Expression] = {}
+
+        while self.consume_if(TokenType.COMMA):
+            if self.match(TokenType.RPAREN):
+                break
+            arg_name = self.expect(TokenType.IDENTIFIER).value
+            self.expect(TokenType.COLON)
+            args[arg_name] = self.parse_expression()
+
+        self.expect(TokenType.RPAREN)
+        return Action(action_type="emit_event", event_name=event_name, args=args)
     
     # ===== Provenance and Metadata =====
     
@@ -639,7 +750,8 @@ class Parser:
         self.expect(TokenType.LPAREN)
         varname = self.expect(TokenType.IDENTIFIER).value if self.match(TokenType.IDENTIFIER) else self.expect(TokenType.STRING).value
         self.expect(TokenType.COMMA)
-        coefficient = float(self.expect(TokenType.NUMBER).value)
+        sign = -1.0 if self.consume_if(TokenType.MINUS) else 1.0
+        coefficient = sign * float(self.expect(TokenType.NUMBER).value)
         self.expect(TokenType.RPAREN)
         return (varname, coefficient)
     
@@ -659,7 +771,10 @@ class Parser:
             if self.match(TokenType.RBRACE):
                 break
             
-            field_name = self.expect(TokenType.IDENTIFIER).value
+            if self.match(TokenType.IDENTIFIER, TokenType.FOR):
+                field_name = self.advance().value
+            else:
+                field_name = self.expect(TokenType.IDENTIFIER).value
             self.expect(TokenType.COLON)
             
             if field_name == 'message':
@@ -675,14 +790,19 @@ class Parser:
     
     def parse_scope_spec(self) -> str:
         """Parse scope specification: 'all timesteps', etc."""
-        # Simplified: just parse as string tokens
-        scope_parts = []
-        while not self.match(TokenType.COMMA, TokenType.RBRACE):
-            if self.match(TokenType.IDENTIFIER):
-                scope_parts.append(self.advance().value)
-            else:
-                break
-        return ' '.join(scope_parts)
+        # Common case: `all timesteps`
+        if self.match(TokenType.IDENTIFIER) and self.current().value == "all":
+            scope_parts = []
+            while not self.match(TokenType.COMMA, TokenType.RBRACE):
+                if self.match(TokenType.IDENTIFIER):
+                    scope_parts.append(self.advance().value)
+                else:
+                    break
+            return " ".join(scope_parts)
+
+        # Otherwise treat scope as an expression like `t >= 6` or `t == 0`.
+        # Note: this is not yet mapped into the structured `Scope` AST.
+        return self.parse_expression()
     
     # ===== Utilities =====
     

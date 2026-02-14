@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+import pytest
+
+from runtime.runtime import PELRuntime, RuntimeConfig
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_binary_op_comparisons() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    state = {}
+
+    def eval_bin(op: str, left: int, right: int):
+        return runtime.evaluate_expression(
+            {
+                "expr_type": "BinaryOp",
+                "operator": op,
+                "left": {"expr_type": "Literal", "literal_value": left},
+                "right": {"expr_type": "Literal", "literal_value": right},
+            },
+            state,
+        )
+
+    assert eval_bin("==", 2, 2) is True
+    assert eval_bin("<", 1, 2) is True
+    assert eval_bin(">", 3, 2) is True
+
+
+@pytest.mark.unit
+def test_runtime_distribution_lognormal_and_uniform_deterministic_paths() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+
+    lognormal = {
+        "expr_type": "Distribution",
+        "distribution": {"distribution_type": "LogNormal", "parameters": {"mu": 7.0, "sigma": 2.0}},
+    }
+    assert runtime.evaluate_expression(lognormal, {}, deterministic=True) == 7.0
+
+    uniform = {
+        "expr_type": "Distribution",
+        "distribution": {"distribution_type": "Uniform", "parameters": {"low": 10.0, "high": 14.0}},
+    }
+    assert runtime.evaluate_expression(uniform, {}, deterministic=True) == 12.0
+
+
+@pytest.mark.unit
+def test_runtime_distribution_uniform_stochastic_is_seeded() -> None:
+    expr = {
+        "expr_type": "Distribution",
+        "distribution": {"distribution_type": "Uniform", "parameters": {"low": 0.0, "high": 1.0}},
+    }
+
+    r1 = PELRuntime(RuntimeConfig(mode="deterministic", seed=123))
+    r2 = PELRuntime(RuntimeConfig(mode="deterministic", seed=123))
+
+    v1 = r1.evaluate_expression(expr, {}, deterministic=False)
+    v2 = r2.evaluate_expression(expr, {}, deterministic=False)
+
+    assert v1 == v2
+    assert 0.0 <= v1 <= 1.0
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_binary_op_sub_and_mul() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+
+    add = {
+        "expr_type": "BinaryOp",
+        "operator": "+",
+        "left": {"expr_type": "Literal", "literal_value": 2},
+        "right": {"expr_type": "Literal", "literal_value": 5},
+    }
+    assert runtime.evaluate_expression(add, {}) == 7
+
+    sub = {
+        "expr_type": "BinaryOp",
+        "operator": "-",
+        "left": {"expr_type": "Literal", "literal_value": 10},
+        "right": {"expr_type": "Literal", "literal_value": 3},
+    }
+    assert runtime.evaluate_expression(sub, {}) == 7
+
+    mul = {
+        "expr_type": "BinaryOp",
+        "operator": "*",
+        "left": {"expr_type": "Literal", "literal_value": 6},
+        "right": {"expr_type": "Literal", "literal_value": 7},
+    }
+    assert runtime.evaluate_expression(mul, {}) == 42
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_unknown_expr_type_returns_zero() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    assert runtime.evaluate_expression({"expr_type": "Nope"}, {}) == 0
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_binary_op_unknown_operator_falls_back_to_zero() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {
+        "expr_type": "BinaryOp",
+        "operator": "!=",  # not implemented in runtime
+        "left": {"expr_type": "Literal", "literal_value": 1},
+        "right": {"expr_type": "Literal", "literal_value": 2},
+    }
+    assert runtime.evaluate_expression(expr, {}) == 0
+
+
+@pytest.mark.unit
+def test_runtime_run_deterministic_initializes_params_into_state() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "m",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "p",
+                    "value": {"expr_type": "Literal", "literal_value": 1},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+            "constraints": [
+                {
+                    "name": "p_is_one",
+                    "severity": "fatal",
+                    "condition": {
+                        "expr_type": "BinaryOp",
+                        "operator": "==",
+                        "left": {"expr_type": "Variable", "variable_name": "p"},
+                        "right": {"expr_type": "Literal", "literal_value": 1},
+                    },
+                }
+            ],
+        }
+    }
+
+    result = runtime.run_deterministic(ir_doc)
+    assert result["status"] == "success"
+    assert result["constraint_violations"] == []

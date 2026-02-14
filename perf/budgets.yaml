@@ -1,0 +1,26 @@
+# ============================================================================
+# PEL PERFORMANCE BUDGETS
+# ============================================================================
+# Purpose: Define budgets for compiler/runtime and CI feedback
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+budgets:
+  ci:
+    total_duration_p95_ms: 300000
+
+  compiler:
+    compile_small_model_p95_ms: 500
+    compile_large_model_p95_ms: 2000
+
+  runtime:
+    deterministic_run_p95_ms: 200
+    monte_carlo_1000_samples_p95_ms: 5000
+
+notes:
+  - "Budgets are targets; enforce once benchmarking harness exists."

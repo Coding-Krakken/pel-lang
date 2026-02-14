@@ -10,7 +10,7 @@
 
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 from compiler.ast_nodes import *
@@ -133,8 +133,12 @@ class IRGenerator:
     
     def generate_type(self, typ: Type) -> Dict[str, Any]:
         """Generate IR type annotation."""
-        result = {"type_kind": typ.type_kind}
-        result.update(typ.params)
+        result: Dict[str, Any] = {"type_kind": typ.type_kind}
+        for key, value in typ.params.items():
+            if isinstance(value, TypeAnnotation):
+                result[key] = self.generate_type(value)
+            else:
+                result[key] = value
         return result
     
     def generate_expression(self, expr: Expression) -> Dict[str, Any]:
@@ -222,10 +226,14 @@ class IRGenerator:
     
     def generate_provenance(self, prov: Provenance) -> Dict[str, Any]:
         """Generate IR provenance block."""
+        # Parser currently produces provenance as a plain dict.
+        if isinstance(prov, dict):
+            return dict(prov)
+
         result = {
             "source": prov.source,
             "method": prov.method,
-            "confidence": prov.confidence
+            "confidence": prov.confidence,
         }
         if prov.freshness:
             result["freshness"] = prov.freshness
@@ -261,7 +269,7 @@ class IRGenerator:
         
         return {
             "model_hash": f"sha256:{model_hash}",
-            "compiled_at": datetime.utcnow().isoformat() + "Z",
+            "compiled_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "compiler_version": f"pel-{self.compiler_version}",
             "source_file": self.source_path
         }

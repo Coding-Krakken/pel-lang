@@ -140,30 +140,21 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ### Install Dependencies
 
 ```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Install PEL in editable mode
-pip install -e .
+# Install PEL in editable mode (with dev deps)
+pip install -e ".[dev]"
 ```
 
 ### Verify Installation
 
 ```bash
-# Run compiler tests
-pytest compiler/tests/
-
-# Run runtime tests
-pytest runtime/tests/
-
 # Run full test suite
-make test
+pytest
 
-# Check formatting
-make fmt-check
+# Unit tests only
+pytest -m unit
 
-# Run linter
-make lint
+# Integration tests only
+pytest -m integration
 ```
 
 ### Development Workflow

@@ -1,0 +1,69 @@
+# ============================================================================
+# PEL EVENT CONTRACTS
+# ============================================================================
+# Purpose: Canonical event taxonomy for observability and deterministic replay
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  scope:
+    - "compiler pipeline events"
+    - "runtime execution events"
+
+principles:
+  - "Events MUST be optional and must not affect semantics"
+  - "Event payloads MUST not contain secrets"
+  - "Event emission MUST NOT introduce nondeterminism"
+
+common_fields:
+  required:
+    - name: "event_name"
+      type: "string"
+    - name: "timestamp"
+      type: "string"
+      format: "rfc3339"
+      note: "If present, timestamp MUST be injectable to preserve determinism"
+    - name: "correlation_id"
+      type: "string"
+      description: "Stable id for compile/run request"
+  optional:
+    - name: "model_hash"
+      type: "string"
+    - name: "assumption_hash"
+      type: "string"
+
+compiler_events:
+  - event_name: "compile.started"
+    payload:
+      fields:
+        - "source_length"
+        - "compiler_version"
+  - event_name: "compile.stage.completed"
+    payload:
+      fields:
+        - "stage"  # lex|parse|type_check|provenance_check|ir_generate
+        - "duration_ms"
+  - event_name: "compile.failed"
+    payload:
+      fields:
+        - "error"  # conforms to contracts/errors.yaml
+
+runtime_events:
+  - event_name: "run.started"
+    payload:
+      fields:
+        - "mode"  # deterministic|monte_carlo
+        - "seed (optional)"
+  - event_name: "run.constraint.violated"
+    payload:
+      fields:
+        - "constraint_id"
+        - "severity"  # warn|fatal
+  - event_name: "run.completed"
+    payload:
+      fields:
+        - "duration_ms"
+        - "outputs_summary"

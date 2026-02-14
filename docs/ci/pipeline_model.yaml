@@ -1,0 +1,473 @@
+# ============================================================================
+# PEL CI/CD MODEL
+# ============================================================================
+# Purpose: Define continuous integration and delivery pipeline governance
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical - workflows must conform to this model
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  purpose: "Govern CI/CD pipeline for model-first governance enforcement"
+  scope: "GitHub Actions workflows, quality gates, automation"
+
+# ============================================================================
+# CI/CD PRINCIPLES
+# ============================================================================
+
+principles:
+  - "Every commit MUST pass all quality gates"
+  - "Tests MUST pass before merge"
+  - "Coverage MUST be ≥ 80%"
+  - "Linting and type checking MUST be clean"
+  - "No manual quality checks - automate everything"
+  - "Fast feedback - CI runs complete in < 5 minutes"
+  - "Reproducible - same code produces same CI result"
+
+# ============================================================================
+# WORKFLOWS - GitHub Actions
+# ============================================================================
+
+workflows:
+  
+  test_workflow:
+    name: "Test"
+    file: ".github/workflows/test.yml"
+    trigger:
+      - "push to any branch"
+      - "pull_request to main"
+    
+    jobs:
+      
+      test:
+        runs_on: "ubuntu-latest"
+        strategy:
+          matrix:
+            python_version: ["3.10", "3.11", "3.12"]
+        
+        steps:
+          - name: "Checkout code"
+            action: "actions/checkout@v3"
+            
+          - name: "Set up Python"
+            action: "actions/setup-python@v4"
+            with:
+              python_version: "${{ matrix.python-version }}"
+              
+          - name: "Install dependencies"
+            command: "pip install -e .[dev]"
+            
+          - name: "Lint with ruff"
+            command: "ruff check ."
+            fail_on_error: true
+            
+          - name: "Format check with black"
+            command: "black --check ."
+            fail_on_error: true
+            
+          - name: "Type check with mypy"
+            command: "mypy compiler/ runtime/"
+            fail_on_error: true
+            
+          - name: "Run tests"
+            command: "pytest --cov=compiler --cov=runtime --cov-report=xml --cov-report=term"
+            fail_on_error: true
+            
+          - name: "Check coverage"
+            command: "pytest --cov-fail-under=80"
+            fail_on_error: true
+            
+          - name: "Upload coverage"
+            action: "codecov/codecov-action@v3"
+            condition: "success()"
+    
+    quality_gates:
+      - "All lint checks pass (ruff)"
+      - "Code formatted correctly (black)"
+      - "Type checking passes (mypy)"
+      - "All tests pass (pytest)"
+      - "Coverage ≥ 80%"
+    
+    failure_behavior:
+      - "Block PR merge"
+      - "Notify via GitHub status checks"
+      - "Provide failure logs"
+  
+  # --------------------------------------------------------------------------
+  
+  pre_commit_workflow:
+    name: "Pre-commit Checks"
+    enforcement: "Local pre-commit hooks"
+    file: ".pre-commit-config.yaml"
+    
+    hooks:
+      - repo: "https://github.com/psf/black"
+        hook: "black"
+        purpose: "Format Python code"
+        
+      - repo: "https://github.com/astral-sh/ruff-pre-commit"
+        hook: "ruff"
+        purpose: "Lint Python code"
+        
+      - repo: "https://github.com/pre-commit/pre-commit-hooks"
+        hooks:
+          - "trailing-whitespace"
+          - "end-of-file-fixer"
+          - "check-yaml"
+          - "check-added-large-files"
+        purpose: "Basic file hygiene"
+    
+    installation_required: true
+    command: "pre-commit install"
+  
+  # --------------------------------------------------------------------------
+  
+  release_workflow:
+    name: "Release"
+    file: ".github/workflows/release.yml"
+    trigger:
+      - "tag push matching v*.*.*"
+    
+    jobs:
+      release:
+        runs_on: "ubuntu-latest"
+        
+        steps:
+          - name: "Checkout code"
+            action: "actions/checkout@v3"
+            
+          - name: "Set up Python"
+            action: "actions/setup-python@v4"
+            with:
+              python_version: "3.10"
+              
+          - name: "Install build tools"
+            command: "pip install build twine"
+            
+          - name: "Build package"
+            command: "python -m build"
+            
+          - name: "Check package"
+            command: "twine check dist/*"
+            
+          - name: "Publish to PyPI"
+            command: "twine upload dist/*"
+            env:
+              TWINE_USERNAME: "__token__"
+              TWINE_PASSWORD: "${{ secrets.PYPI_TOKEN }}"
+            condition: "github.ref startswith 'refs/tags/'"
+    
+    prerequisites:
+      - "All tests passing on main"
+      - "Version bumped in pyproject.toml"
+      - "CHANGELOG.md updated"
+      - "Tag created: git tag v0.1.0"
+    
+    status: "FUTURE (not implementing in initial conversion)"
+
+# ============================================================================
+# QUALITY GATES - Enforcement Rules
+# ============================================================================
+
+quality_gates:
+  
+  gate_linting:
+    name: "Code Linting"
+    tool: "ruff"
+    config_file: "pyproject.toml [tool.ruff]"
+    rules:
+      - "Select: E, F, W, C90, I, N, D, UP, S, B, A, C4, T20, PT"
+      - "Line length: 100"
+      - "Target Python: 3.10+"
+    failure_action: "Block merge"
+    
+  gate_formatting:
+    name: "Code Formatting"
+    tool: "black"
+    config_file: "pyproject.toml [tool.black]"
+    rules:
+      - "Line length: 100"
+      - "Target Python: 3.10+"
+    failure_action: "Block merge"
+    auto_fix: "black . (run locally)"
+    
+  gate_type_checking:
+    name: "Static Type Checking"
+    tool: "mypy"
+    config_file: "pyproject.toml [tool.mypy]"
+    rules:
+      - "Strict mode: False (initially)"
+      - "Check untyped definitions: True"
+      - "Ignore missing imports: False"
+    scope:
+      - "compiler/"
+      - "runtime/"
+    failure_action: "Block merge"
+    
+  gate_tests:
+    name: "Test Suite"
+    tool: "pytest"
+    config_file: "pytest.ini"
+    rules:
+      - "All tests must pass"
+      - "No skipped tests without explanation"
+      - "Test markers used appropriately"
+    failure_action: "Block merge"
+    
+  gate_coverage:
+    name: "Code Coverage"
+    tool: "pytest-cov"
+    threshold: 0.80  # 80%
+    scope:
+      - "compiler/"
+      - "runtime/"
+    exclusions:
+      - "tests/"
+      - "*/__pycache__/*"
+    failure_action: "Block merge"
+    reporting: "codecov.io"
+
+# ============================================================================
+# BRANCH PROTECTION
+# ============================================================================
+
+branch_protection:
+  main_branch:
+    branch: "main"
+    rules:
+      - "Require PR before merge: true"
+      - "Require status checks: true"
+      - "Required checks: [test (3.10), test (3.11), test (3.12)]"
+      - "Require branches up to date: true"
+      - "Require code review: false (solo developer initially)"
+      - "Restrict force push: true"
+      - "Restrict deletions: true"
+    
+    status_checks:
+      - "test / test (3.10)"
+      - "test / test (3.11)"
+      - "test / test (3.12)"
+    
+    merge_strategy: "squash" # Squash commits for clean history
+
+# ============================================================================
+# DEVELOPMENT WORKFLOW
+# ============================================================================
+
+development_workflow:
+  
+  local_development:
+    setup:
+      - "Clone repository"
+      - "Create virtual environment: python -m venv venv"
+      - "Activate: source venv/bin/activate"
+      - "Install: pip install -e .[dev]"
+      - "Install pre-commit: pre-commit install"
+    
+    development_cycle:
+      - "Create feature branch: git checkout -b fix/parser-duration-literals"
+      - "Make changes"
+      - "Run tests: pytest"
+      - "Check coverage: pytest --cov"
+      - "Lint: ruff check ."
+      - "Format: black ."
+      - "Type check: mypy compiler/ runtime/"
+      - "Commit (pre-commit hooks run automatically)"
+      - "Push: git push origin fix/parser-duration-literals"
+    
+    pre_push_checklist:
+      - "[ ] All tests pass locally"
+      - "[ ] Coverage ≥ 80%"
+      - "[ ] Linting clean"
+      - "[ ] Formatting clean"
+      - "[ ] Type checking clean"
+      - "[ ] Pre-commit hooks pass"
+      - "[ ] No debug code or print statements"
+      - "[ ] Commit message descriptive"
+  
+  pull_request_workflow:
+    create:
+      - "Push branch to GitHub"
+      - "Create PR via GitHub UI"
+      - "Fill out PR template (if exists)"
+      - "Link to WorkItem ID"
+    
+    review:
+      - "CI runs automatically"
+      - "Wait for all status checks to pass"
+      - "Review changes (self-review if solo)"
+      - "Address any CI failures"
+    
+    merge:
+      - "All status checks green"
+      - "Squash and merge"
+      - "Delete branch after merge"
+    
+    post_merge:
+      - "Verify main branch CI passes"
+      - "Update WorkItem status to MERGED"
+      - "Monitor for any issues"
+
+# ============================================================================
+# MONITORING AND ALERTS
+# ============================================================================
+
+monitoring:
+  
+  ci_health:
+    metrics:
+      - "Success rate: % of CI runs passing"
+      - "Duration: avg/p95 time to complete"
+      - "Flaky tests: tests that intermittently fail"
+    targets:
+      success_rate: "> 95%"
+      duration_avg: "< 3 minutes"
+      duration_p95: "< 5 minutes"
+      flaky_tests: "0"
+  
+  coverage_trends:
+    tracking: "codecov.io dashboard"
+    alerts:
+      - "Coverage drops below 80%: block merge"
+      - "Coverage trend negative: warning"
+  
+  dependencies:
+    tool: "Dependabot (GitHub)"
+    config: ".github/dependabot.yml"
+    frequency: "weekly"
+    auto_merge: "false (manual review required)"
+
+# ============================================================================
+# CONFIGURATION FILES
+# ============================================================================
+
+configuration_files:
+  
+  pytest_ini:
+    file: "pytest.ini"
+    content: |
+      [pytest]
+      testpaths = tests
+      python_files = test_*.py
+      python_classes = Test*
+      python_functions = test_*
+      addopts = -v --strict-markers --tb=short
+      markers =
+          slow: marks tests as slow (deselect with '-m "not slow"')
+          integration: marks tests as integration tests
+          unit: marks tests as unit tests
+  
+  pyproject_toml_updates:
+    file: "pyproject.toml"
+    sections:
+      
+      tool_black:
+        line_length: 100
+        target_version: ["py310", "py311", "py312"]
+        
+      tool_ruff:
+        line_length: 100
+        target_version: "py310"
+        select: ["E", "F", "W", "C90", "I", "N", "D", "UP", "S", "B", "A", "C4", "T20", "PT"]
+        ignore: ["D100", "D104"]  # Missing docstrings in __init__.py
+        
+      tool_mypy:
+        python_version: "3.10"
+        warn_return_any: true
+        warn_unused_configs: true
+        disallow_untyped_defs: false  # Initially false, target true
+        check_untyped_defs: true
+        
+      tool_coverage_run:
+        source: ["compiler", "runtime"]
+        omit: ["tests/*", "*/__pycache__/*"]
+        
+      tool_coverage_report:
+        exclude_lines: [
+          "pragma: no cover",
+          "def __repr__",
+          "raise AssertionError",
+          "raise NotImplementedError",
+          "if __name__ == .__main__.:"
+        ]
+  
+  pre_commit_config:
+    file: ".pre-commit-config.yaml"
+    content: |
+      repos:
+        - repo: https://github.com/psf/black
+          rev: 23.12.1
+          hooks:
+            - id: black
+              language_version: python3.10
+        
+        - repo: https://github.com/astral-sh/ruff-pre-commit
+          rev: v0.1.11
+          hooks:
+            - id: ruff
+              args: [--fix, --exit-non-zero-on-fix]
+        
+        - repo: https://github.com/pre-commit/pre-commit-hooks
+          rev: v4.5.0
+          hooks:
+            - id: trailing-whitespace
+            - id: end-of-file-fixer
+            - id: check-yaml
+            - id: check-added-large-files
+              args: ['--maxkb=500']
+
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+
+troubleshooting:
+  
+  ci_failing:
+    - problem: "Tests failing in CI but passing locally"
+      solutions:
+        - "Check Python version matches (3.10/3.11/3.12)"
+        - "Ensure dependencies installed correctly"
+        - "Check for environment-specific assumptions"
+        - "Review CI logs for specific error"
+    
+    - problem: "Coverage below threshold"
+      solutions:
+        - "Run: pytest --cov --cov-report=html"
+        - "Open htmlcov/index.html"
+        - "Identify untested code"
+        - "Add tests for uncovered lines"
+    
+    - problem: "Linting failures"
+      solutions:
+        - "Run: ruff check . --fix"
+        - "Review remaining issues"
+        - "Fix manually if auto-fix insufficient"
+    
+    - problem: "Formatting failures"
+      solutions:
+        - "Run: black ."
+        - "Commit formatting changes"
+    
+    - problem: "Type checking failures"
+      solutions:
+        - "Run: mypy compiler/ runtime/"
+        - "Add type hints where missing"
+        - "Use # type: ignore sparingly with justification"
+
+# ============================================================================
+# FUTURE ENHANCEMENTS
+# ============================================================================
+
+future_enhancements:
+  - "Performance benchmarking in CI"
+  - "Security scanning (Snyk, Dependabot alerts)"
+  - "Automated changelog generation"
+  - "Automated release notes"
+  - "Docker image building for runtime"
+  - "Documentation deployment (Sphinx to GitHub Pages)"
+  - "Conformance test suite integration"
+
+# ============================================================================
+# END OF CI/CD MODEL
+# ============================================================================

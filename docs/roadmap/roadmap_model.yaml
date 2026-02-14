@@ -1,0 +1,38 @@
+# ============================================================================
+# PEL ROADMAP MODEL
+# ============================================================================
+# Purpose: Canonical roadmap structure aligned to delivery WorkItems
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+milestones:
+  - name: "Governance scaffolding"
+    includes:
+      - "CI model"
+      - "Dependency policy"
+      - "Error/event/API contracts"
+    status: "in_progress"
+
+  - name: "Compiler correctness gaps"
+    includes:
+      - "Lexer duration literals"
+      - "Parser per-duration"
+      - "Distribution named args"
+    status: "planned"
+
+  - name: "Test + CI enforcement"
+    includes:
+      - "Unit tests"
+      - "Integration tests"
+      - "GitHub Actions workflows"
+    status: "planned"
+
+  - name: "Stdlib expansion"
+    includes:
+      - "demand/funnel/cashflow modules"
+    status: "planned"

@@ -1,0 +1,926 @@
+# ============================================================================
+# PEL CANONICAL SYSTEM STATE MODEL
+# ============================================================================
+# Purpose: Formal specification of system behavior (canonical truth)
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical - implementation must conform to this model
+# Source: Refined from codebase_state_snapshot.yaml + specifications
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  model_date: "2026-02-13"
+  specification_basis:
+    - "spec/pel_language_spec.md"
+    - "spec/pel_formal_semantics.md"
+    - "spec/pel_type_system.md"
+    - "ir/pel_ir_schema.json"
+  conformance_requirement: "Implementation MUST match this model"
+  validation: "Verified by test suite (when implemented)"
+
+# ============================================================================
+# ONTOLOGY - Canonical System Components
+# ============================================================================
+
+ontology:
+  system_type: "deterministic_compiler_pipeline_with_stochastic_runtime"
+  
+  primary_components:
+    compiler:
+      purpose: "Transform source code to portable intermediate representation"
+      determinism: "MUST be deterministic (same source → identical IR)"
+      stages: ["lexer", "parser", "type_checker", "provenance_checker", "ir_generator"]
+      entry_contract: "Source text (UTF-8)"
+      exit_contract: "PEL-IR JSON or CompilationError"
+      
+    runtime:
+      purpose: "Execute PEL-IR with deterministic or stochastic semantics"
+      determinism: "MUST be reproducible (same seed → identical results)"
+      modes: ["deterministic", "monte_carlo"]
+      entry_contract: "Valid PEL-IR JSON + RuntimeConfig"
+      exit_contract: "Results JSON or RuntimeError"
+      
+    stdlib:
+      purpose: "Standard library of economic functions"
+      determinism: "Functions MUST be pure (no side effects)"
+      validation: "All functions MUST have provenance examples"
+      
+    ir_schema:
+      purpose: "Canonical intermediate representation"
+      validation: "JSON Schema v7 + semantic rules V001-V015"
+      portability: "ANY conformant runtime MUST produce identical results"
+
+# ============================================================================
+# COMPILER STATE MACHINE - Canonical Transitions
+# ============================================================================
+
+compiler_state_machine:
+  
+  alphabet: "All possible inputs (source text strings)"
+  
+  states:
+    - name: "INITIAL"
+      type: "initial"
+      data: "Source text (UTF-8 string)"
+      invariants: []
+      
+    - name: "TOKENIZED"
+      type: "intermediate"
+      data: "List[Token]"
+      invariants:
+        - "All tokens have valid type"
+        - "Source locations complete (line, column)"
+        - "Token stream finite"
+        - "Comments stripped"
+        
+    - name: "PARSED"
+      type: "intermediate"
+      data: "Model (AST root)"
+      invariants:
+        - "AST well-formed (all nodes valid types)"
+        - "Syntactically correct per grammar"
+        - "Source locations preserved"
+        - "All references unresolved (identifiers as strings)"
+        
+    - name: "TYPE_CHECKED"
+      type: "intermediate"
+      data: "Model (Typed AST)"
+      invariants:
+        - "Every expression has type annotation"
+        - "All identifiers resolved"
+        - "Dimensional correctness verified"
+        - "Currency compatibility verified"
+        - "Causality verified (no future refs in TimeSeries)"
+        - "Type environment Γ complete"
+        
+    - name: "PROVENANCE_VALIDATED"
+      type: "intermediate"
+      data: "Model (Validated AST) + completeness_score"
+      invariants:
+        - "All type_checked invariants hold"
+        - "All params have provenance (source, method, confidence)"
+        - "Confidence ∈ [0.0, 1.0]"
+        - "Method ∈ allowed_methods"
+        - "Completeness score calculated"
+        
+    - name: "IR_GENERATED"
+      type: "final_success"
+      data: "PEL-IR JSON"
+      invariants:
+        - "Conforms to pel_ir_schema.json"
+        - "Passes all validation rules V001-V015"
+        - "Model hash computed (SHA-256)"
+        - "Assumption hash computed (SHA-256)"
+        - "Dependencies topologically sorted"
+        - "Reproducibility fingerprint complete"
+        
+    - name: "COMPILATION_ERROR"
+      type: "final_error"
+      data: "CompilationError (code, message, location, hint)"
+      invariants:
+        - "Error code in E0000-E0999"
+        - "Location present (file, line, column)"
+        - "Message non-empty"
+  
+  transitions:
+    
+    - name: "TOKENIZE"
+      from: "INITIAL"
+      to: "TOKENIZED"
+      function: "Lexer.tokenize(source: str) → List[Token]"
+      preconditions:
+        - "source is valid UTF-8"
+      postconditions:
+        - "All characters consumed or error raised"
+        - "Token stream complete"
+        - "TOKENIZED.invariants satisfied"
+      errors:
+        - "LexicalError (E00xx): Invalid number, unterminated string, unknown character"
+      determinism: "MUST be deterministic"
+      complexity: "O(n) where n = source length"
+      
+    - name: "PARSE"
+      from: "TOKENIZED"
+      to: "PARSED"
+      function: "Parser.parse(tokens: List[Token]) → Model"
+      preconditions:
+        - "TOKENIZED.invariants satisfied"
+      postconditions:
+        - "AST well-formed"
+        - "PARSED.invariants satisfied"
+      errors:
+        - "ParseError (E02xx): Unexpected token, missing delimiter, invalid syntax"
+      determinism: "MUST be deterministic"
+      complexity: "O(n) where n = token count"
+      
+    - name: "TYPE_CHECK"
+      from: "PARSED"
+      to: "TYPE_CHECKED"
+      function: "TypeChecker.check(ast: Model) → Model"
+      preconditions:
+        - "PARSED.invariants satisfied"
+      postconditions:
+        - "All expressions typed"
+        - "TYPE_CHECKED.invariants satisfied"
+        - "Type environment Γ constructed"
+      errors:
+        - "TypeError (E03xx): Type mismatch, undefined variable, dimensional error, currency mismatch"
+      determinism: "MUST be deterministic"
+      complexity: "O(n) where n = AST node count"
+      type_rules: "See spec/pel_type_system.md § Type Inference"
+      
+    - name: "CHECK_PROVENANCE"
+      from: "TYPE_CHECKED"
+      to: "PROVENANCE_VALIDATED"
+      function: "ProvenanceChecker.check(ast: Model) → (Model, float)"
+      preconditions:
+        - "TYPE_CHECKED.invariants satisfied"
+      postconditions:
+        - "All params have valid provenance"
+        - "PROVENANCE_VALIDATED.invariants satisfied"
+      errors:
+        - "ProvenanceError (E04xx): Missing required field, invalid confidence, invalid method"
+      determinism: "MUST be deterministic"
+      complexity: "O(p) where p = parameter count"
+      
+    - name: "GENERATE_IR"
+      from: "PROVENANCE_VALIDATED"
+      to: "IR_GENERATED"
+      function: "IRGenerator.generate(ast: Model) → Dict"
+      preconditions:
+        - "PROVENANCE_VALIDATED.invariants satisfied"
+      postconditions:
+        - "Valid PEL-IR JSON"
+        - "IR_GENERATED.invariants satisfied"
+        - "Hashes computed deterministically"
+      errors:
+        - "InternalError: Unexpected AST node, hash computation failure"
+      determinism: "MUST be deterministic (hash depends on canonical IR serialization)"
+      complexity: "O(n) where n = AST node count"
+      
+    - name: "ERROR_AT_ANY_STAGE"
+      from: ["INITIAL", "TOKENIZED", "PARSED", "TYPE_CHECKED", "PROVENANCE_VALIDATED"]
+      to: "COMPILATION_ERROR"
+      function: "raise CompilationError"
+      trigger: "Any precondition violation or explicit error"
+      postconditions:
+        - "COMPILATION_ERROR.invariants satisfied"
+        - "No partial IR generated"
+      
+  final_states: ["IR_GENERATED", "COMPILATION_ERROR"]
+  
+  properties:
+    determinism: "MUST hold - same source → same result (IR or error)"
+    totality: "MUST handle all inputs (valid source → IR, invalid → error)"
+    termination: "MUST terminate (no infinite loops)"
+    error_transparency: "Errors MUST include actionable information"
+
+# ============================================================================
+# RUNTIME STATE MACHINE - Canonical Execution
+# ============================================================================
+
+runtime_state_machine:
+  
+  configuration:
+    mode: "deterministic | monte_carlo"
+    seed: "int (PRNG seed, MUST be fixed for reproducibility)"
+    num_runs: "int (1 for deterministic, N for monte_carlo)"
+    time_horizon: "int (T ≥ 0)"
+    
+  states:
+    
+    deterministic_mode:
+      
+      - name: "INITIALIZED"
+        type: "initial"
+        data:
+          ir: "PEL-IR JSON"
+          config: "RuntimeConfig"
+          prng: "RandomState(seed)"
+        invariants:
+          - "IR valid (passes V001-V015)"
+          - "Seed fixed"
+          - "time_horizon ≥ 0"
+        action: "Sample all distributions at mean/median, initialize variable bindings"
+        next: "SIMULATING"
+        
+      - name: "SIMULATING"
+        type: "loop"
+        data:
+          t: "current timestep ∈ [0, T]"
+          state: "Dict[str, Any] (variable bindings)"
+          results: "Dict[str, List[Any]] (timeseries)"
+          violations: "List[Dict] (constraint violations)"
+          policies: "List[Dict] (policy executions)"
+        invariants:
+          - "0 ≤ t ≤ T"
+          - "All variables evaluated in dependency order"
+          - "Causality preserved (no future refs)"
+        substates:
+          - name: "EVALUATE_VARIABLES"
+            action: "For each variable in topological order: compute value from dependencies"
+            postcondition: "All variables have values at timestep t"
+            
+          - name: "CHECK_CONSTRAINTS"
+            action: "Evaluate all constraint conditions"
+            branches:
+              fatal_violation:
+                action: "Log violation, proceed to FAILED"
+                next: "FAILED"
+              warning_violation:
+                action: "Log violation, continue"
+                next: "EXECUTE_POLICIES"
+              no_violation:
+                next: "EXECUTE_POLICIES"
+                
+          - name: "EXECUTE_POLICIES"
+            action: "For each policy in declaration order: if trigger true, execute action"
+            postcondition: "State updated per triggered policies"
+            next: "RECORD_RESULTS"
+            
+          - name: "RECORD_RESULTS"
+            action: "Append current variable values to timeseries"
+            postaction:
+              if: "t < T"
+              then: "t := t + 1, repeat SIMULATING"
+              else: "Proceed to COMPLETED"
+        
+      - name: "COMPLETED"
+        type: "final_success"
+        data:
+          status: "success"
+          results: "Complete timeseries for all variables"
+          violations: "All logged violations"
+          policies: "All policy executions"
+        invariants:
+          - "t = T"
+          - "All timesteps recorded"
+          
+      - name: "FAILED"
+        type: "final_error"
+        data:
+          status: "failed"
+          reason: "Constraint name + message"
+          t_failed: "Timestep of failure"
+          partial_results: "Timeseries up to t_failed"
+        invariants:
+          - "At least one fatal constraint violated"
+          - "Partial results available"
+    
+    monte_carlo_mode:
+      
+      - name: "INITIALIZED"
+        type: "initial"
+        data:
+          ir: "PEL-IR JSON"
+          config: "RuntimeConfig (num_runs = N)"
+          prng: "RandomState(seed)"
+        action: "Initialize aggregator for N runs"
+        next: "RUN_LOOP"
+        
+      - name: "RUN_LOOP"
+        type: "loop"
+        data:
+          run_index: "i ∈ [1, N]"
+          run_results: "List of results from completed runs"
+        action: "For i = 1 to N:"
+        substates:
+          - name: "SAMPLE_DISTRIBUTIONS"
+            action: "Sample all distributions from PRNG, apply correlation (if specified)"
+            postcondition: "All parameter values sampled for this run"
+            
+          - name: "EXECUTE_DETERMINISTIC"
+            action: "Run deterministic simulation with sampled values"
+            result: "COMPLETED or FAILED"
+            
+          - name: "COLLECT_RUN_RESULT"
+            action: "Store run outcome (success/fail) and final values"
+        postaction:
+          if: "i < N"
+          then: "i := i + 1, repeat RUN_LOOP"
+          else: "Proceed to AGGREGATE"
+          
+      - name: "AGGREGATE"
+        type: "processing"
+        action: "Compute statistics across all runs"
+        computes:
+          - "Success rate (fraction of runs that completed)"
+          - "P10, P50, P90 for each variable"
+          - "Correlation matrix (empirical)"
+          - "Sensitivity indices (if requested)"
+        next: "COMPLETED"
+        
+      - name: "COMPLETED"
+        type: "final_success"
+        data:
+          status: "success"
+          mode: "monte_carlo"
+          num_runs: "N"
+          success_rate: "float ∈ [0.0, 1.0]"
+          statistics: "Dict[str, Dict[str, Any]] (P10/P50/P90 per variable)"
+        invariants:
+          - "All N runs executed"
+          - "Statistics computed"
+  
+  properties:
+    reproducibility: "MUST hold - same IR + seed → bit-identical results"
+    determinism_in_deterministic_mode: "MUST hold - no stochasticity beyond distribution mean"
+    stochasticity_in_monte_carlo_mode: "MUST use PRNG correctly, respect correlations"
+    termination: "MUST terminate (time_horizon finite, no infinite loops)"
+    causality: "MUST enforce - no variable at t depends on future values"
+    constraint_semantics: "MUST respect - fatal → stop, warning → continue"
+    policy_semantics: "MUST respect - declaration order, deterministic triggers"
+
+# ============================================================================
+# TYPE SYSTEM MODEL - Canonical Type Rules
+# ============================================================================
+
+type_system:
+  
+  categories:
+    base_types:
+      - name: "Currency<ISO>"
+        parameters: ["iso_code: str"]
+        examples: ["Currency<USD>", "Currency<EUR>"]
+        constraint: "iso_code MUST be 3-letter ISO 4217 code"
+        
+      - name: "Rate per TimeUnit"
+        parameters: ["time_unit: TimeUnit"]
+        examples: ["Rate per Month", "Rate per Year"]
+        semantics: "Change per unit time (dimensionless/time)"
+        
+      - name: "Duration<TimeUnit>"
+        parameters: ["time_unit: TimeUnit"]
+        examples: ["Duration<Month>", "Duration<Year>"]
+        constraint: "time_unit ∈ {Day, Week, Month, Quarter, Year}"
+        
+      - name: "Count<Entity>"
+        parameters: ["entity: str"]
+        examples: ["Count<Customer>", "Count<Order>"]
+        semantics: "Countable entities"
+        
+      - name: "Capacity<Resource>"
+        parameters: ["resource: str"]
+        examples: ["Capacity<Employees>", "Capacity<Seats>"]
+        semantics: "Resource limits"
+        
+      - name: "Fraction"
+        parameters: []
+        semantics: "Dimensionless ratios (percentages, elasticities)"
+        
+    composite_types:
+      - name: "TimeSeries<T>"
+        parameters: ["element_type: Type"]
+        semantics: "Time-indexed values, subject to causality"
+        
+      - name: "Distribution<T>"
+        parameters: ["element_type: Type"]
+        semantics: "Probability distribution over T"
+        
+      - name: "Scoped<T, Entity>"
+        parameters: ["element_type: Type", "entity: str"]
+        semantics: "Per-entity values"
+  
+  dimensional_analysis:
+    
+    multiplication:
+      - rule: "Currency<X> × Count<E> → Currency<X>"
+        example: "$100 per Customer × 500 Customers → $50,000"
+        
+      - rule: "Rate per T × Duration<T> → Fraction"
+        example: "5% per Year × 3 Years → 15%"
+        constraint: "Time units MUST match"
+        
+      - rule: "Capacity<R> × Fraction → Capacity<R>"
+        example: "100 Employees × 80% → 80 Employees"
+        
+    division:
+      - rule: "Currency<X> / Count<E> → Currency<X> per Entity"
+        example: "$50,000 / 500 Customers → $100 per Customer"
+        
+      - rule: "Currency<X> / Duration<T> → Currency<X> per TimeUnit"
+        example: "$1,200 / 12 Months → $100 per Month"
+        
+      - rule: "Fraction / Duration<T> → Rate per T"
+        example: "15% / 3 Years → 5% per Year"
+        
+    addition_subtraction:
+      - rule: "Currency<X> ± Currency<X> → Currency<X>"
+        constraint: "MUST have same ISO code"
+        error: "Currency<USD> + Currency<EUR> → TypeError"
+        
+      - rule: "Rate per T ± Rate per T → Rate per T"
+        constraint: "MUST have same time unit"
+        
+      - rule: "T ± T → T (for same type T)"
+        
+    comparison:
+      - rule: "T cmp T → bool (for same type T)"
+        operators: ["<", "<=", ">", ">=", "==", "!="]
+        
+  type_inference:
+    algorithm: "Bidirectional type checking"
+    reference: "spec/pel_type_system.md § Type Inference Algorithm"
+    environment: "Γ: Identifier → Type"
+    rules:
+      - "Literals inferred from syntax ($100 → Currency<USD>, 5% → Fraction)"
+      - "Variables looked up in Γ"
+      - "Binary operations checked per dimensional_analysis rules"
+      - "Function calls checked against signature"
+      - "Type annotations override inference"
+
+# ============================================================================
+# INVARIANTS - Must Hold Properties
+# ============================================================================
+
+invariants:
+  
+  global_invariants:
+    
+    - name: "COMPILATION_DETERMINISM"
+      property: "∀ source: same source → same IR (or same error)"
+      enforcement: "Tested by test suite"
+      criticality: "FATAL (violates portability)"
+      
+    - name: "RUNTIME_REPRODUCIBILITY"
+      property: "∀ IR, seed: same IR + seed → bit-identical results"
+      enforcement: "Tested by determinism tests"
+      criticality: "FATAL (violates governance requirements)"
+      
+    - name: "TYPE_SAFETY"
+      property: "Well-typed programs don't have runtime type errors"
+      enforcement: "Type checker + runtime guards"
+      criticality: "FATAL (violates safety)"
+      
+    - name: "CAUSALITY"
+      property: "∀ t: variables at t only depend on variables at ≤ t"
+      enforcement: "Type checker (temporal analysis)"
+      criticality: "FATAL (violates semantics)"
+      
+    - name: "PROVENANCE_COMPLETENESS"
+      property: "∀ param: has source, method, confidence"
+      enforcement: "Provenance checker"
+      criticality: "HIGH (violates governance)"
+      
+  stage_invariants:
+    
+    lexer:
+      - "All tokens well-formed"
+      - "Source locations accurate"
+      - "Token stream finite"
+      
+    parser:
+      - "AST structurally valid"
+      - "Grammar rules satisfied"
+      - "Source locations preserved"
+      
+    type_checker:
+      - "Every expression has type"
+      - "No dimensional mismatches"
+      - "No currency mixing"
+      - "Causality preserved"
+      - "All identifiers resolved"
+      
+    provenance_checker:
+      - "All params have provenance"
+      - "Confidence ∈ [0.0, 1.0]"
+      - "Method ∈ allowed set"
+      
+    ir_generator:
+      - "Valid JSON"
+      - "Conforms to schema"
+      - "Passes V001-V015"
+      - "Hashes correct"
+      
+  runtime_invariants:
+    
+    - "Variable evaluation respects dependency order"
+    - "Constraints checked every timestep"
+    - "Fatal constraint → immediate stop"
+    - "Warning constraint → logged, continue"
+    - "Policies executed in declaration order"
+    - "PRNG state deterministic from seed"
+    - "Time never goes backward"
+    - "All timesteps recorded"
+
+# ============================================================================
+# IO CONTRACTS - Canonical Interfaces
+# ============================================================================
+
+io_contracts:
+  
+  compiler_contract:
+    function_signature: "compile(source: str) → Result[IR, CompilationError]"
+    
+    preconditions:
+      - "source is valid UTF-8 string"
+      
+    postconditions_success:
+      - "IR conforms to pel_ir_schema.json"
+      - "IR passes V001-V015"
+      - "model_hash = SHA-256(canonical(IR.model))"
+      - "assumption_hash = SHA-256(IR.provenance_data)"
+      - "Deterministic (same source → identical IR)"
+      
+    postconditions_error:
+      - "Error has code ∈ E0000-E0999"
+      - "Error has non-empty message"
+      - "Error has source location"
+      - "Error has actionable hint (when possible)"
+      
+    error_categories:
+      E00xx: "Lexical errors"
+      E02xx: "Syntax errors"
+      E03xx: "Type errors"
+      E04xx: "Provenance errors"
+      E05xx: "Constraint errors"
+      E06xx: "Policy errors"
+      
+  runtime_contract:
+    function_signature: "run(ir: IR, config: RuntimeConfig) → Result[Results, RuntimeError]"
+    
+    preconditions:
+      - "ir passes V001-V015"
+      - "config.seed is fixed int"
+      - "config.mode ∈ {deterministic, monte_carlo}"
+      - "config.time_horizon ≥ 0"
+      
+    postconditions_success:
+      - "status = 'success'"
+      - "All timesteps executed (0 to T)"
+      - "All variables have timeseries"
+      - "Deterministic: mode = 'deterministic', num_runs = 1"
+      - "Monte Carlo: mode = 'monte_carlo', statistics computed"
+      - "Reproducible (same ir + seed → identical results)"
+      
+    postconditions_failure:
+      - "status = 'failed'"
+      - "reason specifies constraint name"
+      - "timesteps_completed < T"
+      - "partial_results available"
+      
+    reproducibility_guarantee:
+      statement: "∀ IR, seed: run(IR, seed) = run(IR, seed)"
+      scope: "Bit-identical results including floats"
+      exceptions: "None (MUST be exact)"
+
+# ============================================================================
+# FAILURE MODEL - Canonical Error Handling
+# ============================================================================
+
+failure_model:
+  
+  compilation_failures:
+    
+    handling_strategy: "Fail-fast on first error"
+    
+    error_types:
+      
+      - type: "LexicalError"
+        codes: "E00xx"
+        causes: ["Invalid number literal", "Unterminated string", "Unknown character"]
+        recovery: "None (user must fix source)"
+        output: "Error with location, code, message, hint"
+        
+      - type: "ParseError"
+        codes: "E02xx"
+        causes: ["Unexpected token", "Missing delimiter", "Invalid expression"]
+        recovery: "None (user must fix source)"
+        output: "Error with expected vs got, location"
+        
+      - type: "TypeError"
+        codes: "E03xx"
+        causes: ["Type mismatch", "Undefined variable", "Dimensional error", "Currency mismatch"]
+        recovery: "None (user must fix source)"
+        output: "Error with types, location, hint"
+        
+      - type: "ProvenanceError"
+        codes: "E04xx"
+        causes: ["Missing required field", "Invalid confidence", "Invalid method"]
+        recovery: "Add metadata"
+        output: "Error with missing fields, location"
+        
+  runtime_failures:
+    
+    constraint_violations:
+      
+      - severity: "fatal"
+        behavior: "Stop simulation immediately"
+        output:
+          status: "failed"
+          reason: "Constraint name + message"
+          timesteps_completed: "int"
+          partial_results: "Available"
+        use_case: "Hard limits (e.g., cash > 0)"
+        
+      - severity: "warning"
+        behavior: "Log warning, continue execution"
+        output:
+          status: "success"
+          constraint_violations: "List of all warnings"
+          full_results: "Available"
+        use_case: "Soft limits, alerts"
+        
+    resource_limits:
+      
+      - limit: "Memory (2GB default)"
+        enforcement: "OS-level (resource.setrlimit)"
+        error: "MemoryError"
+        handling: "Graceful termination, error message"
+        
+      - limit: "Timeout (60s default)"
+        enforcement: "signal.alarm"
+        error: "TimeoutError"
+        handling: "Graceful termination, partial results if available"
+        
+    numeric_errors:
+      
+      - error: "Division by zero"
+        handling: "Guarded conditionally (depends on expression)"
+        prevention: "Type system encourages safe patterns"
+        
+      - error: "Overflow"
+        handling: "Python's int has arbitrary precision, float may overflow"
+        
+      - error: "NaN propagation"
+        handling: "Depends on numpy configuration"
+  
+  error_reporting:
+    format: "Structured JSON or human-readable text"
+    required_fields: ["code", "message", "location", "hint (optional)"]
+    exit_codes:
+      0: "Success"
+      1: "Compilation or validation error"
+      2: "Internal error (compiler bug)"
+
+# ============================================================================
+# SECURITY MODEL - Canonical Security Invariants
+# ============================================================================
+
+security_model:
+  
+  threat_model:
+    adversary: "Untrusted PEL code, untrusted data sources"
+    assets: "Host system, confidential data, compute resources"
+    goals:
+      - "Prevent code from escaping sandbox"
+      - "Prevent data exfiltration"
+      - "Prevent resource exhaustion"
+      - "Ensure code integrity"
+      
+  security_invariants:
+    
+    - name: "SANDBOX_ISOLATION"
+      property: "No file I/O, network I/O, or process spawning without explicit capability"
+      enforcement: "Restricted builtins, AST validation"
+      validation: "Security tests (attempted escapes MUST fail)"
+      
+    - name: "RESOURCE_BOUNDED"
+      property: "Memory ≤ 2GB, execution time ≤ 60s (configurable)"
+      enforcement: "OS-level limits (setrlimit, signal.alarm)"
+      validation: "Stress tests"
+      
+    - name: "NO_DYNAMIC_CODE"
+      property: "No eval, exec, compile, __import__"
+      enforcement: "Disabled in builtins, AST validation"
+      validation: "Security tests"
+      
+    - name: "INPUT_VALIDATED"
+      property: "CSV injection prevented, type validation"
+      enforcement: "Runtime checks, sanitization"
+      validation: "Fuzzing tests"
+      
+  capability_system:
+    default: "No I/O capabilities"
+    opt_in_mechanism: "Capability declaration in model metadata"
+    capabilities:
+      - "file_read: List[Path]"
+      - "http: List[Domain]"
+    validation: "Runtime enforces declared capabilities only"
+
+# ============================================================================
+# TIME AND CONCURRENCY MODEL
+# ============================================================================
+
+time_model:
+  
+  discrete_time:
+    timestep: "t ∈ [0, T] where T = time_horizon"
+    increment: "Always +1 (no variable timesteps)"
+    unit: "Specified in model (Day, Week, Month, Quarter, Year)"
+    
+  causality:
+    definition: "Variable at t can only depend on variables at ≤ t"
+    enforcement: "Type checker analyzes dependency graph"
+    violation: "TypeError raised at compile time"
+    
+  time_semantics:
+    evaluation_order: "Topological sort of dependencies within timestep"
+    simultaneity: "All variables at t evaluated before moving to t+1"
+    policies: "Executed after variable evaluation, before next timestep"
+    constraints: "Checked after variable evaluation and policies"
+    
+  concurrency:
+    compilation: "Single-threaded (deterministic)"
+    runtime_deterministic: "Single-threaded (deterministic)"
+    runtime_monte_carlo: "Potentially parallel across runs (future optimization)"
+    parallelization_constraint: "MUST maintain reproducibility with seed"
+
+# ============================================================================
+# EXTENSION AND COMPATIBILITY MODEL
+# ============================================================================
+
+extension_model:
+  
+  versioning:
+    scheme: "Semantic versioning (major.minor.patch)"
+    current: "0.1.0"
+    
+  compatibility:
+    
+    ir_schema_evolution:
+      - "Minor version: Backward compatible (old runtimes can read new IR with defaults)"
+      - "Major version: Breaking changes allowed"
+      - "Validation: V012 checks schema version"
+      
+    language_evolution:
+      - "New keywords: Minor version if backward compatible"
+      - "New types: Minor version"
+      - "Breaking syntax changes: Major version"
+      
+    runtime_compatibility:
+      - "Any runtime version V MUST produce identical results for IR version ≤ V"
+      - "Reproducibility hash includes runtime version"
+      
+  extension_points:
+    - "New distributions (add to uncertainty_spec.md)"
+    - "New constraint types (add to constraint_spec.md)"
+    - "New policy actions (add to policy_spec.md)"
+    - "New stdlib modules (standard process)"
+    - "New optimization passes (MUST preserve semantics)"
+
+# ============================================================================
+# ASSUMPTION REGISTRY MODEL
+# ============================================================================
+
+assumption_registry:
+  
+  purpose: "Track all modeling assumptions with provenance"
+  
+  structure:
+    per_parameter:
+      name: "str (parameter identifier)"
+      type: "Type"
+      value: "Expression (may be distribution)"
+      provenance: "Provenance object"
+      
+  provenance_schema:
+    required:
+      - "source: str (data origin)"
+      - "method: str (methodology)"
+      - "confidence: float ∈ [0.0, 1.0]"
+    recommended:
+      - "freshness: ISO 8601 duration (how old is data)"
+      - "owner: str (responsible party)"
+    optional:
+      - "correlated_with: List[Tuple[str, float]] (correlations)"
+      - "notes: str (additional context)"
+      
+  completeness_metric:
+    formula: "fields_present / (required_fields + recommended_fields)"
+    target: "≥ 0.80 (80%)"
+    enforcement: "Warning if < threshold"
+    
+  assumption_hash:
+    computation: "SHA-256(canonical_json(all_provenance))"
+    purpose: "Detect assumption changes"
+    inclusion: "In IR metadata"
+
+# ============================================================================
+# VALIDATION AND VERIFICATION
+# ============================================================================
+
+validation:
+  
+  ir_validation_rules:
+    - "V001: Dependency graph acyclic"
+    - "V002: All dependencies exist"
+    - "V003: Params have provenance"
+    - "V004: Correlation matrix positive semi-definite"
+    - "V005: Correlation coefficients ∈ [-1, 1]"
+    - "V006: No future TimeSeries references"
+    - "V007: Distribution parameters valid"
+    - "V008: Type consistency (declared = inferred)"
+    - "V009: Dimensional correctness"
+    - "V010: Scope references valid entities"
+    - "V011: Constraint scopes valid"
+    - "V012: Model hash correct"
+    - "V013: Assumption hash correct"
+    - "V014: Time horizon respected"
+    - "V015: Policy execution order preserved"
+    
+  property_based_testing:
+    properties:
+      - "Compilation is deterministic"
+      - "Type-safe programs don't crash"
+      - "Reproducibility holds"
+      - "Causality never violated"
+    method: "Generate random valid models, verify properties"
+    
+  conformance_testing:
+    test_suite: "pel-conformance (github.com/pel-lang/pel-conformance)"
+    levels:
+      - "Core: Basic compilation, type checking, deterministic runtime"
+      - "Extended: Monte Carlo, correlation, sensitivity"
+      - "Calibration: Data connectors, fitting, drift detection"
+    requirement: "Implementation MUST pass Core level for v1.0"
+
+# ============================================================================
+# PERFORMANCE MODEL
+# ============================================================================
+
+performance_model:
+  
+  complexity_bounds:
+    
+    compilation:
+      lexer: "O(n) where n = source chars"
+      parser: "O(n) where n = tokens"
+      type_checker: "O(n) where n = AST nodes"
+      provenance_checker: "O(p) where p = params"
+      ir_generator: "O(n) where n = AST nodes"
+      overall: "O(n) where n = source size"
+      
+    runtime:
+      deterministic: "O(T × V × D) where T = timesteps, V = variables, D = max dependency depth"
+      monte_carlo: "O(N × T × V × D) where N = runs"
+      
+  memory_bounds:
+    ast: "O(n) where n = source size"
+    ir: "O(n × 1.5) (JSON overhead)"
+    runtime_state: "O(T × V) (all timesteps stored)"
+    
+  scalability_targets:
+    model_size: "Up to 100KB source (no hard limit)"
+    time_horizon: "Up to 10,000 timesteps"
+    monte_carlo_runs: "Up to 1,000,000 runs"
+    variables: "Up to 10,000 variables"
+    
+  optimization_constraints:
+    - "MUST preserve semantics"
+    - "MUST maintain determinism"
+    - "MUST preserve reproducibility"
+    - "MAY parallelize Monte Carlo runs (with seed management)"
+    - "MAY cache expression evaluation (if pure)"
+
+# ============================================================================
+# END OF CANONICAL SYSTEM STATE MODEL
+# ============================================================================
+
+model_assertions:
+  - "This model is CANONICAL - implementation MUST conform"
+  - "Any deviation from this model is a bug (in implementation or model)"
+  - "Tests MUST verify conformance to this model"
+  - "Specifications are source of truth - this model derives from them"
+  - "Future changes MUST update this model first, then implementation"

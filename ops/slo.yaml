@@ -1,0 +1,32 @@
+# ============================================================================
+# PEL SLO MODEL
+# ============================================================================
+# Purpose: Define service level objectives for correctness and developer UX
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+slos:
+  - name: "CI green on main"
+    objective: ">= 95% successful runs on main"
+    measurement: "ci.success_rate"
+    window: "30d"
+
+  - name: "CI feedback latency"
+    objective: "p95 < 5 minutes"
+    measurement: "ci.duration_p95_ms"
+    window: "30d"
+
+  - name: "Compiler determinism"
+    objective: "0 determinism regressions"
+    measurement: "determinism.regressions"
+    window: "30d"
+
+  - name: "Coverage floor"
+    objective: ">= 80%"
+    measurement: "coverage.total"
+    window: "30d"

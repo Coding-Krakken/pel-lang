@@ -1,0 +1,33 @@
+# ============================================================================
+# PEL TEST TRACEABILITY MODEL
+# ============================================================================
+# Purpose: Map contracts/spec requirements to test categories and WorkItems
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+traceability:
+  - requirement: "IR conforms to schema"
+    source: "ir/pel_ir_schema.json"
+    tests:
+      - type: "unit"
+        planned_work_item: "WI-005"
+  - requirement: "Validation rules V001-V015"
+    source: "ir/ir_validation_rules.md"
+    tests:
+      - type: "integration"
+        planned_work_item: "WI-006"
+  - requirement: "Compiler determinism"
+    source: "spec/pel_governance_spec.md"
+    tests:
+      - type: "integration"
+        planned_work_item: "WI-006"
+  - requirement: "Error reporting contract"
+    source: "contracts/errors.yaml"
+    tests:
+      - type: "unit"
+        planned_work_item: "WI-005"

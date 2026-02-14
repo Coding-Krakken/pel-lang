@@ -1,0 +1,55 @@
+# ============================================================================
+# PEL FAILURE MODES
+# ============================================================================
+# Purpose: Enumerate failure modes and required handling/containment
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+failure_modes:
+  - id: "F1"
+    stage: "lexer"
+    failure: "Invalid token"
+    handling: "Fail-fast with location"
+    severity: "user_error"
+  - id: "F2"
+    stage: "parser"
+    failure: "Unexpected token"
+    handling: "Fail-fast with expected set"
+    severity: "user_error"
+  - id: "F3"
+    stage: "type_checker"
+    failure: "Type mismatch"
+    handling: "Fail-fast with inferred vs expected"
+    severity: "user_error"
+  - id: "F4"
+    stage: "provenance"
+    failure: "Missing required provenance"
+    handling: "Fail compilation; list missing fields"
+    severity: "user_error"
+  - id: "F5"
+    stage: "ir_validation"
+    failure: "IR schema violation"
+    handling: "Fail with internal_error or validation_error depending on source"
+    severity: "internal_or_user"
+  - id: "F6"
+    stage: "runtime"
+    failure: "Constraint violation"
+    handling: "Warn or fail based on constraint severity"
+    severity: "model_violation"
+  - id: "F7"
+    stage: "runtime"
+    failure: "Non-deterministic dependency"
+    handling: "Block execution in deterministic mode"
+    severity: "governance_violation"
+
+recovery:
+  compilation:
+    - "No recovery; surface first error"
+  runtime:
+    - "Continue on warning-level constraint violations"
+    - "Stop on fatal constraint violations"

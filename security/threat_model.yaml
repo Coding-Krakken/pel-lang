@@ -1,0 +1,66 @@
+# ============================================================================
+# PEL THREAT MODEL
+# ============================================================================
+# Purpose: Identify threats and mitigations for compiler/runtime + governance
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+  scope:
+    - "compiler"
+    - "runtime"
+    - "stdlib"
+    - "CI/CD"
+
+assets:
+  - "Source models (PEL)"
+  - "IR documents"
+  - "Runtime outputs"
+  - "Provenance metadata"
+  - "Build artifacts"
+
+trust_boundaries:
+  - name: "User input boundary"
+    description: "Untrusted PEL source and data inputs"
+  - name: "Execution boundary"
+    description: "Runtime evaluation must not escape sandbox"
+  - name: "Supply chain boundary"
+    description: "Dependencies and CI actions"
+
+threats:
+  - id: "T1"
+    name: "Resource exhaustion"
+    vector: "Pathological input causing O(n^2) parse or huge allocations"
+    mitigations:
+      - "Linear-time parsing where possible"
+      - "Input size limits"
+      - "Time/memory budgets"
+  - id: "T2"
+    name: "Nondeterminism injection"
+    vector: "Ambient randomness/time affecting results"
+    mitigations:
+      - "No ambient RNG"
+      - "Injectable clock for events"
+      - "Seed required for Monte Carlo"
+  - id: "T3"
+    name: "Supply chain compromise"
+    vector: "Malicious dependency or CI action"
+    mitigations:
+      - "Dependency policy"
+      - "Pinned versions"
+      - "Review updates"
+  - id: "T4"
+    name: "Data exfiltration"
+    vector: "Logging secrets or embedding sensitive data in IR"
+    mitigations:
+      - "Redaction policy"
+      - "No secrets in events"
+      - "Minimize provenance payloads"
+
+security_requirements:
+  - "No eval/exec/import in runtime"
+  - "Capability-based I/O only (if any)"
+  - "Deterministic execution under declared constraints"

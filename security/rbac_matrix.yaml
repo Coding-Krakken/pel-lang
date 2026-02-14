@@ -1,0 +1,50 @@
+# ============================================================================
+# PEL RBAC MATRIX
+# ============================================================================
+# Purpose: Define governance roles and allowed actions for repository controls
+# Date: 2026-02-13
+# Version: 0.1.0
+# Status: Canonical
+# ============================================================================
+
+metadata:
+  model_version: "0.1.0"
+
+roles:
+  - name: "Maintainer"
+    description: "Can merge to main and manage releases"
+  - name: "Contributor"
+    description: "Can open PRs and propose changes"
+  - name: "CI Bot"
+    description: "Runs checks and reports status"
+
+permissions:
+  repository:
+    read:
+      - "Maintainer"
+      - "Contributor"
+      - "CI Bot"
+    write:
+      - "Maintainer"
+    tag_release:
+      - "Maintainer"
+
+  workflows:
+    modify_ci:
+      - "Maintainer"
+    run_ci:
+      - "Maintainer"
+      - "Contributor"
+      - "CI Bot"
+
+  models:
+    modify_canonical_models:
+      - "Maintainer"
+    propose_model_changes:
+      - "Contributor"
+
+  dependencies:
+    add_dependency:
+      - "Maintainer"
+    update_dependency:
+      - "Maintainer"
