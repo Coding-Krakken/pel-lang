@@ -305,12 +305,12 @@ class TestRetentionGoldenScenarios:
     def test_cohort_half_life_approximation(self):
         """Test cohort half-life calculation."""
         # Scenario: 10% monthly churn
-        # Expected: ~7 months half-life (ln(2)/0.10 ≈ 6.93)
+        # Expected: ~6.93 months half-life (ln(2)/0.10 ≈ 6.93147)
         monthly_churn = 0.10
-        ln_2 = 0.693
+        ln_2 = 0.693147
         
         half_life = ln_2 / monthly_churn
-        assert abs(half_life - 6.93) < 0.1
+        assert abs(half_life - 6.93147) < 0.01
 
     def test_ltv_from_retention_simple(self):
         """Test LTV calculation from retention rate."""

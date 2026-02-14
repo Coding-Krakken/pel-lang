@@ -192,5 +192,7 @@ func cash_balance_projection(
 ) -> Currency<USD> {
   // Project ending cash balance over periods
   // Simplified linear projection
-  return starting_cash + (monthly_cash_flow * periods)
+  // Convert periods count to duration for dimensional correctness
+  var period_duration: Duration<Month> = periods * 1mo
+  return starting_cash + (monthly_cash_flow * period_duration)
 }

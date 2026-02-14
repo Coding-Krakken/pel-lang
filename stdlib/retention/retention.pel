@@ -32,9 +32,10 @@ func cohort_half_life(
 ) -> Duration<Month> {
   // Calculate half-life: time for cohort to shrink to 50%
   // Half-life ≈ ln(2) / ln(1 / (1 - churn_rate))
-  // Approximation: 0.693 / churn_rate for small churn rates
-  var ln_2: Fraction = 0.693
-  return ln_2 / monthly_churn_rate
+  // Approximation: 0.693147 / churn_rate for small churn rates
+  var ln_2: Fraction = 0.693147
+  var half_life_months: Fraction = ln_2 / monthly_churn_rate
+  return half_life_months * 1mo
 }
 
 // === Churn Metrics ===
