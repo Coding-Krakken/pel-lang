@@ -467,6 +467,90 @@ pytest -m "not slow"
 pytest -n auto
 ```
 
+### Conformance Testing
+
+**Conformance tests** verify that the PEL compiler and runtime correctly implement the formal language specification. These differ from unit tests:
+
+- **Unit tests**: Verify implementation details (white-box, coverage-driven)
+- **Conformance tests**: Verify specification compliance (black-box, behavior-driven)
+
+#### When to Add Conformance Tests
+
+Add conformance tests when:
+- Implementing a new language feature specified in `spec/pel_language_spec.md`
+- Fixing a bug related to specification compliance
+- Clarifying ambiguous specification behavior with code
+- **NOT** for implementation-specific optimizations or internal refactoring
+
+#### Conformance Test Requirements
+
+For PRs touching core compiler components:
+- [ ] Relevant conformance tests updated or added
+- [ ] All conformance tests passing (280/280)
+- [ ] Test cases follow YAML schema in `docs/conformance/TEST_CASE_FORMAT.md`
+- [ ] Test IDs unique and sequential
+- [ ] Spec references accurate
+
+#### Adding a Conformance Test
+
+1. **Choose category and ID**:
+   - Lexical: `CONF-LEX-NNN`
+   - Parsing: `CONF-PARSE-NNN`
+   - Type Checking: `CONF-TYPE-NNN`
+   - Provenance: `CONF-PROV-NNN`
+   - Runtime: `CONF-RUN-NNN`
+
+2. **Create YAML file**: `tests/conformance/testcases/<category>/CONF-XXX-NNN.yaml`
+
+3. **Follow schema** from `docs/conformance/TEST_CASE_FORMAT.md`:
+   ```yaml
+   id: CONF-XXX-NNN
+   category: <category>
+   spec_ref: spec/pel_language_spec.md#section-N
+   description: Brief description
+   input: |
+     model test {
+       # PEL code
+     }
+   expected:
+     # Category-specific expectations
+   ```
+
+4. **Validate**:
+   ```bash
+   python3 tests/conformance/test_runner.py --validate-all
+   ```
+
+5. **Run test**:
+   ```bash
+   pytest tests/conformance/testcases/<category>/CONF-XXX-NNN.yaml -v
+   ```
+
+6. **Commit**: `Add conformance test CONF-XXX-NNN: <description>`
+
+#### Running Conformance Tests
+
+```bash
+# Run all conformance tests (280 tests)
+pytest tests/conformance/ -v
+
+# Run by category
+pytest tests/conformance/ -k lexical
+pytest tests/conformance/ -k typechecking
+
+# Validate all test case YAML schemas
+python3 tests/conformance/test_runner.py --validate-all
+
+# Check for duplicate test IDs
+find tests/conformance/testcases/ -name "*.yaml" -exec grep "^id:" {} \; | sort | uniq -d
+```
+
+#### Conformance Documentation
+
+See detailed documentation:
+- `docs/conformance/CONFORMANCE_TESTING.md`: Overview and philosophy
+- `docs/conformance/TEST_CASE_FORMAT.md`: YAML schema and examples
+
 ---
 
 ## Documentation Standards
