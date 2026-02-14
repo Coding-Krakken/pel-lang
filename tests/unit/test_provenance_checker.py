@@ -1,9 +1,9 @@
 import pytest
 
 from compiler.ast_nodes import Literal, Model, ParamDecl, TypeAnnotation
+from compiler.errors import ParseError
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.errors import ParseError
 from compiler.provenance_checker import ProvenanceChecker
 from compiler.typechecker import TypeChecker
 
@@ -23,24 +23,20 @@ def test_param_without_provenance_block_is_parse_error() -> None:
 def test_provenance_missing_required_fields_is_parse_error() -> None:
     with pytest.raises(ParseError):
         _parse_model(
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
-            '    source: "s",\n'
-            '  }\n'
-            '}\n'
+            "model M {\n" "  param x: Fraction = 0.1 {\n" '    source: "s",\n' "  }\n" "}\n"
         )
 
 
 @pytest.mark.unit
 def test_provenance_confidence_out_of_range_is_error() -> None:
     model = _parse_model(
-        'model M {\n'
-        '  param x: Fraction = 0.1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 0.1 {\n"
         '    source: "s",\n'
         '    method: "observed",\n'
-        '    confidence: 1.5\n'
-        '  }\n'
-        '}\n'
+        "    confidence: 1.5\n"
+        "  }\n"
+        "}\n"
     )
     typed = TypeChecker().check(model)
 
@@ -53,13 +49,13 @@ def test_provenance_confidence_out_of_range_is_error() -> None:
 @pytest.mark.unit
 def test_provenance_invalid_method_is_error() -> None:
     model = _parse_model(
-        'model M {\n'
-        '  param x: Fraction = 0.1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 0.1 {\n"
         '    source: "s",\n'
         '    method: "not_a_method",\n'
-        '    confidence: 0.9\n'
-        '  }\n'
-        '}\n'
+        "    confidence: 0.9\n"
+        "  }\n"
+        "}\n"
     )
     typed = TypeChecker().check(model)
 

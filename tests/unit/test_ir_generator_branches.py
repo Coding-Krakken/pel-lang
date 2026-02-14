@@ -122,8 +122,12 @@ def test_ir_generator_generates_constraint_and_policy_nodes_smoke() -> None:
 
     policy = Policy(
         name="p",
-        trigger=Trigger(trigger_type="condition", condition=Literal(value=True, literal_type="number")),
-        action=Action(action_type="assign", target="x", value=Literal(value=2, literal_type="number")),
+        trigger=Trigger(
+            trigger_type="condition", condition=Literal(value=True, literal_type="number")
+        ),
+        action=Action(
+            action_type="assign", target="x", value=Literal(value=2, literal_type="number")
+        ),
     )
     out_p = gen.generate_policy(policy)
     assert out_p["policy_id"] == "policy_p"

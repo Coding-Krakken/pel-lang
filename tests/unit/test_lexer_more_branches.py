@@ -83,11 +83,11 @@ def test_lexer_currency_decimal_and_suffix() -> None:
 
 @pytest.mark.unit
 def test_lexer_percentage_literal_and_percent_operator() -> None:
-    tokens1 = Lexer("5%" ).tokenize()
+    tokens1 = Lexer("5%").tokenize()
     assert tokens1[0].type == TokenType.PERCENTAGE
     assert tokens1[0].value == "5%"
 
-    tokens2 = Lexer("%" ).tokenize()
+    tokens2 = Lexer("%").tokenize()
     assert tokens2[0].type == TokenType.PERCENT
     assert tokens2[0].value == "%"
 

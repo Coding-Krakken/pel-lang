@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from compiler.lexer import Lexer
-from compiler.parser import Parser
 from compiler.ast_nodes import (
     ArrayLiteral,
     BinaryOp,
@@ -11,15 +9,13 @@ from compiler.ast_nodes import (
     FuncDecl,
     FunctionCall,
 )
+from compiler.lexer import Lexer
+from compiler.parser import Parser
 
 
 @pytest.mark.unit
 def test_parser_function_decl_uses_parse_block() -> None:
-    src = (
-        "model M {\n"
-        "  func f(x: Fraction) -> Fraction { x + 1; x + 2 }\n"
-        "}\n"
-    )
+    src = "model M {\n" "  func f(x: Fraction) -> Fraction { x + 1; x + 2 }\n" "}\n"
 
     model = Parser(Lexer(src).tokenize()).parse()
     assert len(model.funcs) == 1
@@ -76,7 +72,7 @@ def test_parser_emit_action_with_no_args() -> None:
 
 @pytest.mark.unit
 def test_parser_scope_spec_as_expression() -> None:
-    src = 'model M { constraint C: 1 == 1 { severity: fatal, for: t >= 1 } }'
+    src = "model M { constraint C: 1 == 1 { severity: fatal, for: t >= 1 } }"
     model = Parser(Lexer(src).tokenize()).parse()
     scope = model.constraints[0].scope
     assert scope is not None

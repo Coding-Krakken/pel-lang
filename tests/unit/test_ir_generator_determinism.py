@@ -9,14 +9,14 @@ from compiler.typechecker import TypeChecker
 @pytest.mark.unit
 def test_ir_generator_model_hash_stable_across_runs() -> None:
     src = (
-        'model M {\n'
-        '  param x: Fraction = 0.1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 0.1 {\n"
         '    source: "unit",\n'
         '    method: "observed",\n'
-        '    confidence: 1\n'
-        '  }\n'
-        '  var y: Fraction = x + 0.2\n'
-        '}\n'
+        "    confidence: 1\n"
+        "  }\n"
+        "  var y: Fraction = x + 0.2\n"
+        "}\n"
     )
     tokens = Lexer(src).tokenize()
     model = Parser(tokens).parse()
@@ -31,13 +31,13 @@ def test_ir_generator_model_hash_stable_across_runs() -> None:
 @pytest.mark.unit
 def test_ir_generator_compiled_at_is_utc_z_timestamp() -> None:
     src = (
-        'model M {\n'
-        '  param x: Fraction = 0.1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 0.1 {\n"
         '    source: "unit",\n'
         '    method: "observed",\n'
-        '    confidence: 1\n'
-        '  }\n'
-        '}\n'
+        "    confidence: 1\n"
+        "  }\n"
+        "}\n"
     )
     tokens = Lexer(src).tokenize()
     model = Parser(tokens).parse()

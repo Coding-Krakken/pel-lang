@@ -2,25 +2,25 @@ from __future__ import annotations
 
 import pytest
 
+from compiler.ast_nodes import Action, Model
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.ast_nodes import Action, Model
 
 
 @pytest.mark.unit
 def test_parser_covers_many_type_annotations_and_var_forms() -> None:
     src = (
-        'model M {\n'
-        '  var mut a: Fraction\n'
-        '  var b: Currency<USD> = $1\n'
-        '  var c: Rate per Month = 0.1\n'
-        '  var d: Duration = 1mo\n'
-        '  var e: Capacity<Compute>\n'
-        '  var f: Count<Customer>\n'
-        '  var g: TimeSeries<Fraction>\n'
-        '  var h: Distribution<Currency<USD>>\n'
-        '  var i: CustomType\n'
-        '}\n'
+        "model M {\n"
+        "  var mut a: Fraction\n"
+        "  var b: Currency<USD> = $1\n"
+        "  var c: Rate per Month = 0.1\n"
+        "  var d: Duration = 1mo\n"
+        "  var e: Capacity<Compute>\n"
+        "  var f: Count<Customer>\n"
+        "  var g: TimeSeries<Fraction>\n"
+        "  var h: Distribution<Currency<USD>>\n"
+        "  var i: CustomType\n"
+        "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()
@@ -39,11 +39,11 @@ def test_parser_covers_many_type_annotations_and_var_forms() -> None:
 @pytest.mark.unit
 def test_parser_action_block_and_fallback_expression_action() -> None:
     src = (
-        'model M {\n'
-        '  var x = 0\n'
+        "model M {\n"
+        "  var x = 0\n"
         '  policy P1 { when: 1 == 1, then: { x = 1; emit event("e", a: 1) } }\n'
-        '  policy P2 { when: 1 == 1, then: 1 }\n'
-        '}\n'
+        "  policy P2 { when: 1 == 1, then: 1 }\n"
+        "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()
@@ -63,15 +63,15 @@ def test_parser_action_block_and_fallback_expression_action() -> None:
 @pytest.mark.unit
 def test_parser_provenance_optional_fields_cover_number_and_expression() -> None:
     src = (
-        'model M {\n'
-        '  param x: Fraction = 1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 1 {\n"
         '    source: "s",\n'
         '    method: "m",\n'
-        '    confidence: 0.9,\n'
-        '    quality: 0.7,\n'
-        '    budget: $10\n'
-        '  }\n'
-        '}\n'
+        "    confidence: 0.9,\n"
+        "    quality: 0.7,\n"
+        "    budget: $10\n"
+        "  }\n"
+        "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()

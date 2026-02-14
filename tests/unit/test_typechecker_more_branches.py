@@ -18,7 +18,9 @@ from compiler.typechecker import Dimension, TypeChecker
 def test_typechecker_duration_generic_addition_is_compatible() -> None:
     tc = TypeChecker()
 
-    generic_duration = Literal(value="1m", literal_type="duration")  # invalid suffix => generic Duration
+    generic_duration = Literal(
+        value="1m", literal_type="duration"
+    )  # invalid suffix => generic Duration
     month_duration = Literal(value="1mo", literal_type="duration")
 
     expr = BinaryOp(operator="+", left=generic_duration, right=month_duration)
@@ -115,7 +117,12 @@ def test_typechecker_function_call_sum_over_array_returns_element_type() -> None
 def test_typechecker_indexing_scalar_returns_same_type() -> None:
     tc = TypeChecker()
 
-    tc.env.bind("x", tc.ast_type_to_pel_type(TypeAnnotation(type_kind="Currency", params={"currency_code": "USD"})))
+    tc.env.bind(
+        "x",
+        tc.ast_type_to_pel_type(
+            TypeAnnotation(type_kind="Currency", params={"currency_code": "USD"})
+        ),
+    )
 
     expr = Indexing(expression=Variable(name="x"), index=Variable(name="t"))
     inferred = tc.infer_expression(expr)

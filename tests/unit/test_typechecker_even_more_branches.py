@@ -9,7 +9,6 @@ from compiler.ast_nodes import (
     IfThenElse,
     Indexing,
     Literal,
-    TypeAnnotation,
     UnaryOp,
     Variable,
 )
@@ -120,11 +119,15 @@ def test_typechecker_indexing_timeseries_and_array_paths() -> None:
     tc = TypeChecker()
 
     tc.env.bind("ts", PELType.timeseries(PELType.currency("USD")))
-    ts_index = tc.infer_expression(Indexing(expression=Variable(name="ts"), index=Variable(name="t")))
+    ts_index = tc.infer_expression(
+        Indexing(expression=Variable(name="ts"), index=Variable(name="t"))
+    )
     assert ts_index.type_kind == "Currency"
 
     arr = ArrayLiteral(elements=[Literal(value="$1", literal_type="currency")])
-    arr_index = tc.infer_expression(Indexing(expression=arr, index=Literal(value=0.0, literal_type="number")))
+    arr_index = tc.infer_expression(
+        Indexing(expression=arr, index=Literal(value=0.0, literal_type="number"))
+    )
     assert arr_index.type_kind == "Currency"
 
 
@@ -138,7 +141,9 @@ def test_typechecker_array_literal_empty_path() -> None:
 @pytest.mark.unit
 def test_typechecker_unary_not_requires_boolean() -> None:
     tc = TypeChecker()
-    inferred = tc.infer_expression(UnaryOp(operator="!", operand=Literal(value=1.0, literal_type="number")))
+    inferred = tc.infer_expression(
+        UnaryOp(operator="!", operand=Literal(value=1.0, literal_type="number"))
+    )
     assert inferred.type_kind == "Boolean"
     assert any(getattr(e, "code", None) == "E0100" for e in tc.errors)
 

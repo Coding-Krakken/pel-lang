@@ -19,13 +19,13 @@ def test_pel_compiler_compile_defaults_output_path(tmp_path: Path) -> None:
     _write_file(
         src,
         (
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
+            "model M {\n"
+            "  param x: Fraction = 0.1 {\n"
             '    source: "unit",\n'
             '    method: "observed",\n'
-            '    confidence: 1\n'
-            '  }\n'
-            '}\n'
+            "    confidence: 1\n"
+            "  }\n"
+            "}\n"
         ),
     )
 
@@ -39,18 +39,20 @@ def test_pel_compiler_compile_defaults_output_path(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_pel_compiler_compile_verbose_prints_stages(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_pel_compiler_compile_verbose_prints_stages(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     src = tmp_path / "m.pel"
     _write_file(
         src,
         (
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
+            "model M {\n"
+            "  param x: Fraction = 0.1 {\n"
             '    source: "unit",\n'
             '    method: "observed",\n'
-            '    confidence: 1\n'
-            '  }\n'
-            '}\n'
+            "    confidence: 1\n"
+            "  }\n"
+            "}\n"
         ),
     )
 
@@ -63,7 +65,9 @@ def test_pel_compiler_compile_verbose_prints_stages(tmp_path: Path, capsys: pyte
 
 
 @pytest.mark.unit
-def test_compiler_main_exits_1_when_file_missing(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_compiler_main_exits_1_when_file_missing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr("sys.argv", ["pel", "missing.pel"])
     with pytest.raises(SystemExit) as ex:
         compiler_main()
@@ -73,7 +77,9 @@ def test_compiler_main_exits_1_when_file_missing(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.unit
-def test_compiler_main_exits_1_when_suffix_not_pel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compiler_main_exits_1_when_suffix_not_pel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     src = tmp_path / "m.txt"
     _write_file(src, "hello")
 
@@ -84,19 +90,21 @@ def test_compiler_main_exits_1_when_suffix_not_pel(tmp_path: Path, monkeypatch: 
 
 
 @pytest.mark.unit
-def test_compiler_main_success_writes_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compiler_main_success_writes_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     src = tmp_path / "m.pel"
     out = tmp_path / "m.ir.json"
     _write_file(
         src,
         (
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
+            "model M {\n"
+            "  param x: Fraction = 0.1 {\n"
             '    source: "unit",\n'
             '    method: "observed",\n'
-            '    confidence: 1\n'
-            '  }\n'
-            '}\n'
+            "    confidence: 1\n"
+            "  }\n"
+            "}\n"
         ),
     )
 
@@ -108,7 +116,9 @@ def test_compiler_main_success_writes_output(tmp_path: Path, monkeypatch: pytest
 
 
 @pytest.mark.unit
-def test_compiler_main_exits_1_on_compiler_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compiler_main_exits_1_on_compiler_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     src = tmp_path / "bad.pel"
     _write_file(src, "model M { param x: Fraction = 0.1 }")
 
@@ -126,13 +136,13 @@ def test_compiler_main_exits_2_on_unhandled_exception(
     _write_file(
         src,
         (
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
+            "model M {\n"
+            "  param x: Fraction = 0.1 {\n"
             '    source: "unit",\n'
             '    method: "observed",\n'
-            '    confidence: 1\n'
-            '  }\n'
-            '}\n'
+            "    confidence: 1\n"
+            "  }\n"
+            "}\n"
         ),
     )
 
@@ -154,13 +164,13 @@ def test_compiler_main_verbose_unhandled_exception_prints_traceback(
     _write_file(
         src,
         (
-            'model M {\n'
-            '  param x: Fraction = 0.1 {\n'
+            "model M {\n"
+            "  param x: Fraction = 0.1 {\n"
             '    source: "unit",\n'
             '    method: "observed",\n'
-            '    confidence: 1\n'
-            '  }\n'
-            '}\n'
+            "    confidence: 1\n"
+            "  }\n"
+            "}\n"
         ),
     )
 

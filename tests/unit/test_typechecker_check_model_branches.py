@@ -8,14 +8,16 @@ from compiler.typechecker import TypeChecker
 
 
 @pytest.mark.unit
-def test_typechecker_check_model_records_param_and_var_mismatches_and_non_boolean_conditions() -> None:
+def test_typechecker_check_model_records_param_and_var_mismatches_and_non_boolean_conditions() -> (
+    None
+):
     src = (
-        'model M {\n'
+        "model M {\n"
         '  param p: Fraction = $1 { source: "s", method: "m", confidence: 0.9 }\n'
-        '  var x: Fraction = $1\n'
-        '  constraint C: 1 { severity: fatal }\n'
-        '  policy P { when: 1, then: x = 1 }\n'
-        '}\n'
+        "  var x: Fraction = $1\n"
+        "  constraint C: 1 { severity: fatal }\n"
+        "  policy P { when: 1, then: x = 1 }\n"
+        "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()

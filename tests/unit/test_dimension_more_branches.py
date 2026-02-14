@@ -35,7 +35,9 @@ def test_dimension_multiply_count_by_scoped_removes_scope() -> None:
 
 @pytest.mark.unit
 def test_dimension_multiply_currency_currency_same_is_dimensionless_and_diff_raises() -> None:
-    assert Dimension.currency("USD").multiply(Dimension.currency("USD")) == Dimension.dimensionless()
+    assert (
+        Dimension.currency("USD").multiply(Dimension.currency("USD")) == Dimension.dimensionless()
+    )
 
     with pytest.raises(ValueError):
         Dimension.currency("USD").multiply(Dimension.currency("EUR"))
@@ -66,7 +68,9 @@ def test_dimension_divide_currency_count_duration_and_generic_inversion() -> Non
     assert scoped == Dimension({"currency": "USD", "scoped": "Customer"})
 
     # Duration / Duration => dimensionless
-    assert Dimension.duration("Month").divide(Dimension.duration("Month")) == Dimension.dimensionless()
+    assert (
+        Dimension.duration("Month").divide(Dimension.duration("Month")) == Dimension.dimensionless()
+    )
 
     # Divide by dimensionless => same dimension
     assert Dimension({"k": 1}).divide(Dimension.dimensionless()) == Dimension({"k": 1})

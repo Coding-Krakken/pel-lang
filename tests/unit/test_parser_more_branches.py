@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from compiler.ast_nodes import Action, Assignment, BlockExpr, Constraint, IfStmt, Lambda, Literal, Policy, Variable
+from compiler.ast_nodes import (
+    Action,
+    Assignment,
+    BlockExpr,
+    Constraint,
+    IfStmt,
+    Lambda,
+    Literal,
+    Policy,
+    Variable,
+)
 from compiler.errors import ParseError
 from compiler.lexer import Lexer
 from compiler.parser import Parser
@@ -30,13 +38,13 @@ def test_parser_parses_lambda_with_no_params() -> None:
 @pytest.mark.unit
 def test_parser_parses_policy_emit_event_action_and_constraint_scope_all_timesteps() -> None:
     src = (
-        'model M {\n'
+        "model M {\n"
         '  constraint c: 1 == 1 { severity: warning, for: all timesteps, message: "m" }\n'
-        '  policy p {\n'
-        '    when: 1 == 1,\n'
+        "  policy p {\n"
+        "    when: 1 == 1,\n"
         '    then: emit event("e", x: 1)\n'
-        '  }\n'
-        '}\n'
+        "  }\n"
+        "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()
@@ -60,11 +68,7 @@ def test_parser_parses_policy_emit_event_action_and_constraint_scope_all_timeste
 @pytest.mark.unit
 def test_parser_parses_if_statement_inside_block_expression() -> None:
     src = (
-        'model M {\n'
-        '  var x = {\n'
-        '    if 1 < 2 { return 1 } else { return 2 }\n'
-        '  }\n'
-        '}\n'
+        "model M {\n" "  var x = {\n" "    if 1 < 2 { return 1 } else { return 2 }\n" "  }\n" "}\n"
     )
 
     model = Parser(Lexer(src).tokenize()).parse()

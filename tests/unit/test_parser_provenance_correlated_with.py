@@ -7,14 +7,14 @@ from compiler.parser import Parser
 @pytest.mark.unit
 def test_parse_provenance_correlated_with_allows_negative_coefficients() -> None:
     source = (
-        'model M {\n'
-        '  param x: Rate per Month = 0.1 {\n'
+        "model M {\n"
+        "  param x: Rate per Month = 0.1 {\n"
         '    source: "s",\n'
         '    method: "m",\n'
-        '    confidence: 0.9,\n'
+        "    confidence: 0.9,\n"
         '    correlated_with: [("y", -0.4), ("z", 0.6)]\n'
-        '  }\n'
-        '}\n'
+        "  }\n"
+        "}\n"
     )
 
     tokens = Lexer(source).tokenize()

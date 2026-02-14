@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import pytest
 
-from compiler.errors import ParseError
-from compiler.lexer import Lexer
-from compiler.parser import Parser
 from compiler.ast_nodes import (
-    BinaryOp,
     IfThenElse,
     Lambda,
     Literal,
     MemberAccess,
     UnaryOp,
 )
+from compiler.errors import ParseError
+from compiler.lexer import Lexer
+from compiler.parser import Parser
 
 
 @pytest.mark.unit
@@ -70,10 +69,10 @@ def test_parser_lambda_with_params_and_if_expression() -> None:
 @pytest.mark.unit
 def test_parser_function_call_multiple_args_and_emit_trailing_comma() -> None:
     src = (
-        'model M {\n'
+        "model M {\n"
         '  policy P { when: 1 == 1, then: emit event("e",) }\n'
-        '  var x = f(1, 2)\n'
-        '}\n'
+        "  var x = f(1, 2)\n"
+        "}\n"
     )
     model = Parser(Lexer(src).tokenize()).parse()
     call = model.vars[0].value
@@ -83,10 +82,10 @@ def test_parser_function_call_multiple_args_and_emit_trailing_comma() -> None:
 @pytest.mark.unit
 def test_parser_provenance_and_constraint_trailing_commas_and_generic_fields() -> None:
     src = (
-        'model M {\n'
+        "model M {\n"
         '  param x: Fraction = 1 { source: "s", method: "m", confidence: 0.9, }\n'
-        '  constraint C: 1 == 1 { severity: fatal, slack: 1, }\n'
-        '}\n'
+        "  constraint C: 1 == 1 { severity: fatal, slack: 1, }\n"
+        "}\n"
     )
     model = Parser(Lexer(src).tokenize()).parse()
     prov = model.params[0].provenance
@@ -99,15 +98,15 @@ def test_parser_provenance_and_constraint_trailing_commas_and_generic_fields() -
 @pytest.mark.unit
 def test_parser_correlated_with_trailing_comma_and_scope_all_timesteps() -> None:
     src = (
-        'model M {\n'
-        '  param x: Fraction = 1 {\n'
+        "model M {\n"
+        "  param x: Fraction = 1 {\n"
         '    source: "s",\n'
         '    method: "m",\n'
-        '    confidence: 0.9,\n'
+        "    confidence: 0.9,\n"
         '    correlated_with: [("y", 0.1),]\n'
-        '  }\n'
-        '  constraint C: 1 == 1 { severity: fatal, for: all timesteps }\n'
-        '}\n'
+        "  }\n"
+        "  constraint C: 1 == 1 { severity: fatal, for: all timesteps }\n"
+        "}\n"
     )
     model = Parser(Lexer(src).tokenize()).parse()
     assert model.params[0].provenance["correlated_with"] == [("y", 0.1)]

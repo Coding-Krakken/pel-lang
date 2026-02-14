@@ -9,7 +9,9 @@ def test_runtime_evaluate_expression_literal_and_variable() -> None:
     state = {"x": 123}
 
     assert runtime.evaluate_expression({"expr_type": "Literal", "literal_value": 5}, state) == 5
-    assert runtime.evaluate_expression({"expr_type": "Variable", "variable_name": "x"}, state) == 123
+    assert (
+        runtime.evaluate_expression({"expr_type": "Variable", "variable_name": "x"}, state) == 123
+    )
 
 
 @pytest.mark.unit

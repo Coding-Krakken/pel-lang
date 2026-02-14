@@ -90,7 +90,10 @@ def test_typechecker_function_call_wrong_arity_records_error() -> None:
     tc = TypeChecker()
     expr = FunctionCall(
         function_name="sqrt",
-        arguments=[Literal(value=1, literal_type="number"), Literal(value=2, literal_type="number")],
+        arguments=[
+            Literal(value=1, literal_type="number"),
+            Literal(value=2, literal_type="number"),
+        ],
     )
     _ = tc.infer_expression(expr)
     assert tc.has_errors()

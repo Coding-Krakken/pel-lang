@@ -34,5 +34,9 @@ def test_number_suffix_m_is_still_supported() -> None:
 
 def test_rate_per_duration_token_stream() -> None:
     tokens = Lexer("$500/1mo").tokenize()
-    assert [t.type for t in tokens[:-1]] == [TokenType.CURRENCY, TokenType.SLASH, TokenType.DURATION]
+    assert [t.type for t in tokens[:-1]] == [
+        TokenType.CURRENCY,
+        TokenType.SLASH,
+        TokenType.DURATION,
+    ]
     assert tokens[2].value == "1mo"

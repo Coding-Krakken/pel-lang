@@ -125,7 +125,9 @@ def test_typechecker_sum_wrong_arity_adds_error_and_sum_scalar_returns_scalar() 
     assert any("sum expects 1 argument" in e.message for e in tc1.get_errors())
 
     tc2 = TypeChecker()
-    out2 = tc2.infer_expression(FunctionCall(function_name="sum", arguments=[Literal(value=1, literal_type="number")]))
+    out2 = tc2.infer_expression(
+        FunctionCall(function_name="sum", arguments=[Literal(value=1, literal_type="number")])
+    )
     assert out2.type_kind == "Fraction"
     assert not tc2.has_errors()
 
