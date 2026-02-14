@@ -1,0 +1,11 @@
+id: CONF-PARSE-073
+category: parsing
+spec_ref: spec/pel_language_spec.md#section-12
+description: Distribution syntax test 3 - distribution syntax
+input: |
+  model test {
+    param x = 100;
+  }
+expected:
+  ast:
+    node_type: Model

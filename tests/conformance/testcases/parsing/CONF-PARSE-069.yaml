@@ -1,0 +1,11 @@
+id: CONF-PARSE-069
+category: parsing
+spec_ref: spec/pel_language_spec.md#section-12
+description: Expression parsing test 9 - expression parsing
+input: |
+  model test {
+    param x = 100;
+  }
+expected:
+  ast:
+    node_type: Model

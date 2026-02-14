@@ -1,0 +1,11 @@
+id: CONF-TYPE-039
+category: typechecking
+spec_ref: spec/pel_language_spec.md#section-13
+description: Currency typing test 9 - currency typing
+input: |
+  model test {
+    param x: number = 100;
+  }
+expected:
+  types:
+    x: number

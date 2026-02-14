@@ -1,0 +1,11 @@
+id: CONF-PARSE-012
+category: parsing
+spec_ref: spec/pel_language_spec.md#section-12
+description: Model declaration test 12 - model declarations
+input: |
+  model test {
+    param x = 100;
+  }
+expected:
+  ast:
+    node_type: Model

@@ -1,0 +1,11 @@
+id: CONF-PARSE-028
+category: parsing
+spec_ref: spec/pel_language_spec.md#section-12
+description: Parameter declaration test 8 - param declarations
+input: |
+  model test {
+    param x = 100;
+  }
+expected:
+  ast:
+    node_type: Model

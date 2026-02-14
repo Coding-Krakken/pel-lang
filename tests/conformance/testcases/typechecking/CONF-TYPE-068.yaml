@@ -1,0 +1,11 @@
+id: CONF-TYPE-068
+category: typechecking
+spec_ref: spec/pel_language_spec.md#section-13
+description: Type inference test 18 - type inference
+input: |
+  model test {
+    param x: number = 100;
+  }
+expected:
+  types:
+    x: number

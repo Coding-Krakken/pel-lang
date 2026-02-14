@@ -1,0 +1,12 @@
+id: CONF-RUN-015
+category: runtime
+spec_ref: spec/pel_language_spec.md#section-15
+description: Expression evaluation test 15 - expression evaluation
+input: |
+  model test {
+    param x = 100;
+    var y = x * 2;
+  }
+expected:
+  values:
+    y: 200

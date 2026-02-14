@@ -1,0 +1,11 @@
+id: CONF-TYPE-012
+category: typechecking
+spec_ref: spec/pel_language_spec.md#section-13
+description: Dimensional analysis test 12 - dimensional analysis
+input: |
+  model test {
+    param x: number = 100;
+  }
+expected:
+  types:
+    x: number

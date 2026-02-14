@@ -18,14 +18,26 @@ import yaml
 import pytest
 
 # Import assertions for use in tests
-from tests.conformance.assertions import (
-    assert_tokens_match,
-    assert_ast_structure,
-    assert_type,
-    assert_dimension_error,
-    assert_parse_error,
-    assert_runtime_value,
-)
+# Use try/except to handle both pytest import and direct script execution
+try:
+    from tests.conformance.assertions import (
+        assert_tokens_match,
+        assert_ast_structure,
+        assert_type,
+        assert_dimension_error,
+        assert_parse_error,
+        assert_runtime_value,
+    )
+except ImportError:
+    # For direct script execution, import from current directory
+    from assertions import (
+        assert_tokens_match,
+        assert_ast_structure,
+        assert_type,
+        assert_dimension_error,
+        assert_parse_error,
+        assert_runtime_value,
+    )
 
 
 def discover_test_cases(testcases_root: Path) -> List[Path]:

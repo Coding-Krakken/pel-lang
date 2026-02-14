@@ -1,0 +1,19 @@
+id: CONF-LEX-004
+category: lexical
+spec_ref: spec/pel_language_spec.md#section-8
+description: Duration literal - seconds
+input: |
+  model test {
+    param x = 45s;
+  }
+expected:
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: EQUALS
+    - type: EOF

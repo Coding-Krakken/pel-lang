@@ -1,0 +1,11 @@
+id: CONF-TYPE-080
+category: typechecking
+spec_ref: spec/pel_language_spec.md#section-13
+description: Distribution type test 10 - distribution types
+input: |
+  model test {
+    param x: number = 100;
+  }
+expected:
+  types:
+    x: number

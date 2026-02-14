@@ -1,0 +1,25 @@
+id: CONF-LEX-003
+category: lexical
+spec_ref: spec/pel_language_spec.md#section-8.2
+description: Duration literal - combined hours and minutes
+input: |
+  model test {
+    param x: duration = 2h30m;
+  }
+expected:
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: COLON
+    - type: DURATION
+    - type: EQUALS
+    - type: DURATION_LITERAL
+      value: 2h30m
+    - type: SEMICOLON
+    - type: RBRACE
+    - type: EOF

@@ -1,0 +1,17 @@
+id: CONF-PROV-013
+category: provenance
+spec_ref: spec/pel_language_spec.md#section-14
+description: Confidence range test 3 - confidence ranges
+input: |
+  model test {
+    param x: number = 100 @{
+      source: "test",
+      date: "2026-01-01",
+      confidence: 0.95
+    };
+  }
+expected:
+  provenance:
+    x:
+      source: test
+      confidence: 0.95

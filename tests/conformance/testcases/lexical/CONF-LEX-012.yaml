@@ -1,0 +1,19 @@
+id: CONF-LEX-012
+category: lexical
+spec_ref: spec/pel_language_spec.md#section-8
+description: Currency literal - EUR
+input: |
+  model test {
+    param x = €50;
+  }
+expected:
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: EQUALS
+    - type: EOF

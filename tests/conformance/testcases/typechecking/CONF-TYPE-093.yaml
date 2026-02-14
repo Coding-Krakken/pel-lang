@@ -1,0 +1,11 @@
+id: CONF-TYPE-093
+category: typechecking
+spec_ref: spec/pel_language_spec.md#section-13
+description: Type error test 3 - type errors
+input: |
+  model test {
+    param x: number = 100;
+  }
+expected:
+  types:
+    x: number

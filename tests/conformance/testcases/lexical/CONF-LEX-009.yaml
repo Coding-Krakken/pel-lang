@@ -1,0 +1,19 @@
+id: CONF-LEX-009
+category: lexical
+spec_ref: spec/pel_language_spec.md#section-8
+description: Duration literal - complex combination
+input: |
+  model test {
+    param x = 1y2mo3d;
+  }
+expected:
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: EQUALS
+    - type: EOF

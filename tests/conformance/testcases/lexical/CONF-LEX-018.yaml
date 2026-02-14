@@ -1,0 +1,19 @@
+id: CONF-LEX-018
+category: lexical
+spec_ref: spec/pel_language_spec.md#section-8
+description: Percentage literal - small decimal
+input: |
+  model test {
+    param x = 0.1%;
+  }
+expected:
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: EQUALS
+    - type: EOF
