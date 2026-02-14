@@ -643,7 +643,7 @@ class TypeChecker:
     
     # ===== Type Conversion and Compatibility =====
     
-    def ast_type_to_pel_type(self, ast_type: Type) -> PELType:
+    def ast_type_to_pel_type(self, ast_type: TypeAnnotation) -> PELType:
         """Convert AST type annotation to PELType."""
         if ast_type.type_kind == "Currency":
             code = ast_type.params.get("currency_code", "USD")
@@ -687,7 +687,7 @@ class TypeChecker:
                 dimension=Dimension.dimensionless()
             )
     
-    def pel_type_to_ast_type(self, pel_type: PELType) -> TypeAnnotationAnnotation:
+    def pel_type_to_ast_type(self, pel_type: PELType) -> TypeAnnotation:
         """Convert PELType to AST type annotation."""
         return TypeAnnotation(type_kind=pel_type.type_kind, params=pel_type.params)
     
