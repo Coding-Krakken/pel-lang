@@ -159,27 +159,159 @@ pytest -m integration
 
 ### Development Workflow
 
+#### 1. Create a Feature Branch
+
 ```bash
-# Create a feature branch
 git checkout -b feature/your-feature-name
+```
 
-# Make changes, add tests
+#### 2. Install Pre-commit Hooks
 
-# Run tests
-pytest
+```bash
+# Install hooks to run automatically on commit
+make install-hooks
+```
 
-# Format code
-make fmt
+This installs git hooks that run:
+- **black**: Code formatting
+- **ruff**: Linting
+- **mypy**: Type checking (informational)
 
-# Lint
-make lint
+#### 3. Make Changes
 
-# Commit with descriptive message
+- Write your code
+- Add or update tests
+- Update documentation if needed
+
+#### 4. Run CI Locally
+
+Before committing, ensure all CI checks pass:
+
+```bash
+# Run full CI suite (lint, typecheck, test)
+make ci
+```
+
+Or run individual checks:
+
+```bash
+make lint       # Code formatting (black, ruff)
+make typecheck  # Type checking (informational)
+make test       # Tests with coverage ≥95%
+```
+
+#### 5. Commit Your Changes
+
+```bash
+# Stage changes
+git add .
+
+# Commit (pre-commit hooks run automatically)
 git commit -m "feat: Add support for X"
+```
 
-# Push and open pull request
+**Commit message format:**
+- `feat: ...` - New feature
+- `fix: ...` - Bug fix
+- `docs: ...` - Documentation changes
+- `test: ...` - Test changes
+- `refactor: ...` - Code refactoring
+- `chore: ...` - Build/tooling changes
+
+#### 6. Push and Create Pull Request
+
+```bash
+# Push to your fork
 git push origin feature/your-feature-name
 ```
+
+Then create a pull request on GitHub.
+
+### Running CI Locally
+
+The project uses a multi-stage CI pipeline. All checks must pass before merging.
+
+#### Quick Check
+
+```bash
+make ci
+```
+
+This runs all CI stages:
+1. **Lint**: black --check, ruff check
+2. **Typecheck**: mypy (informational, won't fail)
+3. **Test**: pytest with ≥95% coverage
+
+#### Individual CI Jobs
+
+```bash
+# Lint only
+make lint
+
+# Type check only  
+make typecheck
+
+# Tests only
+make test
+```
+
+#### CI Coverage Requirements
+
+- **Minimum coverage**: 95%
+- **Current coverage**: 100%
+
+Tests automatically fail if coverage drops below 95%:
+
+```bash
+pytest --cov=compiler --cov=runtime --cov-fail-under=95
+```
+
+#### Test Specific Files
+
+```bash
+# Run single test file
+pytest tests/unit/test_parser.py -v
+
+# Run tests matching pattern
+pytest tests/unit/test_parser*.py -v
+
+# Run with coverage report
+pytest tests/unit/test_parser.py --cov=compiler.parser --cov-report=term
+```
+
+#### Pre-commit Hooks
+
+The repository uses pre-commit hooks to catch issues early:
+
+```bash
+# Install (do this once)
+make install-hooks
+
+# Manually run hooks on all files
+pre-commit run --all-files
+
+# Skip hooks (not recommended)
+git commit --no-verify
+```
+
+Hooks run automatically on `git commit`:
+1. **ruff**: Auto-fixes common issues
+2. **black**: Formats code
+3. **mypy**: Type checks (informational)
+
+#### CI Workflow
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on:
+- Pushes to `main` or `premerge/**` branches
+- Pull requests targeting `main`
+
+Four parallel jobs run:
+1. **lint** (Python 3.12)
+2. **typecheck** (Python 3.12, informational)
+3. **test** (Python 3.10, 3.11, 3.12 matrix)
+4. **docs** (Python 3.12)
+
+See `docs/ci/BRANCH_PROTECTION.md` for branch protection configuration.
 
 ---
 
