@@ -1,0 +1,264 @@
+// Integration Example: SaaS Company with Cashflow and Retention Analysis
+// Demonstrates: stdlib cashflow + retention modules for realistic SaaS modeling
+
+// NOTE: This example demonstrates the intended usage of stdlib modules.
+// Due to current parser limitations (see IMMEDIATE_FIXES_NEEDED.md), this file
+// will not compile until duration literals and rate-per-duration parsing are implemented.
+// The syntax shown here is the target syntax once those features are complete.
+
+model saas_with_cashflow_retention {
+  // === Company Overview ===
+  // Monthly Recurring Revenue (MRR) based SaaS company
+  // 30-day payment terms on invoices
+  // Growing customer base with expansion revenue
+  
+  // === Core Business Metrics ===
+  
+  param starting_mrr: Currency<USD> per Month = $100_000/1mo {
+    source: "billing_system",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Monthly recurring revenue as of month 0"
+  }
+  
+  param initial_customer_count: Count<Customer> = 500 {
+    source: "customer_database",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Active customers at start of analysis"
+  }
+  
+  param arpu: Currency<USD> per Month per Customer = $200/1mo {
+    source: "billing_system",
+    method: "derived",
+    confidence: 0.90,
+    notes: "Average revenue per user (MRR / customers)"
+  }
+  
+  // === Retention Metrics ===
+  
+  param monthly_churn_rate: Fraction = 0.05 {
+    source: "retention_analysis",
+    method: "fitted",
+    confidence: 0.85,
+    notes: "5% monthly customer churn rate"
+  }
+  
+  param expansion_rate: Fraction = 0.03 {
+    source: "upsell_tracking",
+    method: "observed",
+    confidence: 0.80,
+    notes: "3% monthly revenue expansion from existing customers"
+  }
+  
+  param contraction_rate: Fraction = 0.01 {
+    source: "downgrade_tracking",
+    method: "observed",
+    confidence: 0.80,
+    notes: "1% monthly revenue contraction from downgrades"
+  }
+  
+  // === Cashflow Parameters ===
+  
+  param payment_terms: Duration<Day> = 30d {
+    source: "contracts",
+    method: "policy",
+    confidence: 1.0,
+    notes: "Net-30 payment terms for all customers"
+  }
+  
+  param ar_current_pct: Fraction = 0.70 {
+    source: "ar_aging_report",
+    method: "observed",
+    confidence: 0.90,
+    notes: "70% of AR is current (0-30 days)"
+  }
+  
+  param ar_aged_30_pct: Fraction = 0.20 {
+    source: "ar_aging_report",
+    method: "observed",
+    confidence: 0.90,
+    notes: "20% of AR is 30-60 days old"
+  }
+  
+  param ar_aged_60_pct: Fraction = 0.08 {
+    source: "ar_aging_report",
+    method: "observed",
+    confidence: 0.90,
+    notes: "8% of AR is 60-90 days old"
+  }
+  
+  param ar_aged_90_pct: Fraction = 0.02 {
+    source: "ar_aging_report",
+    method: "observed",
+    confidence: 0.90,
+    notes: "2% of AR is 90+ days old"
+  }
+  
+  param bad_debt_rate: Fraction = 0.02 {
+    source: "finance_policy",
+    method: "assumption",
+    confidence: 0.70,
+    notes: "2% bad debt reserve rate"
+  }
+  
+  // === Operating Expenses ===
+  
+  param headcount: Count<Employee> = 25 {
+    source: "hr_system",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Full-time employees"
+  }
+  
+  param avg_salary: Currency<USD> per Month per Employee = $8_000/1mo {
+    source: "payroll_system",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Average monthly salary per employee"
+  }
+  
+  param payroll_tax_rate: Fraction = 0.15 {
+    source: "tax_code",
+    method: "policy",
+    confidence: 1.0,
+    notes: "15% payroll tax rate (employer portion)"
+  }
+  
+  param other_opex: Currency<USD> per Month = $50_000/1mo {
+    source: "budget",
+    method: "assumption",
+    confidence: 0.75,
+    notes: "Other operating expenses (hosting, marketing, etc.)"
+  }
+  
+  // === Working Capital ===
+  
+  param starting_cash: Currency<USD> = $500_000 {
+    source: "bank_statement",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Cash balance at start of analysis"
+  }
+  
+  // === Calculations Using stdlib.cashflow ===
+  
+  // Accounts Receivable
+  var ar_balance = ar_with_payment_terms(starting_mrr, payment_terms)
+  
+  var ar_collectible = ar_aging_buckets(
+    ar_balance,
+    ar_current_pct,
+    ar_aged_30_pct,
+    ar_aged_60_pct,
+    ar_aged_90_pct
+  )
+  
+  var dso = days_sales_outstanding(ar_balance, starting_mrr)
+  
+  var bad_debt_reserve_amount = bad_debt_reserve(ar_balance, bad_debt_rate)
+  
+  // Payroll
+  var monthly_payroll = payroll_timing(headcount, avg_salary, 15d)
+  
+  var payroll_taxes = payroll_taxes_timing(monthly_payroll, payroll_tax_rate, 15d)
+  
+  // Working Capital
+  var total_expenses = monthly_payroll + payroll_taxes + other_opex
+  
+  var current_assets = starting_cash + ar_collectible
+  var current_liabilities = total_expenses
+  
+  var working_cap = working_capital(current_assets, current_liabilities)
+  
+  // Cash Flow
+  var monthly_net_income = starting_mrr - total_expenses
+  
+  var ocf = operating_cash_flow(
+    monthly_net_income,
+    $0/1mo,  // No depreciation for SaaS
+    $0/1mo   // No working capital change in this period
+  )
+  
+  var fcf = free_cash_flow(ocf, $0/1mo)  // No CapEx
+  
+  var monthly_burn = burn_rate(starting_cash, starting_cash + fcf, 1mo)
+  
+  var runway = runway_months(starting_cash, monthly_burn)
+  
+  // === Calculations Using stdlib.retention ===
+  
+  // Retention Analysis
+  var retention_rate: Fraction = 1.0 - monthly_churn_rate
+  
+  var survival_rate = cohort_survival_rate(
+    initial_customer_count * retention_rate,
+    initial_customer_count
+  )
+  
+  var half_life = cohort_half_life(monthly_churn_rate)
+  
+  // Churn Metrics
+  var churned_customers = customer_churn_rate(
+    initial_customer_count * monthly_churn_rate,
+    initial_customer_count
+  )
+  
+  var churned_mrr = revenue_churn_rate(
+    starting_mrr * monthly_churn_rate,
+    starting_mrr
+  )
+  
+  // Expansion/Contraction
+  var expansion_mrr_amount = expansion_mrr(
+    starting_mrr * expansion_rate,
+    $0/1mo  // No cross-sell in this simple model
+  )
+  
+  var contraction_mrr_amount = contraction_mrr(
+    starting_mrr * contraction_rate,
+    $0/1mo  // No discount MRR
+  )
+  
+  // Net Dollar Retention
+  var ndr = net_dollar_retention(
+    starting_mrr,
+    expansion_mrr_amount,
+    contraction_mrr_amount,
+    starting_mrr * monthly_churn_rate
+  )
+  
+  var gdr = gross_dollar_retention(
+    starting_mrr,
+    starting_mrr * monthly_churn_rate,
+    contraction_mrr_amount
+  )
+  
+  // Quick Ratio (simplified: new MRR = 0 for this cohort analysis)
+  var qr = quick_ratio(
+    $0/1mo,  // No new MRR in cohort analysis
+    expansion_mrr_amount,
+    starting_mrr * monthly_churn_rate,
+    contraction_mrr_amount
+  )
+  
+  // LTV Calculation
+  var customer_ltv = ltv_from_retention_curve(arpu, retention_rate)
+  
+  var discounted_customer_ltv = discounted_ltv(
+    arpu,
+    retention_rate,
+    0.01  // 1% monthly discount rate
+  )
+  
+  // === Output Summary ===
+  
+  // This would generate a report showing:
+  // - Cash position: $500k starting, runway calculated
+  // - DSO: ~30 days (with 30-day terms)
+  // - Working capital: positive buffer
+  // - NDR: >100% if expansion > churn + contraction
+  // - GDR: <100% (pure retention without expansion)
+  // - Customer LTV: ~$4000 at 5% churn
+  // - Half-life: ~14 months at 5% churn
+}
