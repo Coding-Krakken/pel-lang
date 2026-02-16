@@ -131,6 +131,7 @@ class IRGenerator:
         
         return list(deps)
     
+<<<<<<< HEAD
     def generate_type(self, typ: TypeAnnotation) -> dict[str, Any]:
         """Generate IR type annotation."""
         result: dict[str, Any] = {"type_kind": typ.type_kind}
