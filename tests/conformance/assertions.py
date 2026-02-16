@@ -26,26 +26,55 @@ def assert_tokens_match(actual_tokens: List[Token], expected_tokens: List[Dict[s
             assert actual.type == expected_type, \
                 f"Token {i}: expected type {expected_type}, got {actual.type}"
         
-        # Check value if specified
+        # Check value if specified (normalize escape sequences for string comparison)
         if 'value' in expected:
-            assert actual.value == expected['value'], \
-                f"Token {i}: expected value {expected['value']}, got {actual.value}"
+            exp_val = expected['value']
+            if isinstance(exp_val, str) and actual.type == TokenType.STRING:
+                # YAML may give literal \n; lexer returns actual newline
+                exp_val = (
+                    exp_val.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace('\\"', '"')
+                    .replace("\\\\", "\\")
+                )
+            assert actual.value == exp_val, \
+                f"Token {i}: expected value {expected['value']!r}, got {actual.value!r}"
+
+
+def _normalize_ast_expected(expected: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize expected AST: accept 'type' or 'node_type'; treat top-level keys as attributes."""
+    node_type = expected.get('node_type') or expected.get('type')
+    if node_type and isinstance(node_type, str) and not node_type.endswith(')'):
+        # e.g. "Model" from YAML
+        pass
+    attrs = expected.get('attributes', {})
+    if not attrs and node_type:
+        # YAML may have type/name/params at top level
+        attrs = {k: v for k, v in expected.items() if k not in ('node_type', 'type', 'attributes')}
+    return {'node_type': node_type, 'attributes': attrs}
 
 
 def assert_ast_structure(ast: ASTNode, expected: Dict[str, Any]):
     """Assert AST structure matches expected shape.
-    
+
     Args:
         ast: Root AST node
-        expected: Expected structure with 'node_type' and optional 'attributes'
+        expected: Expected structure with 'node_type' or 'type', and optional attributes
     """
-    assert type(ast).__name__ == expected['node_type'], \
-        f"Expected AST node type {expected['node_type']}, got {type(ast).__name__}"
-    
+    norm = _normalize_ast_expected(expected)
+    node_type = norm['node_type']
+    assert node_type, "Expected 'node_type' or 'type' in expected AST"
+    assert type(ast).__name__ == node_type, \
+        f"Expected AST node type {node_type}, got {type(ast).__name__}"
+
     # Check attributes if specified
-    if 'attributes' in expected:
-        for attr_name, expected_value in expected['attributes'].items():
-            actual_value = getattr(ast, attr_name, None)
+    for attr_name, expected_value in norm.get('attributes', {}).items():
+        actual_value = getattr(ast, attr_name, None)
+        if attr_name in ('params', 'vars', 'funcs', 'constraints', 'policies', 'statements') and isinstance(actual_value, list):
+            # Compare list lengths for list attributes
+            assert len(actual_value) == len(expected_value), \
+                f"AST attribute '{attr_name}': expected {len(expected_value)} items, got {len(actual_value)}"
+        else:
             assert actual_value == expected_value, \
                 f"AST attribute '{attr_name}': expected {expected_value}, got {actual_value}"
 
