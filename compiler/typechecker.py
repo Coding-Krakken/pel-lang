@@ -687,7 +687,7 @@ class TypeChecker:
                 dimension=Dimension.dimensionless()
             )
     
-    def pel_type_to_ast_type(self, pel_type: PELType) -> TypeAnnotationAnnotation:
+    def pel_type_to_ast_type(self, pel_type: PELType) -> TypeAnnotation:
         """Convert PELType to AST type annotation."""
         return TypeAnnotation(type_kind=pel_type.type_kind, params=pel_type.params)
     
