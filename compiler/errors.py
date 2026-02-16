@@ -11,7 +11,6 @@ Implements error reporting with codes E0xxx from language spec
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -20,37 +19,38 @@ class SourceLocation:
     filename: str
     line: int
     column: int
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return f"{self.filename}:{self.line}:{self.column}"
+
 
 
 class CompilerError(Exception):
     """Base class for all compilation errors."""
-    
+
     def __init__(
         self,
         code: str,
         message: str,
-        location: Optional[SourceLocation] = None,
-        hint: Optional[str] = None
-    ):
+        location: SourceLocation | None = None,
+        hint: str | None = None
+    ) -> None:
         self.code = code
         self.message = message
         self.location = location
         self.hint = hint
         super().__init__(self._format())
-    
+
     def _format(self) -> str:
         """Format error message."""
         parts = [f"error[{self.code}]: {self.message}"]
-        
+
         if self.location:
             parts.insert(0, f"--> {self.location}")
-        
+
         if self.hint:
             parts.append(f"  = hint: {self.hint}")
-        
+
         return "\n".join(parts)
 
 
@@ -61,12 +61,12 @@ class LexicalError(CompilerError):
     pass
 
 
-def lexical_error(msg: str, location: Optional[SourceLocation] = None) -> LexicalError:
+def lexical_error(msg: str, location: SourceLocation | None = None) -> LexicalError:
     """E0001: Generic lexical error."""
     return LexicalError("E0001", msg, location)
 
 
-def invalid_number(text: str, location: Optional[SourceLocation] = None) -> LexicalError:
+def invalid_number(text: str, location: SourceLocation | None = None) -> LexicalError:
     """E0002: Invalid number literal."""
     return LexicalError(
         "E0002",
@@ -76,7 +76,7 @@ def invalid_number(text: str, location: Optional[SourceLocation] = None) -> Lexi
     )
 
 
-def unterminated_string(location: Optional[SourceLocation] = None) -> LexicalError:
+def unterminated_string(location: SourceLocation | None = None) -> LexicalError:
     """E0003: Unterminated string literal."""
     return LexicalError(
         "E0003",
@@ -93,7 +93,7 @@ class TypeError(CompilerError):
     pass
 
 
-def type_mismatch(expected: str, got: str, location: Optional[SourceLocation] = None) -> TypeError:
+def type_mismatch(expected: str, got: str, location: SourceLocation | None = None) -> TypeError:
     """E0100: Type mismatch."""
     return TypeError(
         "E0100",
@@ -102,7 +102,7 @@ def type_mismatch(expected: str, got: str, location: Optional[SourceLocation] = 
     )
 
 
-def undefined_variable(name: str, location: Optional[SourceLocation] = None) -> TypeError:
+def undefined_variable(name: str, location: SourceLocation | None = None) -> TypeError:
     """E0101: Undefined variable."""
     return TypeError(
         "E0101",
@@ -119,7 +119,7 @@ class DimensionalError(CompilerError):
     pass
 
 
-def dimensional_mismatch(op: str, left: str, right: str, location: Optional[SourceLocation] = None) -> DimensionalError:
+def dimensional_mismatch(op: str, left: str, right: str, location: SourceLocation | None = None) -> DimensionalError:
     """E0200: Dimensional mismatch."""
     return DimensionalError(
         "E0200",
@@ -129,7 +129,7 @@ def dimensional_mismatch(op: str, left: str, right: str, location: Optional[Sour
     )
 
 
-def currency_mismatch(currency1: str, currency2: str, location: Optional[SourceLocation] = None) -> DimensionalError:
+def currency_mismatch(currency1: str, currency2: str, location: SourceLocation | None = None) -> DimensionalError:
     """E0203: Currency mismatch."""
     return DimensionalError(
         "E0203",
@@ -139,7 +139,7 @@ def currency_mismatch(currency1: str, currency2: str, location: Optional[SourceL
     )
 
 
-def rate_unit_mismatch(unit1: str, unit2: str, location: Optional[SourceLocation] = None) -> DimensionalError:
+def rate_unit_mismatch(unit1: str, unit2: str, location: SourceLocation | None = None) -> DimensionalError:
     """E0204: Rate unit mismatch."""
     return DimensionalError(
         "E0204",
@@ -156,7 +156,7 @@ class CausalityError(CompilerError):
     pass
 
 
-def future_reference(var_name: str, location: Optional[SourceLocation] = None) -> CausalityError:
+def future_reference(var_name: str, location: SourceLocation | None = None) -> CausalityError:
     """E0300: Future reference in TimeSeries."""
     return CausalityError(
         "E0300",
@@ -166,7 +166,7 @@ def future_reference(var_name: str, location: Optional[SourceLocation] = None) -
     )
 
 
-def cyclic_dependency(var_name: str, cycle: str, location: Optional[SourceLocation] = None) -> CausalityError:
+def cyclic_dependency(var_name: str, cycle: str, location: SourceLocation | None = None) -> CausalityError:
     """E0301: Cyclic dependency."""
     return CausalityError(
         "E0301",
@@ -183,7 +183,7 @@ class ProvenanceError(CompilerError):
     pass
 
 
-def missing_provenance(param_name: str, location: Optional[SourceLocation] = None) -> ProvenanceError:
+def missing_provenance(param_name: str, location: SourceLocation | None = None) -> ProvenanceError:
     """E0400: Missing provenance block."""
     return ProvenanceError(
         "E0400",
@@ -193,17 +193,17 @@ def missing_provenance(param_name: str, location: Optional[SourceLocation] = Non
     )
 
 
-def missing_provenance_field(param_name: str, field: str, location: Optional[SourceLocation] = None) -> ProvenanceError:
+def missing_provenance_field(param_name: str, field: str, location: SourceLocation | None = None) -> ProvenanceError:
     """E0401: Missing required provenance field."""
     return ProvenanceError(
         "E0401",
         f"Missing required field '{field}' in provenance for '{param_name}'",
         location,
-        hint=f"Provenance must include: source, method, confidence"
+        hint="Provenance must include: source, method, confidence"
     )
 
 
-def invalid_confidence(value: float, location: Optional[SourceLocation] = None) -> ProvenanceError:
+def invalid_confidence(value: float, location: SourceLocation | None = None) -> ProvenanceError:
     """E0402: Invalid confidence value."""
     return ProvenanceError(
         "E0402",
@@ -219,7 +219,7 @@ class ConstraintError(CompilerError):
     pass
 
 
-def invalid_constraint_condition(msg: str, location: Optional[SourceLocation] = None) -> ConstraintError:
+def invalid_constraint_condition(msg: str, location: SourceLocation | None = None) -> ConstraintError:
     """E0500: Invalid constraint condition."""
     return ConstraintError(
         "E0500",
@@ -229,7 +229,7 @@ def invalid_constraint_condition(msg: str, location: Optional[SourceLocation] = 
     )
 
 
-def contradictory_constraints(constraint1: str, constraint2: str, location: Optional[SourceLocation] = None) -> ConstraintError:
+def contradictory_constraints(constraint1: str, constraint2: str, location: SourceLocation | None = None) -> ConstraintError:
     """E0501: Contradictory constraints."""
     return ConstraintError(
         "E0501",
@@ -246,7 +246,7 @@ class DistributionError(CompilerError):
     pass
 
 
-def invalid_distribution_param(dist_type: str, param: str, reason: str, location: Optional[SourceLocation] = None) -> DistributionError:
+def invalid_distribution_param(dist_type: str, param: str, reason: str, location: SourceLocation | None = None) -> DistributionError:
     """E0600: Invalid distribution parameter."""
     return DistributionError(
         "E0600",
@@ -255,7 +255,7 @@ def invalid_distribution_param(dist_type: str, param: str, reason: str, location
     )
 
 
-def invalid_correlation(var1: str, var2: str, coef: float, location: Optional[SourceLocation] = None) -> DistributionError:
+def invalid_correlation(var1: str, var2: str, coef: float, location: SourceLocation | None = None) -> DistributionError:
     """E0601: Invalid correlation coefficient."""
     return DistributionError(
         "E0601",
@@ -264,7 +264,7 @@ def invalid_correlation(var1: str, var2: str, coef: float, location: Optional[So
     )
 
 
-def correlation_matrix_not_psd(location: Optional[SourceLocation] = None) -> DistributionError:
+def correlation_matrix_not_psd(location: SourceLocation | None = None) -> DistributionError:
     """E0602: Correlation matrix not positive semi-definite."""
     return DistributionError(
         "E0602",
@@ -281,7 +281,7 @@ class ParseError(CompilerError):
     pass
 
 
-def unexpected_token(expected: str, got: str, location: Optional[SourceLocation] = None) -> ParseError:
+def unexpected_token(expected: str, got: str, location: SourceLocation | None = None) -> ParseError:
     """E0700: Unexpected token."""
     return ParseError(
         "E0700",
@@ -290,7 +290,7 @@ def unexpected_token(expected: str, got: str, location: Optional[SourceLocation]
     )
 
 
-def syntax_error(msg: str, location: Optional[SourceLocation] = None) -> ParseError:
+def syntax_error(msg: str, location: SourceLocation | None = None) -> ParseError:
     """E0701: Generic syntax error."""
     return ParseError(
         "E0701",
@@ -303,8 +303,8 @@ def syntax_error(msg: str, location: Optional[SourceLocation] = None) -> ParseEr
 
 class InternalError(CompilerError):
     """Internal compiler errors (bugs)."""
-    
-    def __init__(self, message: str, location: Optional[SourceLocation] = None):
+
+    def __init__(self, message: str, location: SourceLocation | None = None) -> None:
         super().__init__(
             "E9999",
             f"Internal compiler error: {message}",

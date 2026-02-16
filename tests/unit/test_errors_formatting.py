@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from compiler.errors import (
-    SourceLocation,
     CompilerError,
+    SourceLocation,
     invalid_number,
     unterminated_string,
 )

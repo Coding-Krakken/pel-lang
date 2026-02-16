@@ -27,4 +27,4 @@ jobs:
           python -m pip install .[dev]
 
       - name: Pytest
-        run: pytest
+        run: pytest --ignore=.github/prompts

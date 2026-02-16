@@ -9,10 +9,10 @@ from compiler.ast_nodes import (
     IfThenElse,
     Indexing,
     Literal,
-    TypeAnnotation,
     UnaryOp,
     Variable,
 )
+from compiler.errors import TypeError as PELTypeError
 from compiler.typechecker import PELType, TypeChecker, TypeEnvironment
 
 
@@ -52,7 +52,7 @@ def test_typechecker_check_raises_first_error() -> None:
 
     # Force an error by calling infer_expression on an undefined variable then invoking check().
     tc.infer_expression(Variable(name="nope"))
-    with pytest.raises(Exception):
+    with pytest.raises(PELTypeError):
         tc.check(model)  # type: ignore[arg-type]
 
 

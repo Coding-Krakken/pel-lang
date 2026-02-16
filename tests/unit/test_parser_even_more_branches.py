@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from compiler.lexer import Lexer
-from compiler.parser import Parser
 from compiler.ast_nodes import (
     ArrayLiteral,
     BinaryOp,
@@ -11,6 +9,8 @@ from compiler.ast_nodes import (
     FuncDecl,
     FunctionCall,
 )
+from compiler.lexer import Lexer
+from compiler.parser import Parser
 
 
 @pytest.mark.unit
