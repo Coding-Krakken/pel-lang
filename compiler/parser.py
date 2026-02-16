@@ -289,7 +289,7 @@ class Parser:
     
     # ===== Types =====
     
-    def parse_type(self) -> TypeAnnotationAnnotation:
+    def parse_type(self) -> TypeAnnotation:
         """Parse type annotation."""
         # Primitive types
         if self.match(TokenType.CURRENCY_TYPE):
