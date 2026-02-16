@@ -1,0 +1,3 @@
+[submodule ".github/prompts"]
+	path = .github/prompts
+	url = https://github.com/Coding-Krakken/prompts.git
