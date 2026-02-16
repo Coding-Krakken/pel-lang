@@ -1,0 +1,9 @@
+id: CONF-PARSE-046
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Multiple params
+input: "model test {\n  param x = 1;\n  param y = 2;\n  param z = 3;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

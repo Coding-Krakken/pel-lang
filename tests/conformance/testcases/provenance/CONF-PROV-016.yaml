@@ -1,0 +1,9 @@
+id: CONF-PROV-016
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Method classification
+input: "model test {\n  param observed = 100 { method: \"observed\" }\n  param fitted\
+  \ = 200 { method: \"fitted\" }\n  param derived = 300 { method: \"derived\" }\n\
+  \  param assumed = 400 { method: \"assumption\" }\n}\n"
+expected:
+  type: success

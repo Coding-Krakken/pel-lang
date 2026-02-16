@@ -1,0 +1,26 @@
+id: CONF-PARSE-005
+category: parsing
+spec_ref: spec/pel_language_spec.md#parameter-declaration
+description: Param with Rate type
+input: "model test {\n  param growth: Rate per Month = 0.05/1mo;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    params:
+    - type: ParamDecl
+      name: growth
+      type_annotation:
+        type_kind: Rate
+        params:
+          per_unit: Month
+      default_value:
+        type: BinaryOp
+        operator: /
+        left:
+          type: Literal
+          value: 0.05
+        right:
+          type: Literal
+          value: 1mo

@@ -1,0 +1,17 @@
+id: CONF-LEX-011
+category: lexical
+spec_ref: spec/pel_language_spec.md#identifiers
+description: Identifiers - simple
+input: 'revenue total_cost annual_growth_rate
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: IDENTIFIER
+    value: revenue
+  - type: IDENTIFIER
+    value: total_cost
+  - type: IDENTIFIER
+    value: annual_growth_rate
+  - type: EOF

@@ -1,0 +1,11 @@
+id: CONF-TYPE-074
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Type propagation through variables
+input: "model test {\n  var a = $100;\n  var b = a;\n  var c = b;\n}\n"
+expected:
+  type: success
+  types:
+    a: Currency<USD>
+    b: Currency<USD>
+    c: Currency<USD>

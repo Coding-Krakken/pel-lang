@@ -1,0 +1,9 @@
+id: CONF-TYPE-006
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: String literal type
+input: "model test {\n  var x = \"hello\";\n}\n"
+expected:
+  type: success
+  types:
+    x: String

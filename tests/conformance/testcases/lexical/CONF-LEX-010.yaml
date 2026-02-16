@@ -1,0 +1,17 @@
+id: CONF-LEX-010
+category: lexical
+spec_ref: spec/pel_language_spec.md#keywords
+description: Keywords - all declaration types
+input: 'model func param var constraint policy
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: MODEL
+  - type: FUNC
+  - type: PARAM
+  - type: VAR
+  - type: CONSTRAINT
+  - type: POLICY
+  - type: EOF

@@ -1,0 +1,8 @@
+id: CONF-PROV-018
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Notes and documentation
+input: "model test {\n  param x = 42 {\n    notes: \"This is a test parameter\",\n\
+  \    source: \"test_suite\"\n  }\n}\n"
+expected:
+  type: success

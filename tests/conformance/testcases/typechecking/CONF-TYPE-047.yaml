@@ -1,0 +1,9 @@
+id: CONF-TYPE-047
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: String comparison
+input: "model test {\n  var result = \"a\" == \"b\";\n}\n"
+expected:
+  type: success
+  types:
+    result: Bool

@@ -1,8 +1,8 @@
-id: CONF-LEX-001
+id: CONF-LEX-003
 category: lexical
 spec_ref: spec/pel_language_spec.md#duration-literals
-description: Duration literal - days
-input: "model test {\n  param x: Duration = 2d;\n}\n"
+description: Duration literal - months
+input: "model test {\n  param x: Duration = 6mo;\n}\n"
 expected:
   type: success
   tokens:
@@ -17,7 +17,7 @@ expected:
   - type: DURATION_TYPE
   - type: ASSIGN
   - type: DURATION
-    value: 2d
+    value: 6mo
   - type: SEMICOLON
   - type: RBRACE
   - type: EOF

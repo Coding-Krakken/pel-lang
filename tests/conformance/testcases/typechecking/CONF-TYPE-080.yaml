@@ -1,0 +1,10 @@
+id: CONF-TYPE-080
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Multiple return paths different types
+input: "model test {\n  func mixed(flag: Bool) -> Int {\n    if flag then return 42\
+  \ else return \"error\";\n  }\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Inconsistent return types

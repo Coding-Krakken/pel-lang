@@ -1,0 +1,9 @@
+id: CONF-TYPE-020
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Division - currency by duration
+input: "model test {\n  var result = $1000 / 30d;\n}\n"
+expected:
+  type: success
+  types:
+    result: Rate

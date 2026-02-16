@@ -1,0 +1,10 @@
+id: CONF-TYPE-072
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Dimensional analysis - currency * duration
+input: "model test {\n  var rate = $100/1d;\n  var time = 30d;\n  var amount = rate\
+  \ * time;\n}\n"
+expected:
+  type: success
+  types:
+    amount: Currency<USD>

@@ -1,0 +1,10 @@
+id: CONF-RUN-040
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Assumption validation
+input: "model test {\n  param x = 100 { method: \"assumption\" }\n  constraint valid_assumption:\
+  \ x > 0;\n}\n"
+expected:
+  type: success
+  values:
+    assumption_valid: true

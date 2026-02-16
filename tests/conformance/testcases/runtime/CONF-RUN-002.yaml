@@ -1,0 +1,9 @@
+id: CONF-RUN-002
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Float arithmetic
+input: "model test {\n  var x = 10.5 / 2;\n}\n"
+expected:
+  type: success
+  values:
+    x: 5.25

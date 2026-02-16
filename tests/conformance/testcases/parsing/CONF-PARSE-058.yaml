@@ -1,0 +1,10 @@
+id: CONF-PARSE-058
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Correlated params
+input: "model test {\n  param a: Int = 1 {\n    correlated_with: [(\"b\", 0.5)]\n\
+  \  }\n  param b: Int = 2;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

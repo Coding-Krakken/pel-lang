@@ -1,8 +1,8 @@
-id: CONF-LEX-001
+id: CONF-LEX-002
 category: lexical
 spec_ref: spec/pel_language_spec.md#duration-literals
-description: Duration literal - days
-input: "model test {\n  param x: Duration = 2d;\n}\n"
+description: Duration literal - days only
+input: "model test {\n  param x: Duration = 30d;\n}\n"
 expected:
   type: success
   tokens:
@@ -17,7 +17,7 @@ expected:
   - type: DURATION_TYPE
   - type: ASSIGN
   - type: DURATION
-    value: 2d
+    value: 30d
   - type: SEMICOLON
   - type: RBRACE
   - type: EOF

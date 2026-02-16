@@ -1,0 +1,17 @@
+id: CONF-LEX-017
+category: lexical
+spec_ref: spec/pel_language_spec.md#string-literals
+description: String literals - simple
+input: '"hello" "world" "PEL language"
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: STRING
+    value: hello
+  - type: STRING
+    value: world
+  - type: STRING
+    value: PEL language
+  - type: EOF

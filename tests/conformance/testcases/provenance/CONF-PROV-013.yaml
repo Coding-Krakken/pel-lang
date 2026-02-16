@@ -1,0 +1,8 @@
+id: CONF-PROV-013
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Provenance through functions
+input: "model test {\n  func double(x: Int) -> Int { return x * 2; }\n  param base\
+  \ = 10 { source: \"input\" }\n  var result = double(base);\n}\n"
+expected:
+  type: success

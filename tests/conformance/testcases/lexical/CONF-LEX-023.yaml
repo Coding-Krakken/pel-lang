@@ -1,0 +1,23 @@
+id: CONF-LEX-023
+category: lexical
+spec_ref: spec/pel_language_spec.md#delimiters
+description: Delimiters
+input: '( ) { } [ ] : ; , . = ->
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: LPAREN
+  - type: RPAREN
+  - type: LBRACE
+  - type: RBRACE
+  - type: LBRACKET
+  - type: RBRACKET
+  - type: COLON
+  - type: SEMICOLON
+  - type: COMMA
+  - type: DOT
+  - type: ASSIGN
+  - type: ARROW
+  - type: EOF

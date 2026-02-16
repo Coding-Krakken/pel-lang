@@ -1,0 +1,9 @@
+id: CONF-PARSE-051
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: LogNormal distribution
+input: "model test {\n  param cost: Currency<USD> = ~LogNormal(μ=$100, σ=$20);\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

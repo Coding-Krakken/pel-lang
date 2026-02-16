@@ -1,0 +1,9 @@
+id: CONF-PARSE-078
+category: parsing
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - Missing function body
+input: "model test {\n  func calc() -> Int;\n}\n"
+expected:
+  type: error
+  error_type: ParseError
+  error_message: Expected function body

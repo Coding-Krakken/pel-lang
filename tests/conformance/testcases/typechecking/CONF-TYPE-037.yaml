@@ -1,0 +1,9 @@
+id: CONF-TYPE-037
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Logical AND
+input: "model test {\n  var result = true && false;\n}\n"
+expected:
+  type: success
+  types:
+    result: Bool

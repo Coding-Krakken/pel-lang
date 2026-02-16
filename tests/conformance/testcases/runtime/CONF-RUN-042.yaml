@@ -1,0 +1,9 @@
+id: CONF-RUN-042
+category: runtime
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - index out of bounds
+input: "model test {\n  var nums = [1, 2, 3];\n  var x = nums[10];\n}\n"
+expected:
+  type: error
+  error_type: RuntimeError
+  error_message: Index out of bounds

@@ -1,0 +1,9 @@
+id: CONF-TYPE-095
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Type checking scenario 95
+input: "model test_95 {\n  var x = 95;\n}\n"
+expected:
+  type: success
+  types:
+    x: Int

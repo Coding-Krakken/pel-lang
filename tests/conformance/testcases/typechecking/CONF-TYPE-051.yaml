@@ -1,0 +1,10 @@
+id: CONF-TYPE-051
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Function return type
+input: "model test {\n  func add(a: Int, b: Int) -> Int {\n    return a + b;\n  }\n\
+  }\n"
+expected:
+  type: success
+  types:
+    add: Func(Int, Int) -> Int

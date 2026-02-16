@@ -1,0 +1,8 @@
+id: CONF-PROV-015
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Distribution correlation
+input: "model test {\n  param a = ~Normal(μ=0, σ=1) { source: \"fitted\" }\n  param\
+  \ b = ~Normal(μ=0, σ=1) { correlated_with: [(\"a\", 0.8)] }\n}\n"
+expected:
+  type: success

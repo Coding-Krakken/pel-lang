@@ -1,0 +1,17 @@
+id: CONF-LEX-016
+category: lexical
+spec_ref: spec/pel_language_spec.md#number-literals
+description: Number literals - with suffixes
+input: '10k 5M 2B
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: NUMBER
+    value: 10k
+  - type: NUMBER
+    value: 5M
+  - type: NUMBER
+    value: 2B
+  - type: EOF
