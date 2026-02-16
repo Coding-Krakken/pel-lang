@@ -130,7 +130,7 @@ class IRGenerator:
             deps.update(self.extract_dependencies(expr.expression))
 
         return list(deps)
-    
+
     def generate_type(self, typ: TypeAnnotation) -> Dict[str, Any]:
         """Generate IR type annotation."""
         result: dict[str, Any] = {"type_kind": typ.type_kind}

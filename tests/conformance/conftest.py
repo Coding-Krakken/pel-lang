@@ -1,9 +1,10 @@
 """Pytest configuration and fixtures for conformance tests."""
 
+from pathlib import Path
+from typing import Any
+
 import pytest
 import yaml
-from pathlib import Path
-from typing import Dict, Any
 
 
 @pytest.fixture
@@ -15,8 +16,8 @@ def testcases_dir():
 @pytest.fixture
 def load_yaml_test():
     """Load YAML test case file."""
-    def _loader(test_path: Path) -> Dict[str, Any]:
-        with open(test_path, 'r') as f:
+    def _loader(test_path: Path) -> dict[str, Any]:
+        with open(test_path) as f:
             return yaml.safe_load(f)
     return _loader
 
@@ -26,7 +27,7 @@ def pel_compiler():
     """Return PEL compiler instance."""
     from compiler.lexer import Lexer
     from compiler.parser import Parser
-    
+
     def _compile(source: str):
         """Compile PEL source to AST."""
         lexer = Lexer(source)
@@ -34,7 +35,7 @@ def pel_compiler():
         parser = Parser(tokens)
         ast = parser.parse()
         return ast
-    
+
     return _compile
 
 
@@ -42,12 +43,12 @@ def pel_compiler():
 def pel_lexer():
     """Return PEL lexer for token-level tests."""
     from compiler.lexer import Lexer
-    
+
     def _tokenize(source: str):
         """Tokenize PEL source."""
         lexer = Lexer(source)
         return lexer.tokenize()
-    
+
     return _tokenize
 
 
@@ -55,13 +56,13 @@ def pel_lexer():
 def pel_typechecker():
     """Return PEL type checker."""
     from compiler.typechecker import TypeChecker
-    
+
     def _check(ast):
         """Type check AST."""
         checker = TypeChecker()
         checker.check(ast)
         return ast
-    
+
     return _check
 
 
@@ -69,10 +70,10 @@ def pel_typechecker():
 def pel_runtime():
     """Return PEL runtime instance."""
     from runtime.interpreter import Interpreter
-    
+
     def _evaluate(ast):
         """Evaluate AST."""
         interpreter = Interpreter()
         return interpreter.evaluate(ast)
-    
+
     return _evaluate

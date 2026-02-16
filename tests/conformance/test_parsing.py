@@ -1,14 +1,15 @@
 """Conformance tests for parsing."""
 
+
 import pytest
-from pathlib import Path
+
+from tests.conformance.assertions import assert_ast_structure
 from tests.conformance.test_runner import ConformanceTestRunner
-from tests.conformance.assertions import assert_ast_structure, assert_parse_error
 
 
 class TestParsingConformance:
     """Parsing conformance tests (CONF-PARSE-*)."""
-    
+
     def test_parsing_conformance(self, testcases_dir, load_yaml_test, pel_compiler):
         """Run all parsing conformance tests."""
         test_cases = ConformanceTestRunner.load_test_cases("parsing")
@@ -21,7 +22,7 @@ class TestParsingConformance:
                 ran += 1
         if ran == 0:
             pytest.skip("No parsing test cases matched current grammar")
-    
+
     def _run_test(self, spec, pel_compiler):
         """Execute a single parsing test case. Returns True if assertions ran."""
         test_id = spec['id']
