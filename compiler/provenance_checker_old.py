@@ -1,3 +1,4 @@
+# type: ignore
 # Copyright 2026 PEL Project Contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #

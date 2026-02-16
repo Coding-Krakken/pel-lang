@@ -28,7 +28,7 @@ jobs:
         run: ruff check compiler/ runtime/ tests/
       
       - name: Run mypy
-        run: mypy compiler/ runtime/
+        run: mypy -p compiler -p runtime
 
   test:
     runs-on: ubuntu-latest

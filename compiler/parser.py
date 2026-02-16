@@ -688,7 +688,7 @@ class Parser:
     def parse_provenance_block(self) -> dict[str, Any]:
         """Parse provenance block: { source: ..., method: ..., ... }"""
         self.expect(TokenType.LBRACE)
-        provenance = {}
+        provenance: dict[str, Any] = {}
 
         # Required: source, method, confidence
         provenance['source'] = self.parse_metadata_field('source')
@@ -759,7 +759,7 @@ class Parser:
     def parse_constraint_block(self) -> dict[str, Any]:
         """Parse constraint metadata block."""
         self.expect(TokenType.LBRACE)
-        metadata = {}
+        metadata: dict[str, Any] = {}
 
         # Parse severity (required)
         self.expect(TokenType.IDENTIFIER)  # "severity"
@@ -789,7 +789,7 @@ class Parser:
         self.expect(TokenType.RBRACE)
         return metadata
 
-    def parse_scope_spec(self) -> str:
+    def parse_scope_spec(self) -> str | Expression:
         """Parse scope specification: 'all timesteps', etc."""
         # Common case: `all timesteps`
         if self.match(TokenType.IDENTIFIER) and self.current().value == "all":

@@ -15,7 +15,7 @@ import json
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass
@@ -45,7 +45,7 @@ class PELRuntime:
     def load_ir(self, ir_path: Path) -> dict[str, Any]:
         """Load PEL-IR document."""
         with open(ir_path) as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
 
     def run(self, ir_document: dict[str, Any]) -> dict[str, Any]:
         """
@@ -68,7 +68,7 @@ class PELRuntime:
         Distributions sampled at mean/median.
         """
         model = ir_doc["model"]
-        state = {}  # Variable name -> value
+        state: dict[str, Any] = {}  # Variable name -> value
 
         # Initialize parameters (sample distributions at mean)
         for node in model["nodes"]:
@@ -80,7 +80,7 @@ class PELRuntime:
         T = self.config.time_horizon or model.get("time_horizon", 12)
 
         # Time loop
-        timeseries_results = {node["name"]: [] for node in model["nodes"] if node["node_type"] == "var"}
+        timeseries_results: dict[str, list[Any]] = {node["name"]: [] for node in model["nodes"] if node["node_type"] == "var"}
         constraint_violations = []
         policy_executions = []
 
@@ -225,7 +225,7 @@ class PELRuntime:
 
         return 0  # Default
 
-    def execute_action(self, action: dict[str, Any], state: dict[str, Any]):
+    def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> None:
         """Execute policy action (stub)."""
         action_type = action["action_type"]
 

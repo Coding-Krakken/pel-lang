@@ -9,6 +9,8 @@
 Implements governance requirements from spec/pel_governance_spec.md
 """
 
+from typing import Any, cast
+
 from compiler.ast_nodes import Model, ParamDecl
 from compiler.errors import SourceLocation
 
@@ -40,7 +42,7 @@ class ProvenanceChecker:
         'assumption',      # Explicit assumption
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: list[ProvenanceError] = []
         self.warnings: list[str] = []
         self.completeness_score = 0.0
@@ -51,11 +53,11 @@ class ProvenanceChecker:
             return model
 
         total_fields_possible = len(model.params) * (len(self.REQUIRED_FIELDS) + len(self.RECOMMENDED_FIELDS))
-        total_fields_present = 0
+        total_fields_present: float = 0.0
 
         for param in model.params:
             param_score = self.check_param_provenance(param)
-            total_fields_present += param_score
+            total_fields_present += float(param_score)
 
         # Calculate completeness score
         self.completeness_score = total_fields_present / total_fields_possible if total_fields_possible > 0 else 1.0
@@ -71,29 +73,44 @@ class ProvenanceChecker:
             return 0.0
 
         provenance = param.provenance
+
+        # Normalize provenance into a mapping for simpler checks (parser may produce dict or Provenance dataclass)
+        if isinstance(provenance, dict):
+            prov_map = cast(dict[str, Any], provenance)
+        else:
+            prov_map = {
+                'source': getattr(provenance, 'source', None),
+                'method': getattr(provenance, 'method', None),
+                'confidence': getattr(provenance, 'confidence', None),
+                'freshness': getattr(provenance, 'freshness', None),
+                'owner': getattr(provenance, 'owner', None),
+                'correlated_with': getattr(provenance, 'correlated_with', None),
+                'notes': getattr(provenance, 'notes', None),
+            }
+
         fields_present = 0
 
         # Check required fields
         for field in self.REQUIRED_FIELDS:
-            if field not in provenance:
+            if prov_map.get(field) is None:
                 self.errors.append(ProvenanceError(
                     f"Parameter '{param.name}' missing required provenance field: {field}"
                 ))
             else:
                 fields_present += 1
                 if field == 'confidence':
-                    self.check_confidence_field(param.name, provenance[field])
+                    self.check_confidence_field(param.name, prov_map.get('confidence'))
                 elif field == 'method':
-                    self.check_method_field(param.name, provenance[field])
+                    self.check_method_field(param.name, prov_map.get('method'))
 
         # Check recommended fields
         for field in self.RECOMMENDED_FIELDS:
-            if field in provenance:
+            if prov_map.get(field) is not None:
                 fields_present += 1
 
         return fields_present
 
-    def check_method_field(self, param_name: str, method: any):
+    def check_method_field(self, param_name: str, method: Any) -> None:
         """Validate method field."""
         if not isinstance(method, str) or not method.strip():
             self.errors.append(ProvenanceError(
@@ -106,7 +123,7 @@ class ProvenanceChecker:
                 f"Parameter '{param_name}' method must be one of {self.VALID_METHODS}, got {method!r}"
             ))
 
-    def check_confidence_field(self, param_name: str, confidence: any):
+    def check_confidence_field(self, param_name: str, confidence: Any) -> None:
         """Validate confidence field."""
         try:
             conf_value = float(confidence)

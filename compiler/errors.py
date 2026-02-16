@@ -20,8 +20,9 @@ class SourceLocation:
     line: int
     column: int
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.filename}:{self.line}:{self.column}"
+
 
 
 class CompilerError(Exception):
@@ -33,7 +34,7 @@ class CompilerError(Exception):
         message: str,
         location: SourceLocation | None = None,
         hint: str | None = None
-    ):
+    ) -> None:
         self.code = code
         self.message = message
         self.location = location
@@ -303,7 +304,7 @@ def syntax_error(msg: str, location: SourceLocation | None = None) -> ParseError
 class InternalError(CompilerError):
     """Internal compiler errors (bugs)."""
 
-    def __init__(self, message: str, location: SourceLocation | None = None):
+    def __init__(self, message: str, location: SourceLocation | None = None) -> None:
         super().__init__(
             "E9999",
             f"Internal compiler error: {message}",

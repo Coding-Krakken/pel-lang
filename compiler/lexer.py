@@ -192,15 +192,21 @@ class Lexer:
 
         return char
 
-    def skip_whitespace(self):
+    def skip_whitespace(self) -> None:
         """Skip spaces and tabs (not newlines)."""
-        while self.peek() in ' \t':
+        while True:
+            ch = self.peek()
+            if ch is None or ch not in ' \t':
+                break
             self.advance()
 
-    def skip_comment(self):
+    def skip_comment(self) -> None:
         """Skip // comments."""
         if self.peek() == '/' and self.peek(1) == '/':
-            while self.peek() and self.peek() != '\n':
+            while True:
+                ch = self.peek()
+                if ch is None or ch == '\n':
+                    break
                 self.advance()
 
     def read_number(self) -> Token:
@@ -209,24 +215,36 @@ class Lexer:
         num_str = ''
 
         # Integer part (allow '_' as a separator).
-        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-            num_str += self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isdigit() or ch == '_'):
+                break
+            num_str += ch
+            self.advance()
 
         # Decimal part: only treat '.' as decimal if followed by a digit.
         # This avoids lexing `0..time_horizon` as NUMBER("0.."), which should be
         # NUMBER("0") DOT DOT IDENTIFIER(...).
-        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
-            num_str += self.advance()  # '.'
-            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-                num_str += self.advance()
+        p1 = self.peek(1)
+        if self.peek() == '.' and p1 is not None and p1.isdigit():
+            # consume '.'
+            num_str += self.advance() or ''
+            while True:
+                ch = self.peek()
+                if ch is None or not (ch.isdigit() or ch == '_'):
+                    break
+                num_str += ch
+                self.advance()
 
         # Check for numeric suffix (k, m, M, B, T)
         # NOTE: 'd' is reserved for duration literals (e.g., 30d).
-        if self.peek() in 'kmМMBТ':
-            num_str += self.advance()
+        ch = self.peek()
+        if ch is not None and ch in 'kmМMBТ':
+            num_str += self.advance() or ''
 
         # Percentage literal (e.g., 5%)
-        if self.peek() == '%':
+        ch = self.peek()
+        if ch == '%':
             self.advance()
             return Token(TokenType.PERCENTAGE, num_str + '%', start_line, start_col)
 
@@ -253,21 +271,31 @@ class Lexer:
     def read_currency(self) -> Token:
         """Read currency literal ($100, €50)."""
         start_line, start_col = self.line, self.column
-        symbol = self.advance()  # $, €, £, ¥
+        symbol = self.advance() or ''  # $, €, £, ¥
 
         # Read amount
         amount = ''
-        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-            amount += self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isdigit() or ch == '_'):
+                break
+            amount += ch
+            self.advance()
 
-        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
-            amount += self.advance()  # '.'
-            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-                amount += self.advance()
+        p1 = self.peek(1)
+        if self.peek() == '.' and p1 is not None and p1.isdigit():
+            amount += self.advance() or ''  # '.'
+            while True:
+                ch = self.peek()
+                if ch is None or not (ch.isdigit() or ch == '_'):
+                    break
+                amount += ch
+                self.advance()
 
         # Check for unit suffix (k, m, M, B)
-        if self.peek() and self.peek() in 'kmМMBТ':
-            amount += self.advance()
+        ch = self.peek()
+        if ch is not None and ch in 'kmМMBТ':
+            amount += self.advance() or ''
 
         value = symbol + amount
         return Token(TokenType.CURRENCY, value, start_line, start_col)
@@ -277,8 +305,12 @@ class Lexer:
         start_line, start_col = self.line, self.column
         ident = ''
 
-        while self.peek() and (self.peek().isalnum() or self.peek() in '_'):
-            ident += self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isalnum() or ch in '_'):
+                break
+            ident += ch
+            self.advance()
 
         # Check if keyword
         token_type = self.KEYWORDS.get(ident, TokenType.IDENTIFIER)
@@ -290,10 +322,16 @@ class Lexer:
         quote = self.advance()  # " or '
 
         string_val = ''
-        while self.peek() and self.peek() != quote:
-            char = self.advance()
-            if char == '\\' and self.peek():  # Escape sequence
-                next_char = self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or ch == quote:
+                break
+            char = self.advance() or ''
+            if char == '\\':
+                next_ch = self.peek()
+                if next_ch is None:
+                    break
+                next_char = self.advance() or ''
                 if next_char == 'n':
                     string_val += '\n'
                 elif next_char == 't':
@@ -318,7 +356,7 @@ class Lexer:
             self.skip_comment()
 
             char = self.peek()
-            if not char:
+            if char is None:
                 break
 
             # Newlines (statement terminators)

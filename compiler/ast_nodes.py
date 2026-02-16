@@ -54,7 +54,7 @@ class Statement(ASTNode):
 class Literal(Expression):
     """Literal value."""
     value: Any
-    literal_type: TypeAnnotation | None = None
+    literal_type: str | None = None
 
 
 @dataclass

@@ -26,7 +26,7 @@ class IRGenerator:
 
     def generate(self, model: Model) -> dict[str, Any]:
         """Generate complete IR document."""
-        ir_model = {
+        ir_model: dict[str, Any] = {
             "name": model.name,
             "time_horizon": model.time_horizon,
             "time_unit": model.time_unit,
@@ -80,7 +80,7 @@ class IRGenerator:
         node_id = f"var_{self.node_counter}"
         self.node_counter += 1
 
-        node = {
+        node: dict[str, Any] = {
             "node_id": node_id,
             "node_type": "var",
             "name": var.name,
@@ -99,7 +99,7 @@ class IRGenerator:
 
     def extract_dependencies(self, expr: Expression) -> list:
         """Extract variable dependencies from an expression."""
-        deps = set()
+        deps: set[str] = set()
 
         if isinstance(expr, Variable):
             deps.add(expr.name)

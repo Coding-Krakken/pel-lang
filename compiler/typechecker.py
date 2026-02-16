@@ -11,10 +11,10 @@ Implements type system from spec/pel_type_system.md
 
 import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 from compiler.ast_nodes import *
-from compiler.errors import TypeError, dimensional_mismatch, type_mismatch, undefined_variable
+from compiler.errors import CompilerError, TypeError, DimensionalError, dimensional_mismatch, type_mismatch, undefined_variable
 
 
 @dataclass
@@ -28,7 +28,7 @@ class Dimension:
     - Count<Customer>: {count: 'Customer'}
     - Fraction: {} (dimensionless)
     """
-    units: dict[str, any]  # e.g., {'currency': 'USD'}, {'rate': 'Month', 'time': -1}
+    units: dict[str, Any]  # e.g., {'currency': 'USD'}, {'rate': 'Month', 'time': -1}
 
     def __eq__(self, other):
         return isinstance(other, Dimension) and self.units == other.units
@@ -152,7 +152,7 @@ class Dimension:
 class PELType:
     """Complete PEL type representation."""
     type_kind: str  # "Currency", "Rate", "Duration", "TimeSeries", etc.
-    params: dict[str, any]  # Type parameters
+    params: dict[str, Any]  # Type parameters
     dimension: Dimension  # Dimensional units
 
     def __repr__(self):
@@ -270,9 +270,9 @@ class TypeEnvironment:
 class TypeChecker:
     """Complete PEL type checker with dimensional analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.env = TypeEnvironment()
-        self.errors: list[TypeError] = []
+        self.errors: list[CompilerError] = []
         self.warnings: list[str] = []
 
         # Built-ins used by the language surface syntax.
@@ -673,11 +673,19 @@ class TypeChecker:
             return PELType.boolean()
 
         elif ast_type.type_kind == "TimeSeries":
-            inner_type = self.ast_type_to_pel_type(ast_type.params.get("inner"))
+            inner_param = ast_type.params.get("inner")
+            if isinstance(inner_param, TypeAnnotation):
+                inner_type = self.ast_type_to_pel_type(inner_param)
+            else:
+                inner_type = PELType.fraction()
             return PELType.timeseries(inner_type)
 
         elif ast_type.type_kind == "Distribution":
-            inner_type = self.ast_type_to_pel_type(ast_type.params.get("inner"))
+            inner_param = ast_type.params.get("inner")
+            if isinstance(inner_param, TypeAnnotation):
+                inner_type = self.ast_type_to_pel_type(inner_param)
+            else:
+                inner_type = PELType.fraction()
             return PELType.distribution(inner_type)
 
         else:
@@ -724,7 +732,7 @@ class TypeChecker:
         """Check if type checking produced errors."""
         return len(self.errors) > 0
 
-    def get_errors(self) -> list[TypeError]:
+    def get_errors(self) -> list[CompilerError]:
         """Get list of type errors."""
         return self.errors
 
