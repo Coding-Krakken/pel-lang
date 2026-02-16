@@ -11,10 +11,16 @@ Implements type system from spec/pel_type_system.md
 
 import re
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Any, Optional
 
 from compiler.ast_nodes import *
-from compiler.errors import CompilerError, TypeError, DimensionalError, dimensional_mismatch, type_mismatch, undefined_variable
+from compiler.errors import (
+    CompilerError,
+    TypeError,
+    dimensional_mismatch,
+    type_mismatch,
+    undefined_variable,
+)
 
 
 @dataclass
