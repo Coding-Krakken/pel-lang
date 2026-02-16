@@ -1,0 +1,212 @@
+// PEL Standard Library - Retention Module
+// Customer retention, churn analysis, and lifetime value calculations
+
+// === Cohort Retention Functions ===
+
+func cohort_retention_curve(
+  initial_customers: Count<Customer>,
+  retained_customers: Count<Customer>,
+  period: Count<Month>
+) -> Fraction {
+  // Calculate retention rate at a specific period
+  // Retention% = retained / initial
+  return retained_customers / initial_customers
+}
+
+func cohort_survival_rate(
+  initial_customers: Count<Customer>,
+  surviving_customers: Count<Customer>
+) -> Fraction {
+  // Survival rate = customers remaining / initial customers
+  return surviving_customers / initial_customers
+}
+
+func cohort_half_life(
+  monthly_churn_rate: Rate per Month
+) -> Duration<Month> {
+  // Half-life = ln(0.5) / ln(1 - churn_rate)
+  // Approximation: 0.693 / churn_rate for small churn rates
+  var half_life_ratio: Fraction = 0.693 / monthly_churn_rate
+  return half_life_ratio * 1mo
+}
+
+// === Churn Metrics ===
+
+func customer_churn_rate(
+  churned_customers: Count<Customer>,
+  starting_customers: Count<Customer>
+) -> Rate per Month {
+  // Customer churn rate = churned / starting customers
+  var churn_fraction: Fraction = churned_customers / starting_customers
+  return churn_fraction / 1mo
+}
+
+func revenue_churn_rate(
+  churned_mrr: Currency<USD> per Month,
+  starting_mrr: Currency<USD> per Month
+) -> Rate per Month {
+  // Revenue churn rate = churned MRR / starting MRR
+  var churn_fraction: Fraction = churned_mrr / starting_mrr
+  return churn_fraction / 1mo
+}
+
+func logo_churn(
+  churned_accounts: Count<Account>,
+  starting_accounts: Count<Account>,
+  period_months: Count<Month>
+) -> Rate per Month {
+  // Logo churn = churned accounts / starting accounts / months
+  var churn_fraction: Fraction = churned_accounts / starting_accounts
+  return churn_fraction / period_months
+}
+
+func churn_rate_from_retention(
+  retention_rate: Fraction
+) -> Rate per Month {
+  // Churn rate = 1 - retention rate
+  var churn_fraction: Fraction = 1.0 - retention_rate
+  return churn_fraction / 1mo
+}
+
+// === Expansion & Contraction ===
+
+func expansion_mrr(
+  upsell_mrr: Currency<USD> per Month,
+  cross_sell_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month {
+  // Total expansion MRR = upsells + cross-sells
+  return upsell_mrr + cross_sell_mrr
+}
+
+func contraction_mrr(
+  downgrade_mrr: Currency<USD> per Month,
+  partial_churn_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month {
+  // Total contraction MRR = downgrades + partial churns
+  return downgrade_mrr + partial_churn_mrr
+}
+
+func reactivation_mrr(
+  reactivated_customers: Count<Customer>,
+  average_mrr_per_customer: Currency<USD> per Month per Customer
+) -> Currency<USD> per Month {
+  // MRR from reactivated customers
+  return reactivated_customers * average_mrr_per_customer
+}
+
+// === Net Dollar Retention (NDR) Metrics ===
+
+func net_dollar_retention(
+  starting_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month
+) -> Fraction {
+  // NDR = (starting + expansion - contraction - churned) / starting
+  var ending_mrr = starting_mrr + expansion_mrr - contraction_mrr - churned_mrr
+  return ending_mrr / starting_mrr
+}
+
+func gross_dollar_retention(
+  starting_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month
+) -> Fraction {
+  // GDR = (starting - contraction - churned) / starting
+  var ending_mrr = starting_mrr - contraction_mrr - churned_mrr
+  return ending_mrr / starting_mrr
+}
+
+func quick_ratio_retention(
+  new_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Quick ratio = (new + expansion) / (churned + contraction)
+  var positive_mrr = new_mrr + expansion_mrr
+  var negative_mrr = churned_mrr + contraction_mrr
+  return positive_mrr / negative_mrr
+}
+
+// === Retention Curve Models ===
+
+func exponential_churn_curve(
+  initial_retention: Fraction,
+  monthly_churn_rate: Rate per Month,
+  months: Count<Month>
+) -> Fraction {
+  // Exponential retention: retention(t) = initial * (1 - churn)^t
+  // Approximation: initial * exp(-churn * t)
+  // Simplified for PEL: initial * (1 - churn * months)
+  var decay_factor: Fraction = 1.0 - (monthly_churn_rate * months)
+  return initial_retention * decay_factor
+}
+
+func power_law_churn_curve(
+  initial_retention: Fraction,
+  decay_exponent: Fraction,
+  months: Count<Month>
+) -> Fraction {
+  // Power law retention: retention(t) = initial / (1 + t)^exponent
+  // Approximation for PEL: initial / (1 + months * exponent)
+  var decay_denominator: Fraction = 1.0 + (months * decay_exponent)
+  return initial_retention / decay_denominator
+}
+
+func weibull_churn_curve(
+  initial_retention: Fraction,
+  shape_param: Fraction,
+  scale_param: Fraction,
+  months: Count<Month>
+) -> Fraction {
+  // Simplified Weibull curve for retention
+  // Approximation: initial * (1 - (months / scale)^shape)
+  var time_ratio: Fraction = months / scale_param
+  var decay: Fraction = time_ratio * shape_param
+  return initial_retention * (1.0 - decay)
+}
+
+// === Lifetime Value from Retention ===
+
+func ltv_from_retention_curve(
+  monthly_revenue_per_customer: Currency<USD> per Month per Customer,
+  average_lifetime_months: Duration<Month>
+) -> Currency<USD> per Customer {
+  // LTV = monthly revenue * average lifetime
+  return monthly_revenue_per_customer * average_lifetime_months
+}
+
+func discounted_ltv(
+  monthly_revenue_per_customer: Currency<USD> per Month per Customer,
+  monthly_churn_rate: Rate per Month,
+  monthly_discount_rate: Rate per Month
+) -> Currency<USD> per Customer {
+  // Discounted LTV = ARPU / (churn + discount)
+  var combined_rate = monthly_churn_rate + monthly_discount_rate
+  return monthly_revenue_per_customer / combined_rate
+}
+
+// === Advanced Retention Metrics ===
+
+func retention_improvement_impact(
+  starting_retention: Fraction,
+  improved_retention: Fraction,
+  monthly_revenue: Currency<USD> per Month
+) -> Currency<USD> per Month {
+  // Revenue impact of retention improvement
+  var retention_delta = improved_retention - starting_retention
+  return monthly_revenue * retention_delta
+}
+
+func churn_probability_by_tenure(
+  months_since_signup: Count<Month>,
+  base_churn_rate: Rate per Month,
+  tenure_discount_factor: Fraction
+) -> Fraction {
+  // Churn probability decreases with tenure
+  // Probability = base_churn * (1 - tenure_discount * months)
+  var discount_amount: Fraction = tenure_discount_factor * months_since_signup
+  var adjusted_churn: Fraction = base_churn_rate * (1.0 - discount_amount)
+  return adjusted_churn
+}
