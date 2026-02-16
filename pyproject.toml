@@ -127,7 +127,7 @@ warn_no_return = false
 strict_equality = false
 ignore_missing_imports = true
 # Exclude test, docs, coverage, prompts and legacy files from automatic checking
-exclude = "(^tests/|^\\.github/|^htmlcov/|_old\\.py$)"
+exclude = "(^tests/|^\\.github/prompts/|^\\.github/|^htmlcov/|_old\\.py$)"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

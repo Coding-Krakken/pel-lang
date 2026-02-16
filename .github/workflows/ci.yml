@@ -25,10 +25,10 @@ jobs:
           pip install -e .
       
       - name: Run ruff
-        run: ruff check compiler/ runtime/ tests/
+        run: ruff check compiler/ runtime/ tests/ --extend-exclude .github/prompts
       
       - name: Run mypy
-        run: mypy -p compiler -p runtime
+        run: mypy -p compiler -p runtime --exclude "^\.github/prompts/"
 
   test:
     runs-on: ubuntu-latest
@@ -75,7 +75,7 @@ jobs:
         run: pip install bandit[toml]
       
       - name: Run security scan
-        run: bandit -r compiler/ runtime/ -c pyproject.toml || true
+        run: bandit -r compiler/ runtime/ -c pyproject.toml -x .github/prompts || true
 
   build:
     runs-on: ubuntu-latest
