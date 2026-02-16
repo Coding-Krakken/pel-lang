@@ -289,11 +289,7 @@ class Parser:
         return statements
 
     # ===== Types =====
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> origin/main
     def parse_type(self) -> TypeAnnotation:
         """Parse type annotation."""
         # Primitive types
