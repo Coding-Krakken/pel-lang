@@ -131,7 +131,7 @@ class IRGenerator:
 
         return list(deps)
 
-    def generate_type(self, typ: TypeAnnotation) -> Dict[str, Any]:
+    def generate_type(self, typ: TypeAnnotation) -> dict[str, Any]:
         """Generate IR type annotation."""
         result: dict[str, Any] = {"type_kind": typ.type_kind}
         for key, value in typ.params.items():
@@ -224,7 +224,7 @@ class IRGenerator:
             # Fallback for unknown expression types
             return {"expr_type": "Unknown"}
 
-    def generate_provenance(self, prov: Provenance) -> dict[str, Any]:
+    def generate_provenance(self, prov: Provenance | dict[str, Any]) -> dict[str, Any]:
         """Generate IR provenance block."""
         # Parser currently produces provenance as a plain dict.
         if isinstance(prov, dict):

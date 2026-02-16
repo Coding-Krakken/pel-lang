@@ -181,7 +181,7 @@ class ParamDecl(ASTNode):
     name: str
     type_annotation: TypeAnnotation
     value: Expression
-    provenance: Provenance | None = None
+    provenance: dict[str, Any] | None = None
 
 
 @dataclass
@@ -199,7 +199,7 @@ class FuncDecl(ASTNode):
     name: str
     parameters: list[tuple]  # [(name, type), ...]
     return_type: TypeAnnotation
-    body: Expression
+    body: list[Expression]
 
 
 @dataclass
