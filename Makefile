@@ -9,7 +9,6 @@ lint:
 
 format:
 	ruff format compiler/ runtime/ tests/
-	black compiler/ runtime/ tests/
 
 typecheck:
 	mypy compiler/ runtime/ --exclude '.*_old\.py' || true

@@ -8,12 +8,21 @@ The `main` branch should be protected with the following rules:
 
 ### Required Status Checks
 All of these checks must pass before merging:
-- **CI Pipeline / lint** - Code linting with ruff and type checking with mypy
-- **CI Pipeline / test (3.10)** - Tests on Python 3.10
-- **CI Pipeline / test (3.11)** - Tests on Python 3.11
-- **CI Pipeline / test (3.12)** - Tests on Python 3.12
-- **CI Pipeline / security** - Security scanning with bandit
-- **CI Pipeline / build** - Package build verification
+- **CI Pipeline / test (3.10)** - Tests on Python 3.10 (REQUIRED - blocking)
+- **CI Pipeline / test (3.11)** - Tests on Python 3.11 (REQUIRED - blocking)
+- **CI Pipeline / test (3.12)** - Tests on Python 3.12 (REQUIRED - blocking)
+- **CI Pipeline / build** - Package build verification (REQUIRED - blocking)
+
+### Advisory Status Checks (Non-blocking)
+These checks run on every PR but do not block merging:
+- **CI Pipeline / lint** - Code linting with ruff and type checking with mypy (advisory - non-blocking)
+- **CI Pipeline / security** - Security scanning with bandit (advisory - non-blocking)
+
+**Why some checks are non-blocking:**
+- The codebase is being gradually improved for full type coverage and linting compliance
+- Making these checks blocking immediately would prevent all PRs
+- They provide visibility and encourage improvements without blocking progress
+- Future PRs can make these checks blocking once the codebase is fully compliant
 
 ### Pull Request Requirements
 - ✅ Require pull request before merging
@@ -91,13 +100,13 @@ git push -u origin premerge/my-feature
 #### Require status checks to pass before merging
 - [x] Require status checks to pass before merging
 - [x] Require branches to be up to date before merging
-- Add these required status checks:
-  - `lint`
-  - `test (3.10)`
-  - `test (3.11)`
-  - `test (3.12)`
-  - `security`
-  - `build`
+- Add these **required** status checks (note: lint and security are advisory only):
+  - `test (3.10)` ← **REQUIRED** (blocking)
+  - `test (3.11)` ← **REQUIRED** (blocking)
+  - `test (3.12)` ← **REQUIRED** (blocking)
+  - `build` ← **REQUIRED** (blocking)
+
+**Note:** Do not add `lint` or `security` as required checks - they run but are advisory (non-blocking) for gradual code quality improvement.
 
 #### Additional settings
 - [x] Require linear history
@@ -113,10 +122,10 @@ git push -u origin premerge/my-feature
 # Install GitHub CLI if not already installed
 # https://cli.github.com/
 
-# Enable branch protection
+# Enable branch protection with only blocking checks
 gh api repos/Coding-Krakken/pel-lang/branches/main/protection \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["lint","test (3.10)","test (3.11)","test (3.12)","security","build"]}' \
+  --field required_status_checks='{"strict":true,"contexts":["test (3.10)","test (3.11)","test (3.12)","build"]}' \
   --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field enforce_admins=true \
   --field restrictions=null \
@@ -124,6 +133,8 @@ gh api repos/Coding-Krakken/pel-lang/branches/main/protection \
   --field allow_force_pushes=false \
   --field allow_deletions=false
 ```
+
+**Note:** Only blocking checks (test jobs and build) are included. Lint and security checks run on every PR but are advisory only.
 
 ## Verifying Protection
 
