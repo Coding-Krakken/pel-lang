@@ -131,7 +131,7 @@ class IRGenerator:
         
         return list(deps)
     
-    def generate_type(self, typ: Type) -> Dict[str, Any]:
+    def generate_type(self, typ: TypeAnnotation) -> Dict[str, Any]:
         """Generate IR type annotation."""
         result: Dict[str, Any] = {"type_kind": typ.type_kind}
         for key, value in typ.params.items():
