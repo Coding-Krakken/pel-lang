@@ -1,0 +1,106 @@
+# Example: Q&A Prompt Configuration
+
+version: '1.0'
+pass_threshold: 75
+
+evaluation:
+  # Factual accuracy is most important
+  accuracy:
+    weight: 40
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Is the answer factually correct and accurate?
+        Does it provide truthful information without hallucination?
+        Are any claims properly supported?
+      aspects:
+        - 'factual_correctness'
+        - 'accuracy'
+        - 'no_hallucination'
+      threshold: 85
+  
+  # Must fully address the question
+  completeness:
+    weight: 25
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Does the answer fully address all parts of the question?
+        Are any important aspects left unaddressed?
+      aspects:
+        - 'completeness'
+        - 'thoroughness'
+      threshold: 75
+  
+  # Should be clear and understandable
+  clarity:
+    weight: 20
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Is the answer clear and easy to understand?
+        Is it well-structured and organized?
+      aspects:
+        - 'clarity'
+        - 'structure'
+        - 'readability'
+      threshold: 70
+  
+  # Check for key elements in answer
+  elements:
+    weight: 10
+    evaluator: 'checklist'
+    criteria:
+      required_elements:
+        - 'explanation'
+      optional_elements:
+        - 'example'
+        - 'reference'
+        - 'caveat'
+      threshold: 70
+  
+  # Reasonable length
+  length:
+    weight: 5
+    evaluator: 'length'
+    criteria:
+      min_length: 20
+      max_length: 300
+      count_by: 'words'
+      threshold: 70
+
+test_cases:
+  - id: 'simple_factual'
+    name: 'Simple Factual Question'
+    description: 'Straightforward factual question'
+    input: 'What is the speed of light?'
+  
+  - id: 'explanation_required'
+    name: 'Explanation Question'
+    description: 'Requires explanation, not just facts'
+    input: 'Why do objects fall to the ground?'
+  
+  - id: 'multi_part'
+    name: 'Multi-Part Question'
+    description: 'Question with multiple parts'
+    input: 'What is photosynthesis and why is it important for life on Earth?'
+  
+  - id: 'comparison'
+    name: 'Comparison Question'
+    description: 'Requires comparing concepts'
+    input: 'What is the difference between RAM and ROM?'
+  
+  - id: 'how_to'
+    name: 'How-To Question'
+    description: 'Procedural question'
+    input: 'How do you make a paper airplane?'
+  
+  - id: 'ambiguous'
+    name: 'Ambiguous Question'
+    description: 'Ambiguous question that needs clarification'
+    input: 'How do I fix it?'
+  
+  - id: 'no_answer'
+    name: 'Unanswerable Question'
+    description: 'Question that cannot be definitively answered'
+    input: 'What will the weather be like in exactly one year?'

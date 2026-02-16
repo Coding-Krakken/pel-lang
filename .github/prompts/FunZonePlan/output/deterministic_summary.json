@@ -1,0 +1,14 @@
+{
+  "downside_case": {
+    "revenue": 1378000,
+    "ebitda": -34000
+  },
+  "base_case": {
+    "revenue": 1680000,
+    "ebitda": 369600
+  },
+  "upside_case": {
+    "revenue": 1950000,
+    "ebitda": 424000
+  }
+}

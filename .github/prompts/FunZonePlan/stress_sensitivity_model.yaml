@@ -1,0 +1,875 @@
+# STRESS & SENSITIVITY MODEL
+# FunZone: Scenario Analysis and Risk Quantification
+
+meta:
+  model_version: "1.0"
+  last_updated: "2026-02-15"
+  base_case_reference: "5-location network, Year 3 steady state"
+
+# ==============================================================================
+# BASE CASE ASSUMPTIONS
+# ==============================================================================
+
+base_case_assumptions:
+  revenue_assumptions:
+    annual_revenue_per_location_year_3: 1680000
+    annual_visits_per_location: 78000
+    average_revenue_per_visit: 13.35
+    member_count_per_location: 450
+    membership_revenue_percentage: 0.18
+    visit_growth_rate_year_1_to_3: 0.73
+  
+  cost_assumptions:
+    fixed_costs_per_location: 629000
+    variable_cost_per_visit: 8.72
+    fleet_network_costs_per_location: 145000
+    total_cost_per_location_year_3: 1310400
+  
+  financial_metrics:
+    ebitda_per_location_year_3: 369600
+    ebitda_margin: 0.22
+    net_income_margin: 0.12
+    cash_flow_margin: 0.17
+  
+  network_metrics:
+    location_count: 5
+    total_network_revenue_year_3: 8400000
+    total_network_ebitda_year_3: 1848000
+
+# ==============================================================================
+# DOWNSIDE CASE
+# ==============================================================================
+
+downside_case:
+  scenario_description: |
+    Conservative demand, higher costs, slower ramp, competitive pressure.
+    Represents 70th percentile downside (worse than base, not catastrophic).
+  
+  probability_assessment: 0.25
+  
+  revenue_assumptions:
+    annual_visits_per_location_year_3: 64000
+    variance_from_base: -0.18
+    drivers:
+      - "Slower customer acquisition and ramp"
+      - "Novelty effect weaker than anticipated"
+      - "Competitive response stronger"
+      - "Economic headwinds moderate demand"
+    
+    average_revenue_per_visit: 12.50
+    variance_from_base: -0.06
+    drivers:
+      - "Pricing resistance, more discounting"
+      - "Lower membership penetration"
+    
+    total_revenue_per_location: 1378000
+    variance_from_base: -0.18
+  
+  cost_assumptions:
+    fixed_costs_per_location: 655000
+    variance_from_base: 0.04
+    drivers:
+      - "Rent escalations higher than expected"
+      - "Insurance 10% above forecast"
+      - "Marketing spend elevated to drive demand"
+    
+    variable_cost_per_visit: 9.25
+    variance_from_base: 0.06
+    drivers:
+      - "Labor costs 8% higher (tight market)"
+      - "Supplies and consumables inflation"
+    
+    fleet_costs_per_location: 165000
+    variance_from_base: 0.14
+    drivers:
+      - "Rotation logistics more expensive"
+      - "Equipment maintenance higher than expected"
+    
+    total_costs_per_location: 1412000
+  
+  financial_outcomes:
+    ebitda_per_location: -34000
+    ebitda_margin: -0.025
+    network_ebitda_5_locations: -170000
+    
+    analysis: |
+      Downside case results in negative EBITDA in Year 3.
+      Locations operating below break-even.
+      Requires cost reduction actions or capital infusion.
+      Viability questionable without strategic changes.
+  
+  strategic_implications:
+    - "Cannot sustain operations without changes"
+    - "Must improve demand (marketing, pricing) or reduce costs dramatically"
+    - "Expansion halted, possible location closures"
+    - "Investor support critical for survival"
+    - "Fleet model may need to be abandoned"
+  
+  survival_requirements:
+    - "Reduce fixed costs 15% (renegotiate rent, cut staff)"
+    - "Improve visit volume to 70,000+ per location"
+    - "Access working capital facility to cover losses"
+    - "Defer all growth capex"
+  
+  recovery_path:
+    timeline: "12-18 months to return to breakeven"
+    requirements:
+      - "Operational improvements implemented"
+      - "Market conditions stabilize"
+      - "Competitive differentiation strengthened"
+
+# ==============================================================================
+# BASE CASE
+# ==============================================================================
+
+base_case:
+  scenario_description: |
+    Realistic expectations with moderate execution and market conditions.
+    Core assumptions as modeled throughout business plan.
+  
+  probability_assessment: 0.50
+  
+  financial_outcomes:
+    annual_revenue_per_location: 1680000
+    ebitda_per_location: 369600
+    ebitda_margin: 0.22
+    network_ebitda_5_locations: 1848000
+    net_income_5_locations: 914800
+    cash_flow_operations: 1339800
+  
+  strategic_positioning:
+    - "Profitable operations enabling growth"
+    - "Expansion to 8 locations by Year 5"
+    - "Attractive returns for investors (38% IRR)"
+    - "Competitive moat developing"
+  
+  assessment: "Business model viable and attractive"
+
+# ==============================================================================
+# UPSIDE CASE
+# ==============================================================================
+
+upside_case:
+  scenario_description: |
+    Strong demand, operational excellence, fleet model highly successful.
+    Represents 80th percentile upside scenario.
+  
+  probability_assessment: 0.20
+  
+  revenue_assumptions:
+    annual_visits_per_location_year_3: 92000
+    variance_from_base: 0.18
+    drivers:
+      - "Novelty factor drives higher repeat visits"
+      - "Strong word-of-mouth and social media"
+      - "Membership penetration exceeds targets"
+      - "Limited competitive response"
+    
+    average_revenue_per_visit: 14.25
+    variance_from_base: 0.07
+    drivers:
+      - "Premium pricing power maintained"
+      - "Higher membership mix"
+      - "Strong party and event revenue"
+    
+    total_revenue_per_location: 1950000
+    variance_from_base: 0.16
+  
+  cost_assumptions:
+    fixed_costs_per_location: 615000
+    variance_from_base: -0.02
+    drivers:
+      - "Operating leverage from higher volume"
+      - "Efficiency gains from experience"
+    
+    variable_cost_per_visit: 8.40
+    variance_from_base: -0.04
+    drivers:
+      - "Labor productivity improvements"
+      - "Purchasing efficiencies"
+    
+    fleet_costs_per_location: 138000
+    variance_from_base: -0.05
+    drivers:
+      - "Rotation logistics optimized"
+      - "Equipment durability better than expected"
+    
+    total_costs_per_location: 1526000
+  
+  financial_outcomes:
+    ebitda_per_location: 424000
+    ebitda_margin: 0.217
+    network_ebitda_5_locations: 2120000
+    net_income_5_locations: 1045000
+    cash_flow_operations: 1680000
+    
+    variance_from_base_ebitda: 0.147
+  
+  strategic_implications:
+    - "Accelerate expansion (10 locations by Year 5)"
+    - "Excellent investor returns (45%+ IRR)"
+    - "Strong competitive moat established"
+    - "Franchise model highly attractive"
+    - "Market leadership achievable"
+  
+  assessment: "Exceptional outcome enabling aggressive growth"
+
+# ==============================================================================
+# RECESSION SCENARIO
+# ==============================================================================
+
+recession_scenario:
+  scenario_description: |
+    Moderate recession (2008-lite): 6.5% unemployment, -1.5% GDP.
+    Consumer discretionary spending down 15-20%.
+    Duration: 18 months recession + 12 months slow recovery.
+  
+  probability_assessment: 0.25
+  
+  year_1_recession_impact:
+    visit_volume_decline: -0.18
+    annual_visits_per_location: 64000
+    
+    pricing_pressure: -0.05
+    average_revenue_per_visit: 12.70
+    
+    revenue_per_location: 1344000
+    revenue_decline: -0.20
+    
+    membership_churn_spike:
+      normal_churn_monthly: 0.08
+      recession_churn_monthly: 0.15
+      member_base_decline: -0.40
+      membership_revenue_impact: -0.45
+    
+    party_event_decline: -0.25
+  
+  cost_structure_changes:
+    fixed_costs_stickiness:
+      rent: "No relief (locked in lease)"
+      insurance: "No relief"
+      utilities: "No relief"
+      management_salaries: "Can reduce 10% max"
+      total_fixed_cost_achievable_reduction: 0.06
+      fixed_costs_in_recession: 592000
+    
+    variable_costs:
+      labor_cuts_possible: "Reduce hourly staff proportional to volume"
+      variable_cost_per_visit: 8.50
+      total_variable_costs: 544000
+    
+    fleet_costs:
+      can_defer_rotation: "Temporarily extend rotation cycle (cost -20%)"
+      recession_fleet_costs: 116000
+    
+    total_costs_in_recession: 1252000
+  
+  financial_outcomes_year_1:
+    ebitda_per_location: 92000
+    ebitda_margin: 0.068
+    network_ebitda_5_locations: 460000
+    
+    cash_flow_after_debt_service: 45000
+    
+    analysis: |
+      Marginal profitability maintained but cash flow stressed.
+      Debt service coverage ratio drops to 1.1x (borderline covenant violation).
+      No capacity to fund expansion.
+      Working capital facilities likely tapped.
+  
+  year_2_recovery:
+    visit_volume_recovery: 0.85
+    revenue_per_location: 1428000
+    ebitda_per_location: 214000
+    ebitda_margin: 0.15
+    analysis: "Partial recovery but below pre-recession baseline"
+  
+  year_3_full_recovery:
+    return_to_base_case_trajectory: true
+    revenue_per_location: 1610000
+    ebitda_per_location: 338000
+    
+    cumulative_3_year_impact:
+      lost_ebitda_vs_base: 1244000
+      lost_cash_flow_vs_base: 1580000
+  
+  strategic_responses:
+    immediate:
+      - "Freeze all expansion plans"
+      - "Reduce discretionary spending 20%"
+      - "Shift marketing to value messaging and promotions"
+      - "Negotiate with landlords for temporary relief (unlikely success)"
+      - "Draw on working capital lines"
+    
+    if_prolonged:
+      - "Close weakest location(s) if EBITDA negative >6 months"
+      - "Renegotiate debt covenants with lenders"
+      - "Seek equity infusion to survive (dilutive)"
+      - "Consider strategic sale or merger"
+  
+  survival_assessment:
+    likelihood_of_survival: 0.75
+    key_factors:
+      - "Adequate cash reserves pre-recession"
+      - "Manageable debt service"
+      - "Ability to reduce costs quickly"
+      - "Landlord cooperation"
+      - "Recession duration and severity"
+
+# ==============================================================================
+# INTEREST RATE SPIKE
+# ==============================================================================
+
+interest_rate_spike:
+  scenario_description: |
+    Federal Funds Rate increases to 7-8% (2007 or Volcker-lite levels).
+    Business debt costs spike, consumer spending cools, expansion constrained.
+  
+  probability_assessment: 0.10
+  
+  direct_impacts:
+    existing_debt_repricing:
+      scenario: "Floating rate debt reprices at maturity"
+      current_rate: 0.095
+      spiked_rate: 0.14
+      annual_interest_increase_per_1M_debt: 45000
+      
+      network_debt_5_locations: 3200000
+      additional_annual_interest: 144000
+      ebitda_impact_percentage: -0.078
+    
+    expansion_financing_costs:
+      current_cost_per_new_location: 845000
+      current_debt_financing_70_percent: 591500
+      current_annual_debt_service: 85000
+      
+      high_rate_annual_debt_service: 118000
+      increase: 38.8
+      
+      impact: "New location ROI drops from 36% to 28%"
+  
+  indirect_impacts:
+    consumer_spending:
+      mechanism: "Higher mortgages, auto loans, credit cards squeeze discretionary"
+      demand_impact: "Moderate recession-like demand decline (-10%)"
+      revenue_impact_per_location: -168000
+    
+    real_estate_costs:
+      mechanism: "Commercial property values decline but rents lag"
+      impact: "Mixed - renewal negotiations may improve slightly"
+      net_impact: "Minimal in short term (leases locked)"
+  
+  financial_outcomes:
+    revenue_per_location: 1512000
+    ebitda_per_location: 338000
+    interest_expense_increased: 28800
+    net_income_impact: -35
+    
+    expansion_economics_deterioration:
+      new_location_irr: 0.28
+      hurdle_rate: 0.30
+      decision: "Defer expansion until rates stabilize"
+  
+  strategic_responses:
+    - "Refinance fixed-rate debt if possible (lock in)"
+    - "Delay expansion 12-24 months"
+    - "Focus on optimizing existing location profitability"
+    - "Consider franchise model to avoid debt financing"
+    - "Preserve cash and liquidity"
+  
+  assessment: "Manageable but constrains growth ambitions"
+
+# ==============================================================================
+# COST INFLATION SHOCK
+# ==============================================================================
+
+cost_inflation_shock:
+  scenario_description: |
+    Broad-based cost inflation spike: 8-10% general inflation.
+    Labor costs inflate 12-15%, equipment 10%, utilities 20%.
+    Ability to pass through prices lags by 12-18 months.
+  
+  probability_assessment: 0.15
+  
+  cost_impacts:
+    labor_inflation:
+      wage_increase: 0.15
+      labor_as_percentage_of_costs: 0.32
+      labor_cost_increase: 156000
+    
+    rent_inflation:
+      escalator_annual: 0.03
+      additional_shock_one_time: 0.05
+      rent_increase: 14400
+    
+    equipment_maintenance_inflation:
+      increase: 0.10
+      cost_increase: 14500
+    
+    insurance_inflation:
+      increase: 0.15
+      cost_increase: 10200
+    
+    utilities_inflation:
+      increase: 0.20
+      cost_increase: 7200
+    
+    total_cost_increase_per_location: 202300
+    percentage_increase: 0.154
+  
+  revenue_response:
+    immediate_price_increase_limited: 0.08
+    achievable_year_1: "8% price increase without demand destruction"
+    revenue_increase: 134400
+    
+    full_passthrough_timeline: "18-24 months to achieve full 15% pricing"
+  
+  year_1_margin_impact:
+    revenue_per_location: 1814400
+    costs_per_location: 1512700
+    ebitda_per_location: 301700
+    ebitda_margin: 0.166
+    margin_compression: -0.054
+  
+  year_2_recovery:
+    full_price_passthrough_achieved: 0.15
+    revenue_per_location: 1932000
+    costs_stabilized: 1525000
+    ebitda_per_location: 407000
+    ebitda_margin: 0.211
+    analysis: "Margin recovery but below base case"
+  
+  strategic_responses:
+    - "Immediate price increases where possible"
+    - "Operational efficiency drives"
+    - "Renegotiate supplier contracts"
+    - "Technology investments to reduce labor dependency"
+    - "Member communication to justify price increases"
+  
+  assessment: "Painful margin compression but survivable"
+
+# ==============================================================================
+# DEMAND SHOCK (NOVELTY FAILURE)
+# ==============================================================================
+
+demand_shock_novelty_failure:
+  scenario_description: |
+    Core thesis fails: Equipment rotation does NOT drive incremental visits.
+    Customers visit once, do not return more frequently than traditional facilities.
+    Fleet model becomes pure cost without benefit.
+  
+  probability_assessment: 0.10
+  
+  revenue_reality:
+    visit_frequency_traditional_model: 1.2
+    visit_frequency_funzone_expected: 2.5
+    visit_frequency_funzone_actual: 1.3
+    
+    expected_annual_visits: 78000
+    actual_annual_visits: 40000
+    revenue_miss: -0.49
+    
+    actual_revenue_per_location: 870000
+  
+  cost_structure_unchanged:
+    fixed_costs: 629000
+    fleet_costs_unnecessary: 145000
+    variable_costs: 348000
+    total_costs: 1122000
+  
+  financial_outcome:
+    ebitda_per_location: -252000
+    network_loss_5_locations: -1260000
+    
+    analysis: "Business model fundamentally broken, unsustainable"
+  
+  pivot_options:
+    option_1_abandon_fleet_model:
+      description: "Stop rotation, operate as static facilities"
+      eliminated_costs:
+        fleet_rotation_logistics: 24000
+        excess_equipment_depreciation: 85000
+        maintenance_overhead: 36000
+        total_savings: 145000
+      
+      revised_ebitda: -107000
+      assessment: "Still unprofitable due to insufficient demand"
+      
+      further_actions:
+        - "Reduce fixed costs 20% (including downsizing)"
+        - "Increase marketing dramatically"
+        - "Slash pricing to drive volume"
+      
+      revised_ebitda_post_actions: 15000
+      assessment: "Marginally viable but poor returns"
+    
+    option_2_close_business:
+      description: "Liquidate assets, return remaining capital to investors"
+      asset_value: 3500000
+      debt_outstanding: 2800000
+      equity_recovery: 700000
+      investor_loss: -0.75
+    
+    option_3_pivot_to_different_model:
+      description: "Fundamentally redesign offering"
+      examples: "Add other attractions, change format, etc."
+      cost: 500000-1000000
+      uncertainty: "Very High"
+  
+  strategic_assessment: |
+    This scenario represents core thesis failure.
+    Should be detectable in Year 1 through visit frequency tracking.
+    Early pivot critical - do not wait for Year 3.
+    Indicates insufficient market research and concept validation.
+
+# ==============================================================================
+# COMPETITIVE SHOCK
+# ==============================================================================
+
+competitive_shock:
+  scenario_description: |
+    Well-capitalized competitor launches improved version of fleet rotation model.
+    Enters same markets with 15% lower pricing and better execution.
+    Captures market share and forces defensive pricing.
+  
+  probability_assessment: 0.30
+  
+  competitive_dynamics:
+    competitor_entry_timing: "Year 2-3 after FunZone proves concept"
+    competitor_advantages:
+      - "Better capitalization (PE-backed)"
+      - "Learns from FunZone mistakes"
+      - "Lower pricing (temporarily subsidized)"
+      - "Superior marketing"
+    
+    market_share_impact:
+      funzone_market_share_without_competitor: 0.35
+      funzone_market_share_with_competitor: 0.20
+      market_share_loss: -0.43
+  
+  revenue_impacts:
+    visit_volume_decline: -0.25
+    annual_visits: 58500
+    
+    pricing_pressure:
+      forced_price_reduction: -0.10
+      average_revenue_per_visit: 12.00
+    
+    total_revenue_decline: -0.33
+    revenue_per_location: 1134000
+  
+  cost_response:
+    marketing_increase_to_compete:
+      additional_marketing_spend: 35000
+      new_fixed_costs: 664000
+    
+    variable_costs_unchanged: 510000
+    fleet_costs_unchanged: 145000
+    
+    total_costs: 1319000
+  
+  financial_outcome:
+    ebitda_per_location: -185000
+    network_loss_5_locations: -925000
+    
+    analysis: "Unprofitable operations, emergency response required"
+  
+  strategic_responses:
+    immediate_defensive:
+      - "Match competitor pricing selectively"
+      - "Increase marketing spend aggressively"
+      - "Improve customer experience and differentiation"
+      - "Lock in members with longer contracts/discounts"
+    
+    medium_term:
+      - "Accelerate innovation beyond basic rotation"
+      - "Build brand loyalty programs"
+      - "Pursue strategic partnerships competitor cannot match"
+      - "Consider acquisition or merger with competitor"
+    
+    worst_case:
+      - "Exit markets where competitor dominates"
+      - "Focus resources on defensible markets"
+      - "Seek strategic buyer"
+  
+  survival_probability: 0.60
+  
+  assessment: |
+    Significant threat if competitor well-executed and capitalized.
+    First-mover advantage only 2-3 years without sustained innovation.
+    Demonstrates importance of speed to scale and continuous differentiation.
+
+# ==============================================================================
+# CAPITAL SCARCITY
+# ==============================================================================
+
+capital_scarcity:
+  scenario_description: |
+    Unable to raise planned expansion capital (Series A fails).
+    Forced to grow only through cash flow, dramatically slowing expansion.
+  
+  probability_assessment: 0.20
+  
+  capital_constraint:
+    planned_capital_raise_year_3: 3200000
+    actual_capital_raised: 0
+    
+    expansion_funding_source: "Cash flow only"
+    annual_cash_available_for_expansion: 850000
+    expansion_pace: "1 location per year vs 3 planned"
+  
+  growth_trajectory_comparison:
+    base_case_expansion:
+      year_5_locations: 8
+      year_7_locations: 15
+      year_10_locations: 30
+    
+    capital_constrained_expansion:
+      year_5_locations: 7
+      year_7_locations: 10
+      year_10_locations: 15
+    
+    location_gap_year_10: -15
+  
+  competitive_implications:
+    - "Competitors capture markets while FunZone grows slowly"
+    - "Fleet efficiency improvements delayed (fewer locations)"
+    - "Brand building slower (limited geographic presence)"
+    - "Talent attraction harder (limited growth opportunities)"
+    - "Market leadership unlikely"
+  
+  financial_implications:
+    year_10_revenue_base_case: 21000000
+    year_10_revenue_constrained: 10500000
+    enterprise_value_impact: -55
+    
+    investor_returns:
+      base_case_irr: 0.378
+      constrained_irr: 0.24
+      below_hurdle_rate: true
+  
+  strategic_pivots:
+    option_1_franchise_earlier:
+      description: "Accelerate franchise model to Year 4 vs Year 6"
+      capital_efficiency: "High - franchisee funds locations"
+      trade_off: "Control vs growth"
+      outcome: "Can achieve near-base case location count"
+    
+    option_2_strategic_partner:
+      description: "JV with real estate developer or strategic corporate"
+      capital_access: "Moderate - partner provides development capital"
+      trade_off: "Equity dilution and control"
+    
+    option_3_accept_slower_growth:
+      description: "Optimize existing locations, wait for better capital markets"
+      outcome: "Steady but unexciting returns, niche player"
+  
+  recommended_response: "Accelerate franchise model (Option 1)"
+
+# ==============================================================================
+# LIQUIDITY FREEZE
+# ==============================================================================
+
+liquidity_freeze:
+  scenario_description: |
+    Severe short-term cash crisis: Major equipment failure + seasonal trough + 
+    unexpected expenses + debt covenant breach = liquidity emergency.
+  
+  probability_assessment: 0.05
+  
+  crisis_triggers:
+    equipment_catastrophe:
+      scenario: "Fire damages 30% of fleet equipment"
+      insurance_deductible: 50000
+      replacement_cost_not_covered: 125000
+      revenue_loss_during_recovery: 85000
+      total_impact: 260000
+    
+    seasonal_cash_trough:
+      scenario: "January-February low season"
+      revenue_vs_average: -0.35
+      cash_generation: 45000
+    
+    unexpected_expense:
+      scenario: "Lawsuit settlement or regulatory fine"
+      amount: 75000
+    
+    total_cash_drain: 290000
+    
+    starting_cash_position: 220000
+    ending_cash_position: -70000
+  
+  consequences:
+    payroll_at_risk: "Cannot make payroll in 2 weeks"
+    vendor_payments_defaulted: "Suppliers halt shipments"
+    debt_service_missed: "Technical default on loans"
+    
+    covenant_breach:
+      minimum_cash_covenant: 180000
+      actual_cash: -70000
+      breach_triggered: true
+  
+  emergency_responses:
+    option_1_working_capital_line:
+      available: true
+      amount: 206250
+      solves_immediate_crisis: true
+      cost: "High interest 10.5%"
+    
+    option_2_emergency_equity_infusion:
+      amount_needed: 300000
+      dilution: "Significant (20-30% at distressed valuation)"
+      feasibility: "Moderate - requires investor confidence"
+    
+    option_3_asset_liquidation:
+      sell_equipment: 150000
+      impact: "Damages ongoing operations"
+      desperation_move: true
+    
+    option_4_close_location:
+      cash_freed: 120000
+      impact: "Network efficiency damaged, brand damage"
+      last_resort: true
+  
+  prevention_strategies:
+    - "Maintain minimum 120 days cash reserves"
+    - "Ensure adequate working capital line (underutilized)"
+    - "Comprehensive insurance with low deductibles"
+    - "Seasonal cash planning and buildup"
+    - "Relationship management with lenders (flexibility)"
+  
+  assessment: |
+    Low probability but high impact event.
+    Preventable through conservative cash management.
+    Highlights importance of liquidity cushion in asset-heavy business.
+
+# ==============================================================================
+# SENSITIVITY ANALYSIS SUMMARY
+# ==============================================================================
+
+sensitivity_analysis_summary:
+  most_sensitive_variables:
+    visit_volume:
+      impact_of_10_percent_change: "±22% EBITDA change"
+      sensitivity_rating: "Very High"
+      rationale: "High fixed costs = high operating leverage"
+    
+    labor_costs:
+      impact_of_10_percent_change: "±13% EBITDA change"
+      sensitivity_rating: "High"
+      rationale: "Largest cost category, difficult to reduce quickly"
+    
+    equipment_rotation_costs:
+      impact_of_10_percent_change: "±6.5% EBITDA change"
+      sensitivity_rating: "Moderate"
+      rationale: "Core to model differentiation but meaningful cost"
+    
+    rent_costs:
+      impact_of_10_percent_change: "±4.9% EBITDA change"
+      sensitivity_rating: "Moderate"
+      rationale: "Large fixed cost but typically locked for long term"
+    
+    pricing:
+      impact_of_10_percent_change: "±25% EBITDA change"
+      sensitivity_rating: "Very High"
+      rationale: "Direct flow-through to bottom line with minimal cost offset"
+  
+  least_sensitive_variables:
+    food_beverage_margins: "±0.8% EBITDA change for 10% F&B margin change"
+    retail_merchandise: "±0.5% EBITDA change"
+    utilities: "±1% EBITDA change"
+  
+  correlation_risks:
+    recession_scenario:
+      correlated_variables: "Visit volume down, pricing pressure, member churn up"
+      combined_impact: "Multiplicative, not additive"
+      assessment: "Downside scenarios more severe than isolated sensitivities suggest"
+    
+    inflation_scenario:
+      correlated_variables: "Labor up, equipment up, insurance up, rent up"
+      pricing_lag: "Revenue response delayed 12-18 months"
+      assessment: "Margin compression significant in correlated inflation"
+
+# ==============================================================================
+# MONTE CARLO SUMMARY (CONCEPTUAL)
+# ==============================================================================
+
+monte_carlo_summary:
+  methodology_note: |
+    Probability-weighted outcomes across key variable distributions.
+    Provides expected value and confidence intervals.
+  
+  year_3_ebitda_per_location_distribution:
+    percentile_10: 145000
+    percentile_25: 258000
+    median_percentile_50: 369000
+    percentile_75: 465000
+    percentile_90: 542000
+    
+    expected_value_probability_weighted: 352000
+    standard_deviation: 138000
+  
+  interpretation:
+    - "50% probability EBITDA between $258k and $465k per location"
+    - "10% probability of loss or minimal profitability (<$145k)"
+    - "25% probability of exceptional performance (>$465k)"
+    - "Expected value slightly below base case due to downside skew"
+  
+  investor_return_irr_distribution:
+    percentile_10: 0.08
+    percentile_25: 0.22
+    median: 0.35
+    percentile_75: 0.45
+    percentile_90: 0.54
+    
+    probability_exceeds_hurdle_28_percent: 0.65
+    probability_loss: 0.05
+  
+  strategic_assessment: |
+    Distribution shows attractive risk-adjusted returns but meaningful downside.
+    Not a certain winner but odds favorable with disciplined execution.
+    Downside protection critical - maintain conservative leverage and cash reserves.
+
+# ==============================================================================
+# STRESS TEST CONCLUSIONS
+# ==============================================================================
+
+stress_test_conclusions:
+  survivability_assessment:
+    base_case: "Highly viable"
+    downside_case: "Marginal viability, requires corrective action"
+    recession: "Survives but stressed, no growth"
+    cost_inflation: "Survives with margin compression"
+    demand_shock_novelty_failure: "Likely failure without pivot"
+    competitive_shock: "Challenged survival, 60% probability"
+    capital_scarcity: "Survives but below projections"
+    liquidity_freeze: "Survives with emergency actions"
+  
+  critical_success_factors_validated:
+    - "Visit volume must achieve 70,000+ per location minimum"
+    - "Fleet costs must stay under $150k per location"
+    - "Pricing power must be maintained (avoid >10% discounting)"
+    - "Fixed costs must be controlled (<$650k per location)"
+    - "Cash reserves minimum 90 days critical"
+  
+  risk_mitigation_priorities:
+    priority_1: "Validate novelty thesis early - track visit frequency aggressively"
+    priority_2: "Maintain conservative cash reserves and liquidity"
+    priority_3: "Control fleet logistics costs through disciplined execution"
+    priority_4: "Build competitive moat rapidly before imitation"
+    priority_5: "Maintain operational flexibility to respond to shocks"
+  
+  investment_decision_framework:
+    probability_of_acceptable_return_20_percent_irr: 0.70
+    probability_of_target_return_28_percent_irr: 0.65
+    probability_of_capital_loss: 0.08
+    
+    expected_value_irr: 0.335
+    risk_adjusted_assessment: "Attractive risk-return profile with proper risk management"
+  
+  final_assessment: |
+    Business model demonstrates resilience across most stress scenarios.
+    Survivable downturns and challenges exist with proactive management.
+    Core thesis (novelty drives visits) must be validated - highest risk.
+    Competitive response inevitable but manageable if first-mover advantage exploited.
+    Adequate risk-adjusted returns justify investment with capital discipline.

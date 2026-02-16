@@ -1,0 +1,54 @@
+test_cases:
+  - id: 'node_api_typical'
+    name: 'Node API (Typical)'
+    description: 'Repo-specific reverse-model + canonical artifacts for a typical API service'
+    input: |
+      Repository summary:
+      - Type: service (Node.js / TypeScript)
+      - Architecture: REST API + background worker
+      - Data: Postgres via Prisma
+      - Auth: JWT + RBAC
+      - Observability: OpenTelemetry + Prometheus metrics
+      - CI: GitHub Actions
+
+      Known endpoints:
+      - POST /login
+      - GET /users
+      - POST /users
+
+      Task:
+      Execute the conversion directive for this repo. Produce the Phase 0 snapshot artifacts and the initial canonical models and alignment plan.
+      Keep scope minimal; do not propose refactors beyond what alignment requires.
+
+  - id: 'monolith_high_risk'
+    name: 'Monolith (High Risk)'
+    description: 'Stress test: high risk profile, concurrency, and security boundaries'
+    input: |
+      Repository summary:
+      - Type: monolith (Python)
+      - Components: API (FastAPI), worker (Celery), scheduler, admin UI
+      - Data: Postgres + Redis
+      - Sensitive: processes payments and PII
+      - External deps: Stripe, S3, SendGrid
+      - Concurrency: async endpoints + worker queues
+      - CI/CD: GitHub Actions deploying to Kubernetes
+
+      Task:
+      Execute the conversion directive.
+      - Explicitly define security boundaries, failure modes, and rollback requirements.
+      - Make all assumptions explicit and list unknowns as a registry.
+      - Output must begin with formal structure (file paths + structured content).
+
+  - id: 'ambiguous_library'
+    name: 'Ambiguous Library'
+    description: 'Ensure it does not guess; it should enumerate unknowns and assumptions'
+    input: |
+      Repository summary:
+      - Type: unknown (might be a library)
+      - Language: mixed (Go + JS)
+      - No CI config found (unknown)
+
+      Task:
+      Execute the conversion directive with strict assumption control.
+      If information is missing, explicitly create an assumption/unknowns registry and ask targeted questions.
+      Still produce the Phase 0 snapshot structure and the canonical model file stubs.

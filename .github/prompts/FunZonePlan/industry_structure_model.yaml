@@ -1,0 +1,536 @@
+# INDUSTRY STRUCTURE MODEL
+# Indoor Children's Entertainment & Family Entertainment Centers (FEC)
+
+meta:
+  industry_classification: "NAICS 713990 - All Other Amusement and Recreation Industries"
+  sub_segment: "Indoor play facilities and family entertainment centers"
+  model_version: "1.0"
+  last_updated: "2026-02-15"
+  geographic_scope: "United States"
+
+# ==============================================================================
+# INDUSTRY DEFINITION
+# ==============================================================================
+
+industry_definition:
+  formal_name: "Indoor Children's Play and Family Entertainment Centers"
+  scope: "Commercial facilities providing supervised indoor play experiences for children ages 0-12"
+  includes:
+    - "Indoor playground facilities"
+    - "Soft play centers"
+    - "Trampoline parks"
+    - "Adventure parks (indoor)"
+    - "Multi-activity family entertainment centers"
+  excludes:
+    - "Daycare and childcare services (different regulatory framework)"
+    - "Outdoor amusement parks"
+    - "Arcade-only venues"
+    - "Movie theaters with play areas (ancillary to core business)"
+  
+  industry_characteristics:
+    - "Experience-based, location-dependent business"
+    - "High fixed costs, moderate variable costs"
+    - "Dependent on local population density and demographics"
+    - "Seasonal demand patterns (peaks in winter, summer vacation)"
+    - "Safety-critical operations with regulatory oversight"
+
+# ==============================================================================
+# MARKET SIZE
+# ==============================================================================
+
+market_size:
+  total_addressable_market_tam:
+    us_market_2026: 4200000000
+    basis: "Family entertainment centers and indoor play facilities"
+    compound_annual_growth_rate: 0.047
+    projected_2031: 5350000000
+  
+  serviceable_addressable_market_sam:
+    market_definition: "Indoor play facilities specifically targeting children 0-12"
+    estimated_market_2026: 1680000000
+    basis: "~40% of FEC market focused on younger children vs teens/adults"
+  
+  serviceable_obtainable_market_som:
+    target_geographic_markets: "Metro areas 250k+ population, suburban clusters"
+    estimated_accessible_2026: 680000000
+    basis: "Markets with sufficient density and demographic profile"
+    location_count_potential: 1850
+    average_revenue_per_location: 1500000
+
+  market_growth_drivers:
+    - "Increased parental spending on children's activities (+3.2% annually)"
+    - "Decline in outdoor unsupervised play driving indoor demand"
+    - "Social media influence on experience-based spending"
+    - "Weather-independent entertainment gaining preference"
+    - "Millennial parents prioritizing child enrichment and social development"
+  
+  market_constraints:
+    - "Birth rate decline in US (-0.2% annually 2020-2025)"
+    - "Competition from digital entertainment"
+    - "Economic sensitivity to discretionary spending"
+    - "Real estate costs in desirable locations"
+
+# ==============================================================================
+# COMPETITIVE DENSITY
+# ==============================================================================
+
+competitive_density:
+  market_structure: "Fragmented with regional concentration"
+  
+  national_chains:
+    - name: "Urban Air Adventure Parks"
+      locations: 180
+      focus: "Trampoline and adventure parks"
+      market_share_estimate: 0.04
+    - name: "Monkey Joe's"
+      locations: 45
+      focus: "Inflatable play structures"
+      market_share_estimate: 0.01
+    - name: "Sky Zone"
+      locations: 220
+      focus: "Trampoline parks (aging, competitive pressure)"
+      market_share_estimate: 0.05
+  
+  regional_chains:
+    count_estimate: 85
+    average_locations: 3-8
+    combined_market_share: 0.22
+  
+  independent_single_locations:
+    count_estimate: 2800
+    combined_market_share: 0.58
+    characteristics: "Highly variable quality, limited brand power"
+  
+  adjacent_competitors:
+    - "Chuck E. Cheese / Dave & Buster's (different age focus)"
+    - "Bowling alleys with arcades"
+    - "Movie theaters"
+    - "Municipal recreation centers (subsidized)"
+  
+  competitive_intensity: "Moderate to High"
+  analysis: |
+    Market is fragmented with no dominant national player.
+    Most facilities are independent or small chains.
+    Low brand loyalty - customers choose by proximity and novelty.
+    High churn of independent operators (30% close within 3 years).
+
+# ==============================================================================
+# ENTRY BARRIERS
+# ==============================================================================
+
+entry_barriers:
+  capital_requirements:
+    level: "Moderate to High"
+    initial_investment_single_location: 800000-1200000
+    breakdown:
+      - "Facility buildout: $300k-500k"
+      - "Equipment: $250k-450k"
+      - "Initial working capital: $100k-150k"
+      - "Pre-opening costs: $50k-100k"
+    analysis: "Significant but not prohibitive; accessible to franchisees and local entrepreneurs"
+  
+  regulatory_licensing:
+    level: "Moderate"
+    requirements:
+      - "Business license and zoning approval"
+      - "Health department certification"
+      - "Fire marshal approval"
+      - "Building code compliance for public assembly"
+      - "Background checks for staff"
+      - "Liability insurance (high premiums)"
+    time_to_market: "6-12 months from site selection to opening"
+    analysis: "Manageable but requires expertise; delays common in permitting"
+  
+  location_acquisition:
+    level: "Moderate to High"
+    challenges:
+      - "Need 12,000-20,000 sq ft in accessible retail/entertainment zones"
+      - "High ceiling requirements (14ft+ minimum)"
+      - "Landlord concerns about liability and noise"
+      - "Competition from more stable retail tenants"
+    analysis: "Real estate is often the constraining factor in market entry"
+  
+  operational_expertise:
+    level: "Moderate"
+    required_competencies:
+      - "Child safety management"
+      - "Equipment maintenance and safety inspection"
+      - "Liability and risk management"
+      - "Event coordination and customer service"
+    analysis: "Learnable but critical; safety incidents can be business-ending"
+  
+  economies_of_scale:
+    level: "Low to Moderate"
+    scale_advantages:
+      - "Equipment purchasing power (limited)"
+      - "Marketing efficiency (local, not national)"
+      - "Insurance rates (moderate improvement)"
+      - "Corporate overhead absorption"
+    analysis: "Single-location operators can be competitive; scale advantages moderate"
+  
+  overall_barrier_assessment: "Moderate - accessible to motivated entrepreneurs with capital"
+
+# ==============================================================================
+# SWITCHING COSTS
+# ==============================================================================
+
+switching_costs:
+  customer_switching_costs: "Very Low"
+  analysis:
+    for_pay_per_visit: "Zero switching cost; customers select on convenience and novelty"
+    for_members: "Moderate emotional switching cost but low financial penalty"
+    child_preference: "Children may develop attachment but adapt quickly"
+  
+  implication: "Customer retention requires continuous value delivery and differentiation"
+
+# ==============================================================================
+# SUPPLIER POWER
+# ==============================================================================
+
+supplier_power:
+  equipment_manufacturers:
+    concentration: "Moderate - 10-15 major commercial suppliers"
+    switching_costs: "Low to Moderate"
+    differentiation: "Moderate - products differentiated but substitutable"
+    supplier_power_rating: "Moderate"
+    analysis: |
+      Commercial playground equipment is specialized but competitive.
+      Long lead times (8-16 weeks) create planning requirements.
+      Quality variance significant - premium suppliers command higher prices.
+      Custom/modular requirements may increase dependency.
+  
+  real_estate_landlords:
+    concentration: "Low - fragmented ownership"
+    switching_costs: "Very High (relocation extremely costly)"
+    differentiation: "High - location quality critical"
+    supplier_power_rating: "High"
+    analysis: |
+      Landlords hold significant power post-lease signing.
+      Site-specific buildout creates lock-in.
+      Rent escalations and renewal terms critical to economics.
+  
+  insurance_providers:
+    concentration: "Low - multiple carriers for specialty insurance"
+    switching_costs: "Low annually, high mid-term"
+    supplier_power_rating: "Moderate to High"
+    analysis: |
+      High-risk business model limits carrier options.
+      Claims history heavily impacts premiums and availability.
+      Industry-wide incidents can trigger market hardening.
+  
+  labor_market:
+    concentration: "Highly fragmented"
+    switching_costs: "Low for hourly staff"
+    supplier_power_rating: "Low to Moderate"
+    analysis: |
+      Competes with retail and food service for hourly labor.
+      Wage pressure in tight labor markets.
+      Requires background-checked staff (limiting pool).
+
+# ==============================================================================
+# BUYER POWER
+# ==============================================================================
+
+buyer_power:
+  individual_customers:
+    concentration: "Extremely fragmented"
+    information_access: "High (online reviews, social media)"
+    price_sensitivity: "Moderate"
+    buyer_power_rating: "Low to Moderate"
+    analysis: |
+      Individual transactions small but customers can easily switch.
+      Social proof (reviews) heavily influences purchase decisions.
+      Parents compare value to alternative entertainment options.
+  
+  reputation_risk: "High"
+  analysis: |
+    Online reviews disproportionately impact new customer acquisition.
+    Negative safety incidents or cleanliness complaints spread rapidly.
+    Parent networks create word-of-mouth amplification.
+
+# ==============================================================================
+# SUBSTITUTE THREATS
+# ==============================================================================
+
+substitute_threats:
+  direct_substitutes:
+    - name: "Outdoor playgrounds (municipal/free)"
+      threat_level: "Moderate"
+      differentiation: "Weather-dependent, limited equipment, safety concerns"
+    - name: "Home-based digital entertainment"
+      threat_level: "High"
+      differentiation: "No physical activity, no social interaction, parental guilt factor"
+    - name: "Alternative indoor activities (bowling, movies, arcades)"
+      threat_level: "Moderate to High"
+      differentiation: "Different experience, some overlap in occasion"
+  
+  indirect_substitutes:
+    - name: "Organized sports and activities"
+      threat_level: "Moderate"
+      differentiation: "Higher cost, more structured, skill-development focus"
+    - name: "At-home play equipment"
+      threat_level: "Low"
+      differentiation: "High upfront cost, space requirements, lack of variety"
+  
+  emerging_threats:
+    - name: "VR/AR entertainment centers"
+      threat_level: "Low currently, increasing"
+      differentiation: "Technology-focused, emerging parental concerns about screen time"
+  
+  overall_substitute_threat: "Moderate to High"
+  analysis: |
+    Numerous alternatives for children's entertainment and parent relief.
+    Differentiation on physical activity, social interaction, and convenience.
+    Economic downturns increase substitution to free alternatives.
+
+# ==============================================================================
+# REGULATORY FORCES
+# ==============================================================================
+
+regulatory_forces:
+  primary_regulatory_bodies:
+    - "State and local health departments"
+    - "Fire marshals and building code enforcement"
+    - "CPSC (Consumer Product Safety Commission) for equipment standards"
+    - "OSHA for employee safety"
+    - "State labor departments (youth employment, background checks)"
+  
+  regulatory_intensity: "Moderate to High"
+  
+  key_regulations:
+    safety_standards:
+      - "ASTM F1487 - Standard for playground equipment"
+      - "ASTM F2970 - Soft contained play equipment"
+      - "ADA accessibility requirements"
+    operational_requirements:
+      - "Health and sanitation standards"
+      - "Fire occupancy limits and egress"
+      - "Background check requirements for staff"
+      - "Incident reporting protocols"
+    liability_framework:
+      - "Premises liability law (state-specific)"
+      - "Waiver enforceability (varies by state)"
+      - "Attractive nuisance doctrine considerations"
+  
+  regulatory_trend: "Increasing oversight following high-profile incidents"
+  
+  compliance_cost: "3-5% of revenue ongoing; can spike with new requirements"
+
+# ==============================================================================
+# COST STRUCTURE NORMS
+# ==============================================================================
+
+cost_structure_norms:
+  industry_benchmarks:
+    rent_as_percentage_revenue: 0.10-0.14
+    labor_as_percentage_revenue: 0.28-0.35
+    equipment_depreciation: 0.05-0.08
+    insurance: 0.025-0.04
+    marketing: 0.03-0.05
+    other_operating: 0.15-0.20
+  
+  total_operating_expense_ratio: 0.75-0.85
+  
+  analysis: |
+    Mature facilities operate at 75-80% operating expense ratio.
+    New facilities often >90% in year 1 due to ramp and inefficiencies.
+    Labor is largest variable cost; difficult to scale down.
+
+# ==============================================================================
+# CAPITAL NORMS
+# ==============================================================================
+
+capital_norms:
+  initial_investment_per_location: 900000
+  capital_intensity_ratio: 0.60
+  equipment_replacement_cycle: "5-7 years for major equipment"
+  annual_capex_maintenance: "3-5% of revenue"
+  
+  financing_norms:
+    equity_contribution: 0.40-0.50
+    debt_financing: 0.50-0.60
+    sba_7a_common: true
+    typical_debt_terms: "7-10 year amortization, 8-11% interest (2026 rates)"
+
+# ==============================================================================
+# MARGIN BENCHMARKS
+# ==============================================================================
+
+margin_benchmarks:
+  industry_averages:
+    gross_margin: 0.65-0.72
+    ebitda_margin: 0.18-0.25
+    net_margin: 0.08-0.15
+  
+  top_quartile:
+    ebitda_margin: 0.25-0.32
+    net_margin: 0.15-0.22
+  
+  bottom_quartile:
+    ebitda_margin: 0.05-0.12
+    net_margin: negative to 0.05
+  
+  analysis: |
+    Significant margin variance driven by:
+    - Location quality and traffic
+    - Operational efficiency
+    - Pricing power and mix
+    - Facility age and maintenance burden
+
+# ==============================================================================
+# INDUSTRY LIFECYCLE STAGE
+# ==============================================================================
+
+industry_lifecycle_stage:
+  stage: "Growth transitioning to Maturity"
+  
+  evidence:
+    growth_indicators:
+      - "Market still expanding (4.7% CAGR)"
+      - "New concept innovation (trampoline parks, ninja warrior themes)"
+      - "Increasing institutional investment and private equity interest"
+    maturity_indicators:
+      - "Market saturation in dense urban markets"
+      - "Consolidation beginning (small chains acquiring independents)"
+      - "Concept fatigue for undifferentiated facilities"
+      - "Margin pressure from competition"
+  
+  implications:
+    - "Differentiation becoming critical for new entrants"
+    - "Operational excellence required for profitability"
+    - "Location selection increasingly competitive"
+    - "Brand development more important than in past"
+
+# ==============================================================================
+# STRUCTURAL RISKS
+# ==============================================================================
+
+structural_risks:
+  catastrophic_safety_incident:
+    probability: "Low but non-zero"
+    impact: "Industry-wide regulatory response, insurance market hardening"
+    examples: "Trampoline park spinal injuries led to increased regulation"
+  
+  demographic_decline:
+    probability: "Moderate"
+    impact: "Slow erosion of customer base"
+    trend: "Birth rates declining in US"
+  
+  real_estate_cost_inflation:
+    probability: "Moderate to High"
+    impact: "Margin compression, location inaccessibility"
+    trend: "Retail real estate competitive but cyclical"
+  
+  digital_entertainment_substitution:
+    probability: "Moderate"
+    impact: "Gradual demand erosion"
+    counter_trend: "Parent concerns about screen time provide defense"
+  
+  litigation_risk:
+    probability: "High (individual level), Low (systemic level)"
+    impact: "Insurance costs, reputation damage"
+    note: "Inherent to industry, manageable with protocols"
+
+# ==============================================================================
+# HISTORICAL CONSOLIDATION PATTERNS
+# ==============================================================================
+
+historical_consolidation_patterns:
+  trend: "Early stages of consolidation"
+  
+  notable_transactions:
+    - "Main Event acquired by Dave & Busters (2022)"
+    - "Urban Air Adventure Parks franchising aggressively (150+ locations)"
+    - "Private equity entering: CircusTrix, Sky Zone ownership changes"
+  
+  consolidation_drivers:
+    - "Access to capital for expansion"
+    - "Operating efficiencies at scale"
+    - "Brand development and marketing leverage"
+    - "Equipment purchasing power"
+  
+  remaining_fragmentation:
+    - "Most markets still served by independents"
+    - "Local market knowledge important"
+    - "Franchise model limits corporate consolidation"
+  
+  forecast: "Continued gradual consolidation; market will remain fragmented"
+
+# ==============================================================================
+# GEOGRAPHIC FRAGMENTATION
+# ==============================================================================
+
+geographic_fragmentation:
+  market_coverage: "Uneven - concentrated in suburban family markets"
+  
+  high_penetration_markets:
+    - "Affluent suburbs of major metros (NYC, LA, Chicago, Dallas, Atlanta)"
+    - "Family-oriented suburban counties"
+  
+  underpenetrated_markets:
+    - "Secondary and tertiary cities (50k-200k population)"
+    - "Rural areas (insufficient density)"
+    - "Urban cores (real estate cost prohibitive)"
+  
+  regional_variations:
+    weather_impact: "Higher utilization in extreme climate regions (very hot/cold)"
+    cultural_preferences: "Regional differences in spending on children's activities"
+    competition_intensity: "Varies dramatically by market"
+  
+  expansion_logic: "Follow demographic density and household income clusters"
+
+# ==============================================================================
+# TECHNOLOGY DISRUPTION VECTORS
+# ==============================================================================
+
+technology_disruption_vectors:
+  current_technology_adoption:
+    - "Digital waiver and booking systems (widespread)"
+    - "RFID tracking for safety (emerging)"
+    - "Mobile apps for membership management (common)"
+    - "Interactive play equipment with screens (increasing)"
+  
+  potential_disruptions:
+    vr_ar_integration:
+      timeline: "5-10 years"
+      impact: "Could enhance or substitute physical play"
+      assessment: "Complementary more likely than disruptive"
+    
+    ai_powered_personalization:
+      timeline: "3-5 years"
+      impact: "Customized play experiences, dynamic programming"
+      assessment: "Incremental improvement, not transformative"
+    
+    robotics_automation:
+      timeline: "10+ years"
+      impact: "Automated safety monitoring, cleaning"
+      assessment: "Cost reduction opportunity, not business model threat"
+  
+  overall_disruption_risk: "Low - physical play is experience-good with high tangibility"
+
+# ==============================================================================
+# INDUSTRY ASSESSMENT SUMMARY
+# ==============================================================================
+
+industry_assessment_summary:
+  attractiveness: "Moderately Attractive"
+  
+  favorable_factors:
+    - "Growing market with demographic tailwinds (millennial parents)"
+    - "Fragmented competition - no dominant incumbents"
+    - "Moderate entry barriers allow new concepts"
+    - "Recurring revenue potential through memberships"
+    - "Resilience to digital disruption (physical experience)"
+  
+  unfavorable_factors:
+    - "Low customer switching costs drive competitive intensity"
+    - "High supplier power from landlords"
+    - "Substitute threats from free and low-cost alternatives"
+    - "Safety and liability risks"
+    - "Operational complexity and labor intensity"
+    - "Economic sensitivity (discretionary spending)"
+  
+  strategic_positioning_requirement:
+    "Success requires clear differentiation, operational excellence, and strong local execution.
+    Undifferentiated facilities face margin pressure and high failure rates.
+    Innovation and novelty management are competitive necessities."

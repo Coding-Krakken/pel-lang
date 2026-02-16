@@ -1,0 +1,36 @@
+# Generic Prompt Template
+# Suitable for general-purpose prompts
+
+version: '1.0'
+pass_threshold: 70
+
+evaluation:
+  format:
+    weight: 20
+    evaluator: 'regex'
+    criteria:
+      must_match: []
+      must_not_match: []
+      threshold: 80
+  
+  completeness:
+    weight: 30
+    evaluator: 'checklist'
+    criteria:
+      required_elements: []
+      optional_elements: []
+      threshold: 80
+  
+  quality:
+    weight: 50
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Evaluate the overall quality, accuracy, and usefulness of the output.'
+      aspects: ['accuracy', 'completeness', 'clarity']
+      threshold: 70
+
+test_cases:
+  - id: 'basic_test'
+    name: 'Basic Functionality'
+    description: 'Tests basic prompt functionality'
+    input: 'Test input'

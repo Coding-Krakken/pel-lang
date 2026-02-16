@@ -1,0 +1,55 @@
+# Data Transformation Template
+# For prompts that transform data from one format to another
+
+version: '1.0'
+pass_threshold: 80
+
+evaluation:
+  format_compliance:
+    weight: 30
+    evaluator: 'json_schema'
+    criteria:
+      extract_json: true
+      schema:
+        type: 'object'
+        required: []
+      threshold: 100
+  
+  data_accuracy:
+    weight: 40
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Are all fields correctly mapped? Is data preserved accurately without loss?'
+      aspects: ['accuracy', 'completeness', 'data_preservation']
+      threshold: 85
+  
+  completeness:
+    weight: 20
+    evaluator: 'checklist'
+    criteria:
+      required_elements: []
+      threshold: 90
+  
+  robustness:
+    weight: 10
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'How well does it handle edge cases, empty fields, and malformed data?'
+      aspects: ['error_handling', 'edge_cases']
+      threshold: 70
+
+test_cases:
+  - id: 'typical_data'
+    name: 'Typical Data'
+    description: 'Transform well-formed typical data'
+    input: '{"name": "John", "age": 30}'
+  
+  - id: 'edge_empty'
+    name: 'Empty Input'
+    description: 'Handle empty input gracefully'
+    input: '{}'
+  
+  - id: 'edge_malformed'
+    name: 'Malformed Data'
+    description: 'Handle malformed data'
+    input: '{"name": null, "age": "invalid"}'

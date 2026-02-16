@@ -1,0 +1,483 @@
+# BUSINESS SYSTEM STATE MODEL
+# FunZone: Rotating Fleet Indoor Play Facility Network
+
+meta:
+  business_type: "Asset-heavy, experience-based retail"
+  model_version: "1.0"
+  last_updated: "2026-02-15"
+  complexity_classification: "High operational complexity, moderate capital intensity"
+
+# ==============================================================================
+# CORE OFFERING
+# ==============================================================================
+
+core_offering:
+  primary: "Indoor play facility with continuously rotating equipment fleet"
+  secondary:
+    - "Birthday party hosting and event services"
+    - "Food and beverage concessions"
+    - "Retail merchandise (toys, branded items)"
+  unique_mechanism: "10% permanent infrastructure, 90% rotating play equipment shared across network"
+
+# ==============================================================================
+# VALUE PROPOSITIONS
+# ==============================================================================
+
+value_propositions:
+  customer_facing:
+    novelty: "Never the same experience twice - eliminates repeat visit fatigue"
+    variety: "Exposure to 10x more play equipment than traditional static facilities"
+    freshness: "Monthly rotation creates continuous discovery"
+    age_inclusivity: "Multi-age equipment rotation serves 1-12 year demographic simultaneously"
+  operational:
+    capital_efficiency: "90% asset utilization vs 40% in traditional single-location model"
+    market_responsiveness: "Can test and deploy trending equipment network-wide rapidly"
+    risk_mitigation: "Equipment failure/obsolescence risk spread across network"
+
+# ==============================================================================
+# CUSTOMER SEGMENTS
+# ==============================================================================
+
+customer_segments:
+  primary:
+    segment: "Parents of children ages 1-12 in suburban/urban markets"
+    size_per_100k_population: "~8,000 households with children under 12"
+    visit_frequency_target: "2.5 visits per month (vs 1.2 for traditional facilities)"
+    willingness_to_pay: "$15-25 per child per visit"
+  secondary:
+    segment: "Event organizers (birthdays, group events)"
+    size_per_100k_population: "~400 events per year per location"
+    transaction_value: "$350-800 per event"
+  tertiary:
+    segment: "Schools and daycare centers (field trips)"
+    size_per_100k_population: "~100 groups per year per location"
+    transaction_value: "$200-500 per group"
+
+# ==============================================================================
+# REVENUE STREAMS
+# ==============================================================================
+
+revenue_streams:
+  general_admission:
+    percentage_of_revenue: 62
+    pricing_model: "Per child, time-based (2-hour sessions or day pass)"
+    price_points:
+      standard_session_2hr: 18.00
+      day_pass: 28.00
+      adult_accompanying_free: true
+      sibling_discount: 0.15
+    volume_assumptions_per_location:
+      year_1_annual_visits: 45000
+      year_2_annual_visits: 62000
+      year_3_steady_state: 78000
+  
+  membership_subscriptions:
+    percentage_of_revenue: 18
+    pricing_model: "Monthly recurring subscription with unlimited access"
+    price_points:
+      single_child_monthly: 69.00
+      family_unlimited_monthly: 119.00
+    volume_assumptions_per_location:
+      year_1_avg_members: 180
+      year_2_avg_members: 320
+      year_3_steady_state: 450
+    churn_rate_monthly: 0.08
+  
+  party_events:
+    percentage_of_revenue: 13
+    pricing_model: "Package-based with tiered options"
+    price_points:
+      basic_package: 299.00
+      premium_package: 549.00
+      deluxe_package: 799.00
+    volume_assumptions_per_location:
+      year_1_annual_events: 120
+      year_2_annual_events: 180
+      year_3_steady_state: 240
+  
+  food_beverage:
+    percentage_of_revenue: 5
+    pricing_model: "Concession stand sales"
+    attach_rate: 0.35
+    average_transaction: 8.50
+  
+  retail_merchandise:
+    percentage_of_revenue: 2
+    pricing_model: "Point of sale retail"
+    attach_rate: 0.12
+    average_transaction: 15.00
+
+# ==============================================================================
+# COST STRUCTURE
+# ==============================================================================
+
+cost_structure:
+  fixed_costs_per_location_annual:
+    rent_lease:
+      amount: 180000
+      basis: "15,000 sq ft at $12/sq ft in suburban retail/entertainment district"
+    labor_management:
+      amount: 280000
+      basis: "General Manager (85k), Assistant Manager (55k), 3x Shift Leads (45k each)"
+    insurance:
+      amount: 195000
+      basis: "Consolidated risk mitigation budget: insurance, safety programs, compliance"
+    utilities:
+      amount: 36000
+      basis: "Electric, water, HVAC for large climate-controlled space"
+    marketing_local:
+      amount: 42000
+      basis: "Local digital, direct mail, school outreach, community events"
+    software_systems:
+      amount: 18000
+      basis: "POS, waiver management, CRM, booking system"
+    maintenance_facilities:
+      amount: 28000
+      basis: "Routine facility maintenance, cleaning supplies, repairs"
+    total_fixed_annual: 779000
+  
+  variable_costs:
+    labor_hourly:
+      cost_per_visit: 3.20
+      basis: "Floor monitors, front desk, party hosts at $15/hr avg"
+    food_beverage_cogs:
+      percentage_of_fb_revenue: 0.32
+    retail_cogs:
+      percentage_of_retail_revenue: 0.55
+    credit_card_processing:
+      percentage_of_revenue: 0.025
+    supplies_consumables:
+      cost_per_visit: 0.80
+      basis: "Cleaning, sanitization, disposables, minor consumables"
+  
+  network_fleet_costs_per_location:
+    equipment_rotation_logistics:
+      annual_amount: 24000
+      basis: "Truck rental, labor for quarterly equipment swaps"
+    equipment_maintenance_distributed:
+      annual_amount: 36000
+      basis: "Preventive maintenance, deep cleaning, repairs on rotating fleet"
+    depreciation_fleet_share:
+      annual_amount: 85000
+      basis: "Allocated depreciation of shared fleet equipment pool"
+
+# ==============================================================================
+# KEY RESOURCES
+# ==============================================================================
+
+key_resources:
+  physical:
+    facility_permanent_infrastructure:
+      - "Restrooms, offices, party rooms (10% of space)"
+      - "Electrical, HVAC, safety systems"
+      - "ADA-compliant accessibility features"
+      - "Food service area and storage"
+    fleet_equipment_network_wide:
+      - "Large-scale climbing structures (modular)"
+      - "Inflatable play systems (rotating themes)"
+      - "Interactive game zones (tech-enabled)"
+      - "Soft play areas for toddlers"
+      - "Obstacle courses and physical challenges"
+      - "Creative/sensory play stations"
+    logistics_equipment:
+      - "Modular equipment designed for transport"
+      - "Transport vehicles or contracted logistics"
+      - "Warehouse storage facility (network hub)"
+  
+  human:
+    operational_staff_per_location: 12-18
+    network_operations_team: 
+      - "Fleet manager"
+      - "Maintenance crew (2-3 technicians)"
+      - "Logistics coordinator"
+    required_competencies:
+      - "Child safety and supervision"
+      - "Equipment assembly/disassembly"
+      - "Customer service"
+      - "Event coordination"
+  
+  intellectual:
+    - "Equipment rotation algorithms and scheduling"
+    - "Fleet utilization optimization models"
+    - "Customer retention and novelty management systems"
+    - "Safety protocols and training programs"
+  
+  financial:
+    working_capital_per_location: 120000
+    fleet_investment_per_location_equivalent: 450000
+
+# ==============================================================================
+# KEY ACTIVITIES
+# ==============================================================================
+
+key_activities:
+  customer_facing:
+    - "Daily facility operations and child supervision"
+    - "Event hosting and party execution"
+    - "Customer service and membership management"
+    - "Safety monitoring and incident management"
+  
+  operational:
+    - "Quarterly equipment rotation execution"
+    - "Continuous equipment maintenance and safety inspection"
+    - "Staff training on new equipment configurations"
+    - "Facility cleaning and sanitization"
+  
+  strategic:
+    - "Fleet composition planning and equipment procurement"
+    - "Market trend analysis and equipment investment decisions"
+    - "Network expansion site selection"
+    - "Brand development and differentiation"
+
+# ==============================================================================
+# KEY PARTNERS
+# ==============================================================================
+
+key_partners:
+  equipment_suppliers:
+    type: "Commercial playground equipment manufacturers"
+    criticality: "High"
+    relationship: "Volume purchasing agreements, custom modular designs"
+  
+  logistics_providers:
+    type: "Commercial moving and transportation services"
+    criticality: "High"
+    relationship: "Contracted quarterly rotation services"
+  
+  insurance_brokers:
+    type: "Specialty insurance for entertainment venues"
+    criticality: "Critical"
+    relationship: "Risk management and liability coverage"
+  
+  real_estate_developers:
+    type: "Retail and entertainment property owners"
+    criticality: "Medium"
+    relationship: "Lease negotiations, build-out collaboration"
+  
+  food_distributors:
+    type: "Concession food and beverage suppliers"
+    criticality: "Low"
+    relationship: "Standard distribution agreements"
+
+# ==============================================================================
+# CHANNELS
+# ==============================================================================
+
+channels:
+  customer_acquisition:
+    digital:
+      - "Local SEO and Google My Business"
+      - "Facebook/Instagram parent-targeted advertising"
+      - "Mobile app for booking and membership"
+    physical:
+      - "Direct mail to households with children"
+      - "School and daycare partnerships"
+      - "Community event sponsorships"
+    referral:
+      - "Member referral incentive program"
+      - "Birthday party attendee conversion"
+  
+  service_delivery:
+    - "Physical location facility"
+    - "Online booking and waiver system"
+    - "Mobile app for membership management"
+
+# ==============================================================================
+# PRICING MODEL
+# ==============================================================================
+
+pricing_model:
+  strategy: "Premium pricing justified by novelty and variety"
+  elasticity_estimate: -1.2
+  competitive_positioning: "+15% to +25% above traditional static play facilities"
+  psychological_anchors:
+  psychological_anchors:
+    - "Always something new messaging justifies premium"
+    - "Membership represents unlimited value proposition"
+    - "Per-visit pricing competitive with movie theaters, bowling"
+
+# ==============================================================================
+# MARGIN STRUCTURE
+# ==============================================================================
+
+margin_structure:
+  gross_margin_target: 0.68
+  contribution_margin_target: 0.52
+  ebitda_margin_target: 0.22
+  net_margin_target: 0.12
+  
+  margin_by_revenue_stream:
+    general_admission: 0.72
+    memberships: 0.81
+    party_events: 0.58
+    food_beverage: 0.48
+    retail: 0.35
+
+# ==============================================================================
+# UNIT ECONOMICS (PER LOCATION, STEADY STATE YEAR 3)
+# ==============================================================================
+
+unit_economics:
+  annual_revenue: 1680000
+  revenue_breakdown:
+    general_admission: 1041600  # 78,000 visits * $13.35 blended
+    memberships: 302400         # 450 members * $672 annual avg
+    party_events: 218400        # 240 events * $910 avg
+    food_beverage: 84000
+    retail: 33600
+  
+  annual_costs: 1310400
+  cost_breakdown:
+    fixed_costs: 629000
+    variable_labor: 249600      # 78,000 * $3.20
+    fleet_network_costs: 145000
+    food_beverage_cogs: 26880
+    retail_cogs: 18480
+    supplies_consumables: 62400 # 78,000 * $0.80
+    credit_card_fees: 42000
+    other_variable: 137040
+  
+  annual_costs: 1460400
+
+  ebitda: 219600
+  ebitda_margin: 0.13
+
+  cash_flow_before_debt: 134600  # EBITDA minus capex reserve
+  
+  payback_assumptions:
+    initial_investment: 980000
+    simple_payback_years: 3.4
+
+# ==============================================================================
+# BREAK-EVEN DYNAMICS
+# ==============================================================================
+
+break_even:
+  monthly_visits_break_even: 4200
+  annual_visits_break_even: 50400
+  analysis: "Achievable within 12-15 months given ramp trajectory"
+  
+  sensitivity:
+    if_rent_increases_10_percent: 5280
+    if_labor_costs_increase_10_percent: 5640
+    if_pricing_decreases_10_percent: 6720
+
+# ==============================================================================
+# OPERATIONAL STATE VARIABLES
+# ==============================================================================
+
+operational_state_variables:
+  - customer_visit_volume_daily
+  - member_count_active
+  - equipment_configuration_id
+  - staff_count_present
+  - capacity_utilization_percentage
+  - safety_incident_count
+  - equipment_downtime_hours
+  - customer_satisfaction_score
+  - repeat_visit_rate
+  - member_churn_rate_monthly
+
+# ==============================================================================
+# CAPACITY CONSTRAINTS
+# ==============================================================================
+
+capacity_constraints:
+  physical_capacity:
+    max_children_simultaneous: 180
+    comfortable_capacity: 140
+    staff_ratio_required: "1 staff per 20 children minimum"
+  
+  temporal_capacity:
+    peak_hours: "Saturday/Sunday 10am-4pm, holidays"
+    utilization_peak_hours: 0.85
+    utilization_weekday_average: 0.35
+    utilization_weekend_average: 0.72
+  
+  operational_capacity:
+    max_parties_per_weekend_day: 4
+    equipment_rotation_cycle: "90 days (quarterly)"
+    staff_training_time_new_equipment: "8 hours per rotation"
+
+# ==============================================================================
+# CASH FLOW CYCLES
+# ==============================================================================
+
+cash_flow_cycles:
+  revenue_timing:
+    general_admission: "Same-day cash collection"
+    memberships: "Monthly recurring, collected 1st of month"
+    party_events: "50% deposit at booking, 50% day-of"
+  
+  cost_timing:
+    rent: "Monthly, 1st of month"
+    labor: "Bi-weekly payroll"
+    equipment_rotation: "Quarterly, upfront for logistics"
+    utilities: "Monthly, 30-day lag"
+  
+  working_capital_requirements:
+    minimum_cash_reserve: 90000
+    seasonal_buildup_summer: 40000
+
+# ==============================================================================
+# INCENTIVE STRUCTURES
+# ==============================================================================
+
+incentive_structures:
+  customer_incentives:
+    membership_discount_per_visit: "Unlimited visits at ~$2.75/visit equivalent"
+    referral_bonus: "$20 account credit per referred member"
+    birthday_child_free: "Free admission during party event"
+  
+  staff_incentives:
+    performance_bonus: "Quarterly bonus on customer satisfaction scores"
+    safety_milestone: "Zero-incident bonuses"
+    retention_bonus: "Annual retention bonus after 1 year"
+  
+  manager_incentives:
+    profit_sharing: "5% of location EBITDA above target"
+    member_growth: "Bonus for membership target achievement"
+
+# ==============================================================================
+# INVARIANTS (MUST ALWAYS HOLD TRUE)
+# ==============================================================================
+
+invariants:
+  safety:
+    - "Staff-to-child ratio never exceeds 1:25"
+    - "All equipment safety inspected within 30 days"
+    - "Valid insurance coverage maintained at all times"
+    - "Background checks current for all staff"
+  
+  operational:
+    - "At least 80% of equipment operational at any time"
+    - "Minimum 10 unique play elements present"
+    - "Facility passes health inspection standards"
+  
+  financial:
+    - "Working capital sufficient for 2 months operations"
+    - "Cash flow positive on contribution margin basis"
+    - "Equipment depreciation funded through cash flow"
+
+# ==============================================================================
+# FAILURE CONDITIONS
+# ==============================================================================
+
+failure_conditions:
+  immediate_failure:
+    - "Fatal safety incident"
+    - "Loss of liability insurance coverage"
+    - "Catastrophic equipment failure affecting >50% of facility"
+    - "Health department closure order"
+  
+  business_failure:
+    - "Monthly visits below break-even for 6 consecutive months"
+    - "Member churn exceeds 15% monthly for 3+ months"
+    - "Cash reserves depleted with negative cash flow"
+    - "Unable to execute equipment rotation for 2+ cycles"
+  
+  strategic_failure:
+    - "Novelty effect proven to not drive incremental visits"
+    - "Equipment rotation costs exceed modeled assumptions by >30%"
+    - "Competitive moat fails to materialize"
+    - "Network effects do not achieve efficiency targets"

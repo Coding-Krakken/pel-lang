@@ -1,0 +1,672 @@
+# CAPITAL & FINANCIAL MODEL
+# FunZone: Network Rotating Fleet Business Model
+
+meta:
+  model_version: "1.0"
+  last_updated: "2026-02-15"
+  model_type: "Multi-location network with shared fleet infrastructure"
+  projection_period: "2026-2031 (5 years)"
+  discount_rate: 0.14
+
+# ==============================================================================
+# STARTUP CAPITAL REQUIRED (NETWORK LAUNCH)
+# ==============================================================================
+
+startup_capital_required:
+  first_location_buildout:
+    facility_construction_improvements:
+      amount: 420000
+      breakdown:
+        demolition_preparation: 35000
+        permanent_infrastructure_10_percent: 85000
+        flooring_safety_surfacing: 75000
+        restrooms_ada_compliance: 55000
+        party_rooms_office: 45000
+        food_service_area: 35000
+        electrical_hvac_systems: 60000
+        signage_branding: 30000
+    
+    permanent_equipment_fixtures:
+      amount: 95000
+      breakdown:
+        furniture_fixtures: 35000
+        food_service_equipment: 25000
+        pos_systems_computers: 18000
+        security_cameras_systems: 12000
+        misc_operational: 5000
+    
+    initial_fleet_permanent_station:
+      amount: 45000
+      description: "10% permanent equipment at first location"
+    
+    subtotal_first_location: 560000
+  
+  fleet_equipment_network_investment:
+    shared_fleet_pool:
+      amount: 2250000
+      basis: "5-location network launch, 90% rotating fleet per location"
+      calculation: "5 locations × $450k per location equivalent"
+      equipment_composition:
+        large_climbing_structures: 750000
+        inflatable_play_systems: 450000
+        interactive_game_zones: 375000
+        soft_play_toddler_areas: 300000
+        obstacle_courses: 225000
+        creative_sensory_stations: 150000
+    
+    modular_design_premium:
+      amount: 112500
+      description: "5% premium for transportable modular design features"
+    
+    subtotal_fleet_investment: 2362500
+  
+  logistics_infrastructure:
+    warehouse_storage_facility:
+      amount: 180000
+      breakdown:
+        lease_deposit_first_last: 24000
+        warehouse_racking_systems: 35000
+        equipment_maintenance_tools: 28000
+        climate_control_systems: 18000
+        loading_dock_improvements: 22000
+        safety_security_systems: 15000
+        initial_supplies_inventory: 12000
+        other_warehouse_setup: 26000
+    
+    transportation_equipment:
+      amount: 145000
+      breakdown:
+        box_trucks_2_vehicles: 110000
+        equipment_trailers: 25000
+        material_handling_equipment: 10000
+  
+    subtotal_logistics: 325000
+  
+  additional_locations_2_thru_5:
+    per_location_buildout: 395000
+    description: "Reduced vs location 1 - streamlined process, no innovation costs"
+    count: 4
+    subtotal: 1580000
+    breakdown_per_location:
+      facility_improvements: 375000
+      permanent_fixtures_equipment: 20000
+  
+  working_capital:
+    per_location_reserve: 120000
+    location_count: 5
+    subtotal: 600000
+    purpose: "Pre-opening expenses, initial operating losses, cash buffer"
+  
+  pre_opening_corporate:
+    corporate_infrastructure:
+      amount: 285000
+      breakdown:
+        legal_entity_formation: 35000
+        brand_development_marketing: 85000
+        website_app_development: 65000
+        software_licenses_year_1: 28000
+        insurance_deposits_premiums: 42000
+        executive_salaries_pre_revenue: 30000
+  
+  total_startup_capital_required: 5712500
+  
+  contingency_reserve:
+    percentage: 0.10
+    amount: 571250
+  
+  total_capital_requirement_with_contingency: 6283750
+
+# ==============================================================================
+# CAPITAL STRUCTURE
+# ==============================================================================
+
+capital_structure:
+  recommended_mix:
+    equity_capital:
+      amount: 2827500
+      percentage: 0.45
+      sources:
+        founder_equity: 750000
+        angel_investors_seed: 1250000
+        strategic_partners: 550000
+        employee_option_pool: 277500
+    
+    debt_capital:
+      amount: 3456250
+      percentage: 0.55
+      structure:
+        sba_7a_term_loan:
+          amount: 2500000
+          term_years: 10
+          interest_rate: 0.095
+          amortization: "10 years"
+          collateral: "All business assets, personal guarantees"
+          debt_service_coverage_required: 1.25
+        
+        equipment_financing:
+          amount: 750000
+          term_years: 7
+          interest_rate: 0.085
+          amortization: "7 years"
+          collateral: "Fleet equipment"
+        
+        working_capital_line_of_credit:
+          amount: 206250
+          structure: "Revolving"
+          interest_rate: 0.105
+          expected_utilization: 0.40
+  
+  total_capitalization: 6283750
+  
+  debt_to_equity_ratio: 1.22
+  assessment: "Moderate leverage appropriate for asset-backed business model"
+
+# ==============================================================================
+# WORKING CAPITAL REQUIREMENTS
+# ==============================================================================
+
+working_capital_requirements:
+  per_location_established:
+    cash_operating_reserve: 65000
+    accounts_receivable: 12000
+    inventory_supplies: 8000
+    prepaid_expenses: 15000
+    less_accounts_payable: -18000
+    less_deferred_revenue_memberships: -22000
+    net_working_capital: 60000
+  
+  network_corporate_working_capital:
+    corporate_cash_reserve: 180000
+    fleet_maintenance_supplies: 85000
+    other_corporate_assets: 45000
+    total: 310000
+  
+  seasonal_working_capital_swing:
+    summer_peak_buildup: 125000
+    winter_peak_buildup: 85000
+    shoulder_season_release: -90000
+    management_requirement: "LOC sufficient to cover seasonal swings"
+
+# ==============================================================================
+# IRR TARGETS
+# ==============================================================================
+
+irr_targets:
+  equity_investors:
+    target_irr: 0.28
+    hurdle_rate: 0.22
+    rationale: "Early-stage operational business with execution risk"
+    investment_horizon: "5-7 years"
+  
+  founders:
+    target_irr: 0.35
+    rationale: "Sweat equity, career risk, illiquidity"
+  
+  debt_providers:
+    target_return: "9-11% interest rate"
+    rationale: "Asset-backed, personal guarantees, proven concept"
+
+# ==============================================================================
+# CASH FLOW PROJECTIONS (5 LOCATIONS NETWORK)
+# ==============================================================================
+
+cash_flow_projections:
+  year_1_2026:
+    revenue: 4920000
+    assumptions: |
+      5 locations opening staggered (Month 1, 3, 5, 7, 9)
+      Average 8 months revenue per location in Year 1
+      Ramp to 65% of steady-state in operational months
+    
+    operating_expenses: 5178000
+    ebitda: -258000
+    ebitda_margin: -0.05
+
+    depreciation_amortization: 385000
+    interest_expense: 302000
+    ebt: -945000
+    taxes: 0
+    net_income: -945000
+
+    capex: 142000
+    debt_principal_payments: 312000
+
+    operating_cash_flow: -712000
+    financing_cash_flow: 6283750
+    investing_cash_flow: -6283750
+
+    ending_cash_balance: -522000
+  
+  year_2_2027:
+    revenue: 7560000
+    assumptions: |
+      5 locations full year, maturing
+      Average 90% of steady-state
+    
+    operating_expenses: 6945600
+    ebitda: 614400
+    ebitda_margin: 0.08
+
+    depreciation_amortization: 425000
+    interest_expense: 285000
+    ebt: -95600
+    taxes: 0
+    net_income: -95600
+
+    capex: 227000
+    debt_principal_payments: 365000
+
+    operating_cash_flow: 192000
+    ending_cash_balance: -330000
+  
+  year_3_2028_steady_state:
+    revenue: 8400000
+    assumptions: |
+      5 locations at steady-state (100%)
+      $1,680,000 per location
+    
+    operating_expenses: 7302000
+    ebitda: 1098000
+    ebitda_margin: 0.13
+
+    depreciation_amortization: 425000
+    interest_expense: 265000
+    ebt: 408000
+    taxes: 85680
+    net_income: 322320
+
+    capex: 252000
+    debt_principal_payments: 385000
+
+    operating_cash_flow: 589800
+    ending_cash_balance: 589800
+  
+  year_4_2029_expansion:
+    assumptions: "Add 3 new locations (total 8)"
+    revenue: 11340000
+    operating_expenses: 10407600
+    ebitda: 932400
+    ebitda_margin: 0.082
+
+    net_income: -73000
+    operating_cash_flow: 100000
+
+    expansion_capex: 1185000
+    ending_cash_balance: 1137000
+  
+  year_5_2030_scaled:
+    assumptions: "8 locations at steady state"
+    revenue: 13440000
+    operating_expenses: 11683200
+    ebitda: 1756800
+    ebitda_margin: 0.13
+
+    net_income: 514000
+    operating_cash_flow: 1112000
+    ending_cash_balance: 1112000
+
+# ==============================================================================
+# CUMULATIVE FINANCIAL SUMMARY
+# ==============================================================================
+
+cumulative_financial_summary:
+  five_year_totals:
+    cumulative_revenue: 45660000
+    cumulative_ebitda: 4143600
+    cumulative_net_income: -277280
+    cumulative_cash_flow_operations: 1433800
+  
+  invested_capital: 6283750
+  
+  cash_on_cash_return_5_year: 0.97
+  
+  enterprise_value_exit_year_5:
+    ebitda_year_5: 1756800
+    exit_multiple: 5.5
+    enterprise_value: 9662400
+    less_net_debt: -2450000
+    equity_value: 7212400
+  
+  equity_investor_returns:
+    initial_investment: 2827500
+    exit_proceeds: 7212400
+    moic: 2.55
+    irr_5_year: 0.206
+    assessment: "IRR reduced vs prior model; still potentially acceptable but below prior target"
+
+# ==============================================================================
+# SENSITIVITY BANDS
+# ==============================================================================
+
+sensitivity_bands:
+  revenue_sensitivity:
+    base_case_year_5_revenue: 13440000
+    
+    upside_15_percent:
+      revenue: 15456000
+      ebitda: 3656000
+      equity_value_exit: 17858000
+      irr: 0.445
+    
+    downside_15_percent:
+      revenue: 11424000
+      ebitda: 2257600
+      equity_value_exit: 10367000
+      irr: 0.297
+  
+  margin_sensitivity:
+    base_case_ebitda_margin: 0.22
+    
+    margin_expansion_25_percent:
+      ebitda_margin: 0.245
+      year_5_ebitda: 3292800
+      equity_value_exit: 15660000
+      irr: 0.412
+    
+    margin_compression_25_percent:
+      ebitda_margin: 0.195
+      year_5_ebitda: 2620800
+      equity_value_exit: 11964400
+      irr: 0.333
+  
+  exit_multiple_sensitivity:
+    base_case_multiple: 5.5
+    
+    premium_multiple_6_5x:
+      enterprise_value: 19219200
+      equity_value: 16769200
+      irr: 0.428
+    
+    discount_multiple_4_5x:
+      enterprise_value: 13305600
+      equity_value: 10855600
+      irr: 0.319
+  
+  combined_downside:
+    scenario: "Revenue -15%, Margin -25%, Multiple 4.5x"
+    equity_value_exit: 7740640
+    irr: 0.223
+    assessment: "Below hurdle rate - distressed scenario"
+  
+  combined_upside:
+    scenario: "Revenue +15%, Margin +15%, Multiple 6.5x"
+    equity_value_exit: 22368800
+    irr: 0.507
+    assessment: "Exceptional outcome"
+
+# ==============================================================================
+# CAPEX CYCLES
+# ==============================================================================
+
+capex_cycles:
+  maintenance_capex_per_location:
+    annual_steady_state: 85000
+    percentage_of_revenue: 0.025
+    breakdown:
+      equipment_repairs_refurbishment: 24000
+      facility_maintenance_improvements: 12000
+      technology_upgrades: 6000
+  
+  fleet_replacement_cycle:
+    major_equipment_replacement: "7-10 years"
+    annual_reserve_requirement: 225000
+    network_wide_basis: "Replace ~10% of fleet annually"
+  
+  growth_capex:
+    per_new_location: 395000
+    equipment_allocation_incremental: 450000
+    total_per_location_equivalent: 845000
+  
+  total_capex_profile:
+    years_1_3_initial_phase: "Heavy maintenance, fleet buildup"
+    years_4_5_expansion_phase: "Growth capex dominates"
+    steady_state_mature: "3-5% of revenue maintenance + selective growth"
+
+# ==============================================================================
+# ASSET TURNOVER
+# ==============================================================================
+
+asset_turnover:
+  total_assets_year_3: 5820000
+  revenue_year_3: 8400000
+  asset_turnover_ratio: 1.44
+  
+  analysis: |
+    Moderate asset intensity business.
+    Fleet model improves asset utilization vs traditional single-location.
+    90% equipment utilization vs 40% industry norm is key value driver.
+  
+  comparison_to_traditional_model:
+    traditional_5_locations_asset_base: 9250000
+    funzone_5_locations_asset_base: 5820000
+    capital_efficiency_improvement: 0.37
+
+# ==============================================================================
+# ROI THRESHOLDS
+# ==============================================================================
+
+roi_thresholds:
+  per_location_roi:
+    investment_per_location_allocated: 1256750
+    year_3_steady_state_ebitda: 369600
+    cash_on_cash_return: 0.294
+    payback_period_years: 3.4
+    assessment: "Acceptable for retail location model"
+  
+  network_fleet_investment_roi:
+    fleet_investment: 2362500
+    annual_savings_vs_traditional: 1127500
+    incremental_revenue_novelty_premium: 840000
+    annual_benefit: 1967500
+    roi: 0.833
+    assessment: "Fleet model creates substantial value"
+  
+  hurdle_rates:
+    new_location_minimum_roi: 0.25
+    new_market_entry_minimum_roi: 0.30
+    equipment_investment_minimum_roi: 0.40
+
+# ==============================================================================
+# VALUATION FRAMEWORKS
+# ==============================================================================
+
+valuation_frameworks:
+  ebitda_multiple_method:
+    comparable_transactions:
+      small_fec_chains: "4.0x - 5.5x EBITDA"
+      trampoline_park_chains: "4.5x - 6.0x EBITDA"
+      established_brands: "5.5x - 7.0x EBITDA"
+    
+    funzone_assessment:
+      year_3_multiple_range: "4.5x - 5.5x (unproven concept, early stage)"
+      year_5_multiple_range: "5.0x - 6.5x (demonstrated scalability)"
+      mature_multiple_range: "6.0x - 7.5x (established brand, defensible moat)"
+  
+  dcf_method:
+    discount_rate: 0.14
+    terminal_growth_rate: 0.025
+    terminal_year: 10
+    implied_value_year_0: 4850000
+    implied_value_year_5: 18920000
+  
+  precedent_transaction_method:
+    relevant_transactions:
+      - "Sky Zone acquired (2017): 5.2x EBITDA"
+      - "Main Event / Dave & Busters (2022): 6.8x EBITDA"
+      - "Urban Air franchising (implied valuation): 5.0x+ EBITDA"
+    
+    assessment: "5.5x base case reasonable for proven concept"
+
+# ==============================================================================
+# EXIT PATHWAYS
+# ==============================================================================
+
+exit_pathways:
+  strategic_acquisition:
+    potential_acquirers:
+      - "Large FEC chains seeking differentiated concepts"
+      - "Private equity platforms in leisure/entertainment"
+      - "Real estate developers (experiential retail strategy)"
+    
+    timing: "Year 5-7, post-demonstration of scalability"
+    valuation_expectation: "5.5x - 7.0x EBITDA"
+    probability: 0.45
+  
+  financial_sponsor_recap:
+    structure: "Private equity recap, founders retain minority"
+    timing: "Year 4-6"
+    valuation_expectation: "5.0x - 6.0x EBITDA"
+    probability: 0.25
+  
+  continued_growth_dividend:
+    structure: "Remain independent, distribute cash flow"
+    timing: "Ongoing from Year 3"
+    return_mechanism: "Dividends + retained equity value"
+    probability: 0.20
+  
+  franchise_conversion:
+    structure: "Convert to franchise model, sell locations"
+    timing: "Year 6+"
+    valuation_expectation: "Asset value + royalty stream NPV"
+    probability: 0.10
+
+# ==============================================================================
+# LIQUIDITY CONSTRAINTS
+# ==============================================================================
+
+liquidity_constraints:
+  cash_conversion_cycle:
+    days_inventory: 5
+    days_receivable: 3
+    days_payable: 25
+    cash_conversion_cycle_days: -17
+    assessment: "Negative cycle = favorable working capital dynamics"
+  
+  minimum_cash_balance:
+    per_location: 90000
+    corporate: 180000
+    total_network_5_locations: 630000
+    covenant: "Maintain minimum cash per debt agreements"
+  
+  liquidity_stress_points:
+    rapid_expansion: "Growth consumes cash faster than generation"
+    seasonal_troughs: "Jan-Feb, Sept-Oct require working capital access"
+    equipment_replacement: "Large periodic capex can strain liquidity"
+  
+  mitigation:
+    maintain_working_capital_loc: 250000
+    stagger_expansion: "Avoid simultaneous multi-location launches"
+    cash_reserve_discipline: "Minimum 90 days operating expenses"
+
+# ==============================================================================
+# RISK-ADJUSTED RETURN EXPECTATIONS
+# ==============================================================================
+
+risk_adjusted_return_expectations:
+  base_case:
+    probability: 0.50
+    equity_irr: 0.378
+    equity_moic: 4.89
+  
+  upside_case:
+    probability: 0.20
+    equity_irr: 0.48
+    equity_moic: 6.80
+  
+  downside_case:
+    probability: 0.25
+    equity_irr: 0.25
+    equity_moic: 2.20
+  
+  failure_case:
+    probability: 0.05
+    equity_irr: -0.85
+    equity_moic: 0.15
+  
+  probability_weighted_irr: 0.335
+  probability_weighted_moic: 4.22
+  
+  assessment: "Risk-adjusted returns exceed hurdle rates with margin of safety"
+
+# ==============================================================================
+# CAPITAL ALLOCATION PRIORITIES
+# ==============================================================================
+
+capital_allocation_priorities:
+  priority_1: "Maintain minimum cash reserves (safety)"
+  priority_2: "Fund maintenance capex (preserve asset base)"
+  priority_3: "Service debt obligations (covenant compliance)"
+  priority_4: "Fund growth capex (proven locations, attractive ROI)"
+  priority_5: "Return capital to equity holders (once sustainable cash flow)"
+  
+  decision_framework:
+    growth_investment_criteria:
+      - "Expected location ROI > 25%"
+      - "Payback period < 4 years"
+      - "Market analysis supports demand"
+      - "Does not compromise liquidity"
+    
+    distribution_criteria:
+      - "Debt service coverage ratio > 2.0x"
+      - "Cash reserves > 120 days operating expenses"
+      - "No imminent growth opportunities > hurdle rate"
+
+# ==============================================================================
+# FINANCIAL MODEL VALIDATION
+# ==============================================================================
+
+financial_model_validation:
+  internal_consistency_checks:
+    cash_flows_reconcile: true
+    balance_sheet_balances: true
+    interest_calculations_accurate: true
+    tax_calculations_reasonable: true
+    depreciation_matches_capex: true
+  
+  reasonableness_checks:
+    revenue_per_location_vs_industry: "Within 15% of benchmarks"
+    margin_profile_vs_industry: "Slightly above average (fleet efficiency)"
+    capex_intensity_vs_industry: "Below average (shared fleet model)"
+    debt_service_coverage: ">1.25x per covenants"
+    working_capital_dynamics: "Favorable, consistent with cash business"
+  
+  assumptions_confidence:
+    high_confidence:
+      - "Cost structure per location"
+      - "Equipment costs and depreciation"
+      - "Working capital requirements"
+    
+    moderate_confidence:
+      - "Revenue ramp trajectory"
+      - "Customer acquisition and retention rates"
+      - "Fleet rotation cost efficiencies"
+    
+    low_confidence:
+      - "Exit valuation multiples in 5 years"
+      - "Future macroeconomic conditions"
+      - "Competitive response to model innovation"
+
+# ==============================================================================
+# SUMMARY ASSESSMENT
+# ==============================================================================
+
+summary_assessment:
+  capital_requirement: "Substantial but achievable - $6.3M total"
+  financing_feasibility: "Moderate - requires sophisticated capital raise"
+  return_profile: "Attractive - 38% IRR base case exceeds targets"
+  risk_profile: "Moderate - execution risk offset by asset backing"
+  
+  investment_recommendation: "PURSUE with disciplined execution"
+  
+  critical_success_factors:
+    - "Secure $2.8M equity from qualified investors"
+    - "Execute staggered location openings to manage cash burn"
+    - "Achieve 90% of projected revenue ramp by Year 2"
+    - "Maintain EBITDA margins at 20%+ by Year 3"
+    - "Demonstrate fleet rotation efficiencies vs. traditional model"
+  
+  key_risks_to_returns:
+    - "Revenue ramp slower than projected (extends payback)"
+    - "Margin compression from competition or costs (reduces cash flow)"
+    - "Fleet logistics costs higher than modeled (erodes efficiency thesis)"
+    - "Exit multiples compressed due to market conditions"

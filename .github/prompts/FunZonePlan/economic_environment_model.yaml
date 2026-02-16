@@ -1,0 +1,534 @@
+# ECONOMIC ENVIRONMENT MODEL
+# FunZone: Macroeconomic Context and Sensitivities
+
+meta:
+  model_version: "1.0"
+  last_updated: "2026-02-15"
+  baseline_year: 2026
+  forecast_horizon: "2026-2031"
+  economic_context: "Post-pandemic normalization, elevated interest rate environment"
+
+# ==============================================================================
+# MACRO DRIVERS
+# ==============================================================================
+
+macro_drivers:
+  gdp_sensitivity:
+    correlation_coefficient: 0.65
+    relationship: "Moderately Pro-Cyclical"
+    analysis: |
+      Discretionary spending on children's entertainment tracks consumer confidence
+      and household income more than GDP directly. Lag of 3-6 months on GDP changes.
+      Parents prioritize children's activities but cut back in sustained downturns.
+    
+    scenario_impacts:
+      gdp_growth_3_percent: "Base case - steady demand growth"
+      gdp_growth_1_percent: "Demand growth slows to +1-2%, pricing pressure increases"
+      gdp_contraction_2_percent: "Demand declines 8-12%, membership churn spikes"
+  
+  employment_sensitivity:
+    correlation_coefficient: 0.72
+    relationship: "Strongly Pro-Cyclical"
+    analysis: |
+      Unemployment rate more predictive than GDP for discretionary family spending.
+      Target demographic (parents 25-45) particularly sensitive to job market.
+      Dual-income households = higher spending; job loss = immediate cuts.
+    
+    scenario_impacts:
+      unemployment_4_percent: "Strong demand environment, willingness to pay high"
+      unemployment_6_percent: "Base case - moderate demand with some price sensitivity"
+      unemployment_8_percent: "Significant demand erosion, shift to pay-per-visit from memberships"
+  
+  consumer_confidence:
+    correlation_coefficient: 0.58
+    leading_indicator: true
+    relationship: "Forward-looking demand signal"
+    analysis: |
+      Parent spending decisions influenced by confidence even before income changes.
+      Confidence drops = postponed parties, reduced visit frequency.
+      Confidence surges = upgrade to memberships, higher party spending.
+
+# ==============================================================================
+# INTEREST RATE EXPOSURE
+# ==============================================================================
+
+interest_rate_exposure:
+  direct_exposure:
+    business_debt_financing:
+      typical_debt_percentage: 0.55
+      debt_structure: "7-10 year term loan, SBA 7(a) or conventional"
+      rate_structure: "Prime + 3-4% or fixed at origination"
+      sensitivity: |
+        Each 100 bps rate increase = +$5,500 annual interest per $1M borrowed
+        New locations financed during high-rate periods face margin compression
+    
+    working_capital_lines:
+      typical_utilization: 0.30
+      rate_structure: "Prime + 2-3%"
+      sensitivity: "Minor impact - limited borrowing on revolving facilities"
+  
+  indirect_exposure:
+    customer_financing_costs:
+      impact: "Moderate"
+      mechanism: "Higher mortgage rates and consumer debt servicing reduce discretionary income"
+      lag_effect: "6-12 months"
+    
+    real_estate_costs:
+      impact: "Moderate to High"
+      mechanism: |
+        Commercial real estate capitalization rates follow interest rates.
+        Higher rates = lower property values but stickier rents.
+        Lease renewals and new locations face rate-adjusted rent expectations.
+    
+    equipment_financing:
+      impact: "Low to Moderate"
+      mechanism: "Equipment purchases typically cash or short-term financed"
+  
+  overall_rate_sensitivity: "Moderate"
+  baseline_assumption: "Federal Funds Rate 4.5-5.0% (2026), gradual decline to 3.5% by 2028"
+  
+  scenario_impacts:
+    rates_plateau_5_percent:
+      - "Financing costs elevated for expansion"
+      - "Consumer spending moderates"
+      - "Valuation multiples compressed"
+    rates_decline_3_percent:
+      - "Refinancing opportunities for existing debt"
+      - "Consumer spending accelerates"
+      - "Real estate competition intensifies"
+    rates_spike_7_percent:
+      - "Expansion becomes prohibitively expensive"
+      - "Consumer recession likely"
+      - "Business valuation severely impacted"
+
+# ==============================================================================
+# INFLATION SENSITIVITY
+# ==============================================================================
+
+inflation_sensitivity:
+  revenue_side:
+    pricing_power: "Moderate"
+    passthrough_capability: 0.60
+    analysis: |
+      Can pass through 60% of cost inflation through price increases over 12-18 months.
+      Member contracts create pricing stickiness (lock-in for 1 year).
+      Competitive pressure limits aggressive price increases.
+      Psychological price points constrain flexibility.
+  
+  cost_side_exposures:
+    labor_inflation:
+      weight_in_cost_structure: 0.32
+      inflation_correlation: 1.15
+      analysis: |
+        Labor costs typically inflate faster than CPI in tight markets.
+        Entry-level wage pressure from competing retail/food service.
+        State and local minimum wage increases = step-function shocks.
+      
+      scenario_impacts:
+        wage_inflation_3_percent: "Manageable with efficiency gains"
+        wage_inflation_6_percent: "Significant margin pressure, price increases required"
+        wage_inflation_10_percent: "Severe profitability challenge"
+    
+    rent_inflation:
+      weight_in_cost_structure: 0.11
+      inflation_correlation: 0.85
+      analysis: |
+        Long-term leases (10 years) with 2-3% annual escalators provide stability.
+        Renewal risk at market rates (unpredictable).
+        High-quality retail locations experiencing higher inflation than CPI.
+    
+    equipment_inflation:
+      weight_in_cost_structure: 0.09
+      inflation_correlation: 0.70
+      analysis: |
+        Commercial playground equipment includes steel, plastics, electronics.
+        Global supply chain disruptions create volatility.
+        Long lead times enable planning but limit responsiveness.
+    
+    utilities_inflation:
+      weight_in_cost_structure: 0.03
+      inflation_correlation: 1.30
+      analysis: |
+        Energy costs highly volatile (climate-controlled large spaces).
+        Limited ability to mitigate beyond efficiency investments.
+    
+    insurance_inflation:
+      weight_in_cost_structure: 0.03
+      inflation_correlation: 1.50
+      analysis: |
+        Liability insurance premiums rising faster than general inflation.
+        Industry-wide incidents trigger market-wide increases.
+        Claims history creates individual exposure.
+  
+  net_inflation_sensitivity: "High"
+  analysis: |
+    Cost structure inflates faster than revenue growth in high-inflation environments.
+    Margin compression of 2-4% for every 3% inflation above 2% baseline.
+
+# ==============================================================================
+# INPUT COST VOLATILITY
+# ==============================================================================
+
+input_cost_volatility:
+  high_volatility_inputs:
+    energy_utilities:
+      volatility_coefficient: 0.85
+      mitigation: "Limited - some LED lighting, HVAC optimization"
+    liability_insurance:
+      volatility_coefficient: 0.75
+      mitigation: "Safety protocols, claims management"
+  
+  moderate_volatility_inputs:
+    equipment_procurement:
+      volatility_coefficient: 0.45
+      mitigation: "Multi-year purchasing agreements, supplier diversification"
+    labor_hourly_rates:
+      volatility_coefficient: 0.40
+      mitigation: "Wage planning, productivity improvements"
+  
+  low_volatility_inputs:
+    rent:
+      volatility_coefficient: 0.15
+      mitigation: "Long-term lease contracts with escalators"
+  
+  overall_volatility_exposure: "Moderate"
+  cash_flow_predictability: "Moderate - revenue more volatile than costs"
+
+# ==============================================================================
+# CURRENCY EXPOSURE
+# ==============================================================================
+
+currency_exposure:
+  direct_exposure: "Minimal"
+  analysis: |
+    Domestic business model with USD revenues and costs.
+    Equipment procurement from international suppliers exposes to forex indirectly.
+    
+  indirect_exposure:
+    equipment_imports:
+      percentage_imported: 0.35
+      primary_currencies: "CNY (China), EUR (Europe)"
+      hedging_feasibility: "Impractical for small-scale operations"
+      impact: "5-8% equipment cost variance from currency movements"
+  
+  overall_currency_risk: "Low"
+
+# ==============================================================================
+# LABOR MARKET DEPENDENCY
+# ==============================================================================
+
+labor_market_dependency:
+  labor_intensity: "High"
+  competitive_position: "Disadvantaged in tight labor markets"
+  
+  workforce_composition:
+    hourly_frontline: 0.75
+    management_salary: 0.25
+  
+  labor_market_dynamics:
+    competing_industries:
+      - "Retail (similar wage bands, often better conditions)"
+      - "Food service (higher tips potential)"
+      - "Warehousing (higher base wages recently)"
+    
+    workforce_supply:
+      target_demographics: "Part-time students, parents seeking flexible hours, retirees"
+      constraints: "Background check requirements reduce available pool"
+      turnover_rate_industry: 0.65
+    
+    wage_pressure_scenarios:
+      tight_labor_market_4_percent_unemployment:
+        starting_wage: 16.00
+        pressure: "High - must compete aggressively"
+      loose_labor_market_7_percent_unemployment:
+        starting_wage: 14.50
+        pressure: "Low - abundant applicants"
+  
+  mitigation_strategies:
+    - "Part-time scheduling flexibility as attraction"
+    - "Positive work environment (children's entertainment)"
+    - "Internal promotion pathways"
+    - "Efficiency through technology (booking, waivers)"
+  
+  overall_labor_dependency: "High - constraining factor in tight markets"
+
+# ==============================================================================
+# CAPITAL MARKET DEPENDENCY
+# ==============================================================================
+
+capital_market_dependency:
+  expansion_capital_requirements: "High"
+  dependency_level: "Moderate to High"
+  
+  capital_sources:
+    debt_markets:
+      primary_source: "SBA 7(a) loans, commercial bank lending"
+      availability_sensitivity: "Moderate - cyclical but accessible in most conditions"
+      cost_sensitivity: "High - rate-dependent"
+    
+    equity_capital:
+      primary_source: "Founder equity, angel investors, small private equity"
+      availability_sensitivity: "High - discretionary investment"
+      valuation_sensitivity: "High - multiples compressed in downturns"
+    
+    cash_flow_reinvestment:
+      feasibility: "Slow - 3-4 years to generate expansion capital per location"
+      dependency: "High - limits growth velocity"
+  
+  capital_market_scenarios:
+    accommodative_low_rates:
+      - "Debt readily available at favorable terms"
+      - "Private equity interest increases"
+      - "Rapid expansion feasible"
+    
+    restrictive_high_rates:
+      - "Debt expensive, terms restrictive"
+      - "Equity investors demand higher returns"
+      - "Growth constrained to cash flow"
+    
+    credit_crunch:
+      - "Debt unavailable regardless of business quality"
+      - "Equity markets freeze"
+      - "Survival mode - maintain existing operations"
+  
+  overall_capital_dependency: "High for growth phase, low for steady-state operations"
+
+# ==============================================================================
+# CREDIT CYCLE SENSITIVITY
+# ==============================================================================
+
+credit_cycle_sensitivity:
+  business_credit_access:
+    sensitivity: "Moderate"
+    analysis: |
+      Asset-backed lending (real property, equipment) provides some credit access resilience.
+      Personal guarantees common - founder creditworthiness critical.
+      SBA programs provide counter-cyclical support during downturns.
+  
+  consumer_credit_conditions:
+    sensitivity: "Low to Moderate"
+    analysis: |
+      Transactions are small ($15-100) and typically cash/debit.
+      Membership subscriptions require payment method but low per-transaction credit utilization.
+      Party deposits are small relative to credit limits.
+      Tighter consumer credit = reduced discretionary spending indirectly.
+  
+  overall_credit_sensitivity: "Moderate"
+
+# ==============================================================================
+# POLICY / REGULATORY ENVIRONMENT
+# ==============================================================================
+
+policy_regulatory_environment:
+  federal_level:
+    consumer_safety_regulation:
+      current_state: "CPSC oversight, voluntary standards (ASTM)"
+      trend: "Increasing scrutiny post-incidents"
+      risk: "Prescriptive equipment requirements could increase costs 10-15%"
+    
+    sba_lending_programs:
+      current_state: "Supportive - SBA 7(a) widely available"
+      trend: "Stable bipartisan support"
+      risk: "Program changes during fiscal crises"
+    
+    labor_regulation:
+      current_state: "Federal minimum wage $7.25 (functionally irrelevant)"
+      trend: "No federal action expected; state/local focus"
+      risk: "Low federal risk"
+  
+  state_local_level:
+    minimum_wage_changes:
+      current_state: "15 states with $15+ minimum wage (2026)"
+      trend: "Continued increases in progressive states"
+      risk: |
+        High-impact in CA, NY, WA, CO markets.
+        Can increase labor costs 15-25% in affected markets.
+    
+    safety_licensing:
+      current_state: "Varies significantly by jurisdiction"
+      trend: "Increasing requirements (inspections, certifications)"
+      risk: "Compliance costs rising; operational friction"
+    
+    zoning_land_use:
+      current_state: "Most jurisdictions permit in commercial/entertainment zones"
+      trend: "NIMBY resistance in some markets (noise, traffic)"
+      risk: "Site approval delays, geographic restrictions"
+  
+  overall_policy_risk: "Moderate - manageable but requires monitoring"
+
+# ==============================================================================
+# TAX ENVIRONMENT
+# ==============================================================================
+
+tax_environment:
+  federal_corporate_tax:
+    current_rate: 0.21
+    stability: "Moderate"
+    scenario_risk: "Potential increase to 25-28% under future administrations"
+    impact: "Would reduce net margins by 3-5%"
+  
+  state_corporate_tax:
+    range: "0% (TX, FL, WA) to 8.84% (CA)"
+    strategy: "Site selection considers state tax burden"
+    impact: "Material to multi-state expansion strategy"
+  
+  sales_tax:
+    applicability: "Entertainment services typically taxable"
+    rates: "5-10% depending on state/local"
+    pass_through: "Collected from customers, administrative burden"
+  
+  property_tax:
+    applicability: "Pass-through in triple-net leases or estimated in gross leases"
+    variability: "High - location-dependent"
+    impact: "Embedded in rent negotiations"
+  
+  employment_taxes:
+    burden: "Standard FICA, unemployment insurance, workers comp"
+    trend: "Workers comp rates elevated for high-risk entertainment"
+    impact: "Adds 15-20% to gross wages"
+  
+  depreciation_tax_benefits:
+    section_179_bonus_depreciation:
+      applicability: "Equipment purchases"
+      benefit: "Accelerated write-offs improve early-year cash flow"
+      strategy: "Time equipment purchases for tax optimization"
+  
+  overall_tax_burden: "~35-40% effective rate (federal, state, payroll, property)"
+
+# ==============================================================================
+# ECONOMIC STRESS SCENARIOS
+# ==============================================================================
+
+economic_stress_scenarios:
+  moderate_recession:
+    definition:
+      gdp_decline: "-1.5% for 2 quarters"
+      unemployment_peak: "6.5%"
+      duration: "12-18 months"
+    
+    business_impacts:
+      demand_decline: "12-18%"
+      pricing_pressure: "5-8% effective discount through promotions"
+      membership_churn: "Increases to 12% monthly"
+      party_bookings: "Decline 20-25%"
+      cost_flexibility: "Limited - labor costs sticky downward"
+    
+    cash_flow_impact: "EBITDA margins compress 8-12 percentage points"
+    survival_requirements:
+      - "Reduce to break-even operations"
+      - "Defer non-critical capex"
+      - "Renegotiate supplier terms"
+      - "Access working capital lines"
+    
+    recovery_timeline: "12-18 months post-recession end"
+  
+  severe_recession:
+    definition:
+      gdp_decline: "-3.5% over 4 quarters"
+      unemployment_peak: "9.0%"
+      duration: "24+ months"
+    
+    business_impacts:
+      demand_decline: "25-35%"
+      pricing_power: "Collapses - deep discounting required"
+      membership_base: "Collapses 40-50%"
+      party_bookings: "Decline 40-50%"
+    
+    cash_flow_impact: "Negative EBITDA without drastic action"
+    survival_requirements:
+      - "Staff reductions 30-40%"
+      - "Rent renegotiation or closure of weakest locations"
+      - "Suspend all expansion"
+      - "Creditor negotiations"
+    
+    failure_risk: "High - 30-40% of locations likely to close"
+    recovery_timeline: "3-5 years to return to pre-recession performance"
+  
+  stagflation:
+    definition:
+      gdp_growth: "0-1% (stagnant)"
+      inflation: "6-8%"
+      unemployment: "6-7%"
+      duration: "24+ months"
+    
+    business_impacts:
+      demand_stagnation: "Flat to -5%"
+      cost_inflation: "Accelerating across all inputs"
+      pricing_lag: "6-12 months behind cost increases"
+      margin_compression: "Severe - EBITDA margins decline 10-15 points"
+    
+    strategic_response:
+      - "Aggressive pricing increases despite demand risk"
+      - "Operational efficiency drive"
+      - "Reduce variable costs where possible"
+      - "Delay expansion until environment normalizes"
+  
+  credit_freeze:
+    definition: "Banking system stress limits commercial lending"
+    
+    business_impacts:
+      expansion_capital: "Unavailable"
+      working_capital_lines: "Reduced or recalled"
+      equipment_financing: "Constrained"
+    
+    strategic_response:
+      - "Halt all expansion immediately"
+      - "Maximize cash reserves"
+      - "Accelerate receivables, extend payables"
+      - "Consider strategic partners or sale"
+
+# ==============================================================================
+# BASELINE ECONOMIC ASSUMPTIONS (2026-2031)
+# ==============================================================================
+
+baseline_economic_assumptions:
+  gdp_growth: "2.0-2.5% annually"
+  unemployment_rate: "4.0-4.5%"
+  inflation_cpi: "2.0-2.5% annually"
+  wage_inflation: "3.0-3.5% annually"
+  federal_funds_rate: "4.5% (2026) declining to 3.0% (2028-2031)"
+  
+  consumer_spending_growth: "2.5-3.0% annually"
+  discretionary_spending_premium: "+0.5-1.0% vs overall consumer spending"
+  
+  scenario_probability_assessment:
+    baseline_continuation: 0.50
+    moderate_recession_2027_2029: 0.25
+    stronger_growth_rates_normalize: 0.15
+    severe_recession_or_stagflation: 0.10
+  
+  confidence_level: "Moderate - standard macroeconomic uncertainty"
+
+# ==============================================================================
+# ECONOMIC ENVIRONMENT SUMMARY
+# ==============================================================================
+
+economic_environment_summary:
+  overall_sensitivity: "Moderate to High"
+  
+  key_exposures:
+    highest_risk:
+      - "Labor cost inflation in tight markets"
+      - "Consumer discretionary spending in recessions"
+      - "Interest rate impacts on expansion financing"
+    
+    moderate_risk:
+      - "Real estate cost escalation"
+      - "Insurance market hardening"
+      - "General inflation passthrough lag"
+    
+    lower_risk:
+      - "Currency fluctuations"
+      - "Credit availability (for quality operators)"
+  
+  economic_positioning:
+    favorable_conditions: "2-3% GDP growth, 4-5% unemployment, stable rates"
+    survivable_conditions: "Mild recession, moderate inflation"
+    distressed_conditions: "Severe recession, stagflation, credit freeze"
+  
+  strategic_implications:
+    - "Maintain conservative leverage to weather downturns"
+    - "Build cash reserves during growth periods"
+    - "Location portfolio diversification across economic regions"
+    - "Operational flexibility in cost structure critical"
+    - "Pricing strategy must balance growth and margin preservation"

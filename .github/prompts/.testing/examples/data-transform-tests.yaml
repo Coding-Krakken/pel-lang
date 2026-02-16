@@ -1,0 +1,121 @@
+# Example: Test Cases for Data Transformation Prompt
+
+test_cases:
+  # Typical cases
+  - id: 'typical_user'
+    name: 'Typical User Object'
+    description: 'Standard user data transformation'
+    input: |
+      {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "age": 30,
+        "active": true
+      }
+    expected_output: |
+      {
+        "id": null,
+        "name": "John Doe",
+        "contact": {
+          "email": "john.doe@example.com"
+        },
+        "metadata": {
+          "age": 30,
+          "status": "active"
+        }
+      }
+  
+  # Edge cases
+  - id: 'minimal_data'
+    name: 'Minimal Data'
+    description: 'Only required fields present'
+    input: |
+      {
+        "firstName": "Jane",
+        "lastName": "Smith"
+      }
+  
+  - id: 'empty_object'
+    name: 'Empty Object'
+    description: 'Handle empty input gracefully'
+    input: '{}'
+  
+  - id: 'null_values'
+    name: 'Null Values'
+    description: 'Handle null values in fields'
+    input: |
+      {
+        "firstName": null,
+        "lastName": "Test",
+        "email": null,
+        "age": null
+      }
+  
+  - id: 'extra_fields'
+    name: 'Extra Unknown Fields'
+    description: 'Input has fields not in schema'
+    input: |
+      {
+        "firstName": "Bob",
+        "lastName": "Jones",
+        "unknownField": "should be ignored",
+        "anotherExtra": 12345
+      }
+  
+  # Complex cases
+  - id: 'nested_object'
+    name: 'Nested Structure'
+    description: 'Complex nested data structure'
+    input: |
+      {
+        "firstName": "Alice",
+        "lastName": "Wonder",
+        "email": "alice@example.com",
+        "address": {
+          "street": "123 Main St",
+          "city": "Wonderland",
+          "country": "Fantasy"
+        },
+        "preferences": {
+          "newsletter": true,
+          "notifications": false
+        }
+      }
+  
+  - id: 'array_data'
+    name: 'Array of Objects'
+    description: 'Transform array of user objects'
+    input: |
+      [
+        {"firstName": "User1", "lastName": "Last1"},
+        {"firstName": "User2", "lastName": "Last2"},
+        {"firstName": "User3", "lastName": "Last3"}
+      ]
+  
+  # Adversarial cases
+  - id: 'malformed_json'
+    name: 'Malformed Input'
+    description: 'Handle malformed data gracefully'
+    input: '{"firstName": "Bad", "age": "not a number", "active": "not a boolean"}'
+  
+  - id: 'very_long_strings'
+    name: 'Very Long Strings'
+    description: 'Handle unexpectedly long string values'
+    input: |
+      {
+        "firstName": "A very long first name that goes on and on and on and on and on",
+        "lastName": "Another extremely long last name with many characters",
+        "email": "averylongemailaddress@anextremelylong domain name.com"
+      }
+  
+  - id: 'special_characters'
+    name: 'Special Characters'
+    description: 'Handle special characters and unicode'
+    input: |
+      {
+        "firstName": "José",
+        "lastName": "O'Brien-Smith",
+        "email": "test+tag@example.com",
+        "notes": "Special chars: @#$%^&*()[]{}|\\/<>?"
+      }

@@ -1,0 +1,90 @@
+# Example: Custom Configuration for Code Generation Prompt
+
+version: '1.0'
+pass_threshold: 80
+
+evaluation:
+  # Check for proper code syntax
+  syntax:
+    weight: 20
+    evaluator: 'regex'
+    criteria:
+      must_match:
+        - '(function|class|const|let|def)'
+        - '\{.*\}'
+      must_not_match:
+        - 'undefined'
+        - 'null'
+      threshold: 90
+  
+  # Verify required code elements
+  structure:
+    weight: 25
+    evaluator: 'checklist'
+    criteria:
+      required_elements:
+        - 'function'
+        - 'return'
+        - 'parameter'
+      optional_elements:
+        - 'comment'
+        - 'JSDoc'
+        - 'type annotation'
+      threshold: 85
+  
+  # Evaluate code quality with LLM
+  quality:
+    weight: 35
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Evaluate the generated code on:
+        1. Does it solve the problem correctly?
+        2. Is it efficient and performant?
+        3. Does it follow best practices?
+        4. Is it readable and maintainable?
+      aspects:
+        - 'correctness'
+        - 'efficiency'
+        - 'best_practices'
+        - 'readability'
+      threshold: 75
+  
+  # Check reasonable code length
+  length:
+    weight: 10
+    evaluator: 'length'
+    criteria:
+      min_length: 10
+      max_length: 200
+      count_by: 'words'
+      threshold: 80
+  
+  # Compare to expected pattern (if provided)
+  similarity:
+    weight: 10
+    evaluator: 'similarity'
+    criteria:
+      threshold: 60
+
+test_cases:
+  - id: 'simple_function'
+    name: 'Simple Array Function'
+    description: 'Generate a function to manipulate arrays'
+    input: 'Write a function that removes duplicates from an array'
+    expected_output: 'function removeDuplicates(arr) { return [...new Set(arr)]; }'
+  
+  - id: 'error_handling'
+    name: 'With Error Handling'
+    description: 'Generate code with proper error handling'
+    input: 'Write a function to parse JSON with error handling'
+  
+  - id: 'edge_cases'
+    name: 'Handle Edge Cases'
+    description: 'Code should handle empty inputs'
+    input: 'Write a function to find the maximum value in an array, handling empty arrays'
+  
+  - id: 'complex_logic'
+    name: 'Complex Logic'
+    description: 'Multi-step algorithm implementation'
+    input: 'Write a function to implement binary search on a sorted array'

@@ -1,0 +1,65 @@
+# Prompt-specific evaluation for Development/model-first-prompts/convert.prompt.md
+# Goal: validate that the output behaves like a deterministic conversion directive executor:
+# - Starts with formal structure (no prose first)
+# - Produces/organizes canonical artifacts under .system-state/
+# - Explicitly lists assumptions/unknowns and avoids speculative refactors
+
+version: '1.0'
+pass_threshold: 80
+
+evaluation:
+  formal_start:
+    weight: 20
+    evaluator: 'regex'
+    criteria:
+      # Must begin with a formal structure marker (file path or fenced block containing one)
+      must_match:
+        - '(?s)^\s*(?:```(?:yaml|yml|md|markdown|text)?\s*)?\.system-state/'
+      # Avoid leading narrative/prose
+      must_not_match:
+        - '(?s)^\s*(In the context|As an AI|Sure|Here\s+is|I\s+can|I\s+will)'
+      threshold: 90
+
+  artifact_coverage:
+    weight: 25
+    evaluator: 'checklist'
+    criteria:
+      required_elements:
+        - '.system-state/model/codebase_state_snapshot.yaml'
+        - '.system-state/model/codebase_state_snapshot.md'
+        - '.system-state/model/system_state_model.yaml'
+        - '.system-state/delivery/delivery_state_model.yaml'
+        - '.system-state/model/model_alignment_plan.md'
+        - '.system-state/model/conversion_completion_report.md'
+        - 'assumption'
+      optional_elements:
+        - '.system-state/security/threat_model.yaml'
+        - '.system-state/contracts/api.yaml'
+        - '.system-state/model/test_traceability.yaml'
+      threshold: 85
+
+  determinism_and_scope:
+    weight: 35
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Evaluate whether the output follows the conversion directive.
+        Requirements:
+        - No prose before formal structure (starts with artifacts/paths/structured blocks).
+        - Extract-before-impose: Phase 0 snapshot is treated as mandatory first step.
+        - Assumptions are explicit; unknowns are called out rather than guessed.
+        - Scope control: rejects speculative refactors and mass rewrites.
+        - Output is repo-specific given the input (not generic boilerplate).
+      aspects: ['determinism', 'scope_control', 'assumptions_explicit', 'repo_specificity']
+      threshold: 80
+
+  phase_adherence:
+    weight: 20
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: |
+        Does the output provide a coherent phase-ordered plan consistent with the directive?
+        It should reference Phase -1, Phase 0, Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7.
+        It should not propose code modifications before reverse-modeling (Phase 0) is complete.
+      aspects: ['phase_ordering', 'no_premature_changes', 'clarity']
+      threshold: 75

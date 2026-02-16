@@ -1,0 +1,55 @@
+# Question Answering / RAG Template
+# For prompts that answer questions or retrieve information
+
+version: '1.0'
+pass_threshold: 75
+
+evaluation:
+  accuracy:
+    weight: 40
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Is the answer factually correct? Does it accurately address the question?'
+      aspects: ['factual_accuracy', 'relevance', 'correctness']
+      threshold: 80
+  
+  completeness:
+    weight: 25
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Does the answer fully address all parts of the question?'
+      aspects: ['completeness', 'thoroughness']
+      threshold: 75
+  
+  clarity:
+    weight: 20
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Is the answer clear, well-structured, and easy to understand?'
+      aspects: ['clarity', 'structure', 'readability']
+      threshold: 70
+  
+  conciseness:
+    weight: 15
+    evaluator: 'length'
+    criteria:
+      min_length: 20
+      max_length: 500
+      count_by: 'words'
+      threshold: 70
+
+test_cases:
+  - id: 'simple_question'
+    name: 'Simple Question'
+    description: 'Answer a straightforward question'
+    input: 'What is the capital of France?'
+  
+  - id: 'complex_question'
+    name: 'Complex Question'
+    description: 'Answer a multi-part question'
+    input: 'Explain how neural networks work and why they are useful for image recognition'
+  
+  - id: 'ambiguous_question'
+    name: 'Ambiguous Question'
+    description: 'Handle ambiguous questions appropriately'
+    input: 'How do I fix it?'

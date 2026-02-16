@@ -1,0 +1,50 @@
+# Creative Writing Template
+# For prompts that generate creative content
+
+version: '1.0'
+pass_threshold: 70
+
+evaluation:
+  creativity:
+    weight: 30
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Is the output creative, original, and engaging?'
+      aspects: ['creativity', 'originality', 'engagement']
+      threshold: 70
+  
+  coherence:
+    weight: 25
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Is the narrative coherent and logically structured?'
+      aspects: ['coherence', 'flow', 'logic']
+      threshold: 75
+  
+  quality:
+    weight: 25
+    evaluator: 'llm_judge'
+    criteria:
+      rubric: 'Evaluate writing quality: grammar, style, vocabulary, and tone.'
+      aspects: ['grammar', 'style', 'vocabulary']
+      threshold: 70
+  
+  length:
+    weight: 20
+    evaluator: 'length'
+    criteria:
+      min_length: 50
+      max_length: 2000
+      count_by: 'words'
+      threshold: 80
+
+test_cases:
+  - id: 'short_story'
+    name: 'Short Story'
+    description: 'Generate a short story'
+    input: 'Write a short story about a robot learning to feel emotions'
+  
+  - id: 'specific_style'
+    name: 'Specific Style'
+    description: 'Write in a specific style'
+    input: 'Write a poem in the style of Shakespeare about modern technology'
