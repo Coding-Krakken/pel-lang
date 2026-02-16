@@ -181,7 +181,7 @@ class Parser:
         
         return params
     
-    def expect_and_parse_type(self) -> TypeAnnotationAnnotation:
+    def expect_and_parse_type(self) -> TypeAnnotation:
         """Expect colon then parse type."""
         self.expect(TokenType.COLON)
         return self.parse_type()
