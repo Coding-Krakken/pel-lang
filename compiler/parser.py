@@ -181,7 +181,7 @@ class Parser:
         
         return params
     
-    def expect_and_parse_type(self) -> TypeAnnotationAnnotation:
+    def expect_and_parse_type(self) -> TypeAnnotation:
         """Expect colon then parse type."""
         self.expect(TokenType.COLON)
         return self.parse_type()
@@ -289,7 +289,7 @@ class Parser:
     
     # ===== Types =====
     
-    def parse_type(self) -> TypeAnnotationAnnotation:
+    def parse_type(self) -> TypeAnnotation:
         """Parse type annotation."""
         # Primitive types
         if self.match(TokenType.CURRENCY_TYPE):

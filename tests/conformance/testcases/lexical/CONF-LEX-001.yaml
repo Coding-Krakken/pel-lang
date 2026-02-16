@@ -1,0 +1,25 @@
+id: CONF-LEX-001
+category: lexical
+spec_ref: spec/pel_language_spec.md#duration-literals
+description: Duration literal - hours only
+input: |
+  model test {
+    param x: Duration = 2h;
+  }
+expected:
+  type: success
+  tokens:
+    - type: MODEL
+    - type: IDENTIFIER
+      value: test
+    - type: LBRACE
+    - type: PARAM
+    - type: IDENTIFIER
+      value: x
+    - type: COLON
+    - type: DURATION_TYPE
+    - type: EQUALS
+    - type: DURATION_LITERAL
+      value: 2h
+    - type: SEMICOLON
+    - type: RBRACE
