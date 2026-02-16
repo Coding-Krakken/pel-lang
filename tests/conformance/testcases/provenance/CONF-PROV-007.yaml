@@ -1,0 +1,18 @@
+id: CONF-PROV-007
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Dependency tracking - transitive
+input: "model test {\n  param a = 10;\n  var b = a * 2;\n  var c = b + 5;\n  var d\
+  \ = c * 3;\n}\n"
+expected:
+  type: success
+  dependencies:
+    b:
+    - a
+    c:
+    - b
+    - a
+    d:
+    - c
+    - b
+    - a

@@ -1,0 +1,12 @@
+id: CONF-PROV-006
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Dependency tracking - complex expression
+input: "model test {\n  param revenue: Currency<USD> = $10000;\n  param cost: Currency<USD>\
+  \ = $7000;\n  var profit = revenue - cost;\n}\n"
+expected:
+  type: success
+  dependencies:
+    profit:
+    - revenue
+    - cost

@@ -1,0 +1,11 @@
+id: CONF-LEX-029
+category: lexical
+spec_ref: spec/pel_language_spec.md#identifiers
+description: Error - identifier starting with number
+input: 'param 123invalid = 1;
+
+  '
+expected:
+  type: error
+  error_type: LexicalError
+  error_message: Invalid identifier

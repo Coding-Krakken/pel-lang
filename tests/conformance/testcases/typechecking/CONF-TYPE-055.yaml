@@ -1,0 +1,9 @@
+id: CONF-TYPE-055
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: TimeSeries element type
+input: "model test {\n  var revenue: TimeSeries<Currency<USD>>;\n}\n"
+expected:
+  type: success
+  types:
+    revenue: TimeSeries<Currency<USD>>

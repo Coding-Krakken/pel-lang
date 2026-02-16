@@ -1,0 +1,9 @@
+id: CONF-TYPE-018
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Multiplication - currency by scalar
+input: "model test {\n  var result = $100 * 2;\n}\n"
+expected:
+  type: success
+  types:
+    result: Currency<USD>

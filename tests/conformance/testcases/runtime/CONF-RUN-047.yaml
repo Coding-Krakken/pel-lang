@@ -1,0 +1,8 @@
+id: CONF-RUN-047
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-analysis
+description: Sensitivity analysis
+input: "model test {\n  param base = 100;\n  var doubled = base * 2;\n}\n"
+expected:
+  type: success
+  analysis_type: sensitivity

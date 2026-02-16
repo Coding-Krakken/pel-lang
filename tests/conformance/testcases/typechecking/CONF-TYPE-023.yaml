@@ -1,0 +1,10 @@
+id: CONF-TYPE-023
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Type error - mismatched currency
+input: "model test {\n  var usd = $100;\n  var eur = €50;\n  var result = usd + eur;\n\
+  }\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Cannot add Currency<USD> and Currency<EUR>

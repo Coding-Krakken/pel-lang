@@ -1,0 +1,10 @@
+id: CONF-RUN-030
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Policy trigger - false
+input: "model test {\n  var triggered = false;\n  policy test { when: false, then:\
+  \ { triggered = true; } }\n}\n"
+expected:
+  type: success
+  values:
+    triggered: false

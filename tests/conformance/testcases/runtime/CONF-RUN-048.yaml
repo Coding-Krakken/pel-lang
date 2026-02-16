@@ -1,0 +1,9 @@
+id: CONF-RUN-048
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-analysis
+description: Bottleneck analysis
+input: "model test {\n  param capacity = 100;\n  param demand = 150;\n  constraint\
+  \ sufficient: capacity >= demand;\n}\n"
+expected:
+  type: success
+  analysis_type: bottleneck

@@ -1,0 +1,9 @@
+id: CONF-RUN-045
+category: runtime
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - null reference
+input: "model test {\n  var x: Int? = None;\n  var y = x + 1;\n}\n"
+expected:
+  type: error
+  error_type: RuntimeError
+  error_message: Null reference

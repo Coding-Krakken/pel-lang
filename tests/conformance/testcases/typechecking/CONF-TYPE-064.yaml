@@ -1,0 +1,9 @@
+id: CONF-TYPE-064
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Rate per unit
+input: "model test {\n  var growth: Rate per Month = 0.05/1mo;\n}\n"
+expected:
+  type: success
+  types:
+    growth: Rate per Month

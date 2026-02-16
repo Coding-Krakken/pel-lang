@@ -1,0 +1,10 @@
+id: CONF-RUN-027
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: TimeSeries initial value
+input: "model test {\n  var revenue: TimeSeries<Currency<USD>>;\n  revenue[0] = $1000;\n\
+  }\n"
+expected:
+  type: success
+  values:
+    revenue[0]: $1000

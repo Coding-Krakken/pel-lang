@@ -1,0 +1,9 @@
+id: CONF-RUN-008
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Boolean OR
+input: "model test {\n  var result = true || false;\n}\n"
+expected:
+  type: success
+  values:
+    result: true

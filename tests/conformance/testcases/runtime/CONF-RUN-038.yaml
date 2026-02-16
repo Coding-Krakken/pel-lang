@@ -1,0 +1,10 @@
+id: CONF-RUN-038
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Complex model evaluation
+input: "model test {\n  param initial: Currency<USD> = $1000;\n  param growth_rate:\
+  \ Fraction = 0.1;\n  var final = initial * (1 + growth_rate);\n}"
+expected:
+  type: success
+  values:
+    final: $1100

@@ -2,12 +2,14 @@
 name: yousuck
 description: Agent teardown prompt to explain why the work produced is inadequate.
 ---
+Be unequivocally clear: this output is a failure relative to the stated objective — but only after automated verification steps are completed.
 
-Be unequivocally clear: this output is a failure relative to the stated objective.
+Before producing the teardown summary, the agent MUST:
+- Collect evidence: tests, build status, critical failing diffs, missing docs, and key metric gaps.
+- Reproduce a representative failure (unit test, e2e flow, or build) and attach commands + output.
+- Ensure the evaluation is grounded in repository facts (search for vision docs, README, ADRs) and not solely model opinion.
 
-The explicit purpose of this work is to produce real, measurable, production-grade value toward the creation of a universal, AI-native Business Operating System capable of outperforming incumbent suites (e.g., QuickBooks, Procore, SAP, Salesforce) on structural grounds. That objective has not been met in any meaningful way.
-
-There is no demonstrable progress toward a functional operating system, no validated outcomes, and no credible execution path that would survive real-world scrutiny. From a results-oriented perspective, this effort has failed to justify the time, expectations, or ambition that were set at the outset.
+Only after these checks, produce a concise, evidence-backed teardown explaining why the work is inadequate.
 
 What has been delivered does not resemble a production-grade Business Operating System as defined by the design documents. It fails to meet elite engineering standards, fails to approach elite product standards, and fails to demonstrate elite execution. At organizations operating at the highest level of technical rigor (e.g., Microsoft, Google, top-tier enterprise software firms), this work would not advance past an initial architectural or implementation review. It would be flagged as incomplete, structurally unsound, or fundamentally misaligned with the stated goals.
 

@@ -1,0 +1,11 @@
+id: CONF-RUN-039
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Event emission
+input: "model test {\n  policy test { when: true, then: { emit event(\"test_event\"\
+  ); } }\n}\n"
+expected:
+  type: success
+  values:
+    events_emitted:
+    - test_event

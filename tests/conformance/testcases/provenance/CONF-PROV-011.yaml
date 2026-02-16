@@ -1,0 +1,8 @@
+id: CONF-PROV-011
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Multiple correlated params
+input: "model test {\n  param a = 1 { correlated_with: [(\"b\", 0.5), (\"c\", -0.3)]\
+  \ }\n  param b = 2;\n  param c = 3;\n}\n"
+expected:
+  type: success

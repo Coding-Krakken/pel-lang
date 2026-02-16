@@ -1,0 +1,8 @@
+id: CONF-PROV-017
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Freshness tracking
+input: "model test {\n  param recent = 100 { freshness: \"P1D\" }\n  param old = 200\
+  \ { freshness: \"P1Y\" }\n}\n"
+expected:
+  type: success

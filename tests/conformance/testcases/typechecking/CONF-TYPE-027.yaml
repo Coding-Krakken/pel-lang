@@ -1,0 +1,9 @@
+id: CONF-TYPE-027
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Unary minus - currency
+input: "model test {\n  var result = -$100;\n}\n"
+expected:
+  type: success
+  types:
+    result: Currency<USD>

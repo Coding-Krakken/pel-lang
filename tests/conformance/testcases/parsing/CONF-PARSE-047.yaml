@@ -1,0 +1,9 @@
+id: CONF-PARSE-047
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Multiple vars
+input: "model test {\n  var a = 1;\n  var b = 2;\n  var c = 3;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

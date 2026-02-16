@@ -1,0 +1,8 @@
+id: CONF-TYPE-079
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Multiple return paths same type
+input: "model test {\n  func abs(x: Int) -> Int {\n    if x < 0 then return -x else\
+  \ return x;\n  }\n}\n"
+expected:
+  type: success

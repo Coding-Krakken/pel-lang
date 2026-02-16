@@ -1,0 +1,10 @@
+id: CONF-PARSE-060
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Complex constraint
+input: "model test {\n  constraint profitability: revenue[t] - cost[t] >= $0 {\n \
+  \   for: t >= 6\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

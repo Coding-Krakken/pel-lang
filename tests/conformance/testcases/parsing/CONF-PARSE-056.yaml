@@ -1,0 +1,10 @@
+id: CONF-PARSE-056
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Emit event
+input: "model test {\n  policy alert {\n    when: cash < $0,\n    then: {\n      emit\
+  \ event(\"low_cash\");\n    }\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

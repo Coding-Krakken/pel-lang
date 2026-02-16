@@ -1,0 +1,9 @@
+id: CONF-RUN-003
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Currency addition
+input: "model test {\n  var total = $100 + $50;\n}\n"
+expected:
+  type: success
+  values:
+    total: $150

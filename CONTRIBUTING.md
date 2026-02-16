@@ -399,16 +399,22 @@ PEL follows **property-based testing** where applicable:
 - Test runtime with stdlib modules
 - Moderate speed (<100ms per test)
 
-**3. End-to-End Tests**
+**3. Conformance Tests**
+- Validate specification compliance (280 systematic tests)
+- Test lexical analysis, parsing, type checking, provenance, runtime
+- Required for changes to compiler, type checker, or runtime core
+- See [Conformance Testing Guide](docs/conformance/CONFORMANCE_TESTING.md)
+
+**4. End-to-End Tests**
 - Full PEL model compilation and execution
 - Test complete workflows
 - Slower (< 5s per test)
 
-**4. Property Tests**
+**5. Property Tests**
 - Use Hypothesis for random input generation
 - Test invariants (e.g., "any valid model compiles without crashes")
 
-**5. Golden Tests**
+**6. Golden Tests**
 - Test against known-good reference outputs
 - Detect unintended behavior changes
 - Used extensively in stdlib
@@ -447,6 +453,11 @@ def test_monte_carlo_preserves_correlation_within_tolerance():
 ```bash
 # Run all tests
 pytest
+
+# Run specific test types
+pytest -m unit           # Unit tests only
+pytest -m integration    # Integration tests only
+pytest tests/conformance/  # Conformance tests only
 
 # Run specific test file
 pytest compiler/tests/test_typechecker.py

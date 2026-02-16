@@ -1,0 +1,11 @@
+id: CONF-LEX-027
+category: lexical
+spec_ref: spec/pel_language_spec.md#string-literals
+description: Error - unterminated string
+input: '"unterminated string
+
+  '
+expected:
+  type: error
+  error_type: LexicalError
+  error_message: Unterminated string

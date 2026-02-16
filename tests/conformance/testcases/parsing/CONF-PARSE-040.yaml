@@ -1,0 +1,10 @@
+id: CONF-PARSE-040
+category: parsing
+spec_ref: spec/pel_language_spec.md#expressions
+description: Range expression
+input: "model test {\n  var range = 0..10;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test

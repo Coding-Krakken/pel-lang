@@ -1,0 +1,24 @@
+id: CONF-LEX-006
+category: lexical
+spec_ref: spec/pel_language_spec.md#currency-literals
+description: Currency literal - with underscores
+input: 'param budget: Currency<USD> = $50_000;
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: budget
+  - type: COLON
+  - type: CURRENCY_TYPE
+  - type: LT
+  - type: IDENTIFIER
+    value: USD
+  - type: GT
+  - type: ASSIGN
+  - type: CURRENCY
+    value: $50_000
+  - type: SEMICOLON
+  - type: EOF

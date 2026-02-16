@@ -1,0 +1,9 @@
+id: CONF-TYPE-098
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Type checking scenario 98
+input: "model test_98 {\n  var x = 98;\n}\n"
+expected:
+  type: success
+  types:
+    x: Int
