@@ -183,6 +183,155 @@ git push origin feature/your-feature-name
 
 ---
 
+## CI/CD Pipeline
+
+### Overview
+
+All code must pass automated CI checks before merging to `main`. The CI pipeline runs on every push to `main`, `premerge/**` branches, and on all pull requests.
+
+### CI Pipeline Stages
+
+The pipeline consists of 4 stages that run in parallel (except build, which requires all others to pass):
+
+**1. Lint**
+- **Tool:** `ruff`
+- **Purpose:** Code style and quality checks
+- **Failures:** Code style violations, unused imports, complexity issues
+
+**2. Test**
+- **Tool:** `pytest`
+- **Python Versions:** 3.10, 3.11, 3.12 (matrix)
+- **Coverage:** Requires ≥ 90% for new code
+- **Failures:** Test failures, insufficient coverage
+
+**3. Security**
+- **Tool:** `bandit`
+- **Purpose:** Security vulnerability scanning
+- **Failures:** High/medium severity issues
+
+**4. Build**
+- **Tool:** Python `build`
+- **Purpose:** Verify package builds correctly
+- **Failures:** Missing dependencies, build errors
+
+### Running CI Locally
+
+**Before pushing code, run the full CI suite locally:**
+
+```bash
+# Run all CI checks
+make ci
+
+# Or run individual checks:
+make lint          # Linting
+make typecheck     # Type checking
+make security      # Security scan
+make test          # Test suite
+make coverage      # Tests with coverage report
+```
+
+**Install pre-commit hooks** (runs checks automatically on commit):
+
+```bash
+make install
+# or manually:
+pip install pre-commit
+pre-commit install
+```
+
+### Branch Strategy
+
+CI only runs on specific branch patterns to conserve resources:
+
+- **`main`** - Production branch (CI required for merge)
+- **`premerge/**`** - Integration branches (CI runs automatically)
+- **`feature/**`** - Development branches (no CI, run locally)
+
+**Development workflow:**
+
+```bash
+# 1. Create feature branch (no CI runs)
+git checkout -b feature/my-feature
+
+# 2. Develop and test locally
+make ci
+
+# 3. When ready, create premerge branch for CI
+git checkout -b premerge/my-feature
+git push -u origin premerge/my-feature
+
+# 4. Open PR: premerge/my-feature → main
+# CI runs automatically on PR
+```
+
+### CI Requirements for Merging
+
+All PRs must satisfy:
+
+- ✅ **All CI stages pass** (lint, test, security, build)
+- ✅ **All tests pass** on Python 3.10, 3.11, 3.12
+- ✅ **Code coverage** ≥ 90% for new code
+- ✅ **No security issues** (medium or high severity)
+- ✅ **At least 1 approval** from a maintainer
+- ✅ **Branch up to date** with main
+
+### CI Failure Troubleshooting
+
+**Lint failures:**
+```bash
+# Auto-fix most issues
+make format
+
+# Check remaining issues
+make lint
+```
+
+**Test failures:**
+```bash
+# Run specific test
+pytest tests/path/to/test_file.py::test_name -v
+
+# Run with debugging
+pytest tests/path/to/test_file.py::test_name -vvs --pdb
+```
+
+**Coverage failures:**
+```bash
+# Generate coverage report
+make coverage
+
+# View in browser
+open htmlcov/index.html
+```
+
+**Security failures:**
+```bash
+# Run security scan locally
+make security
+
+# Review findings and fix or add exceptions in pyproject.toml
+```
+
+### CI Configuration Files
+
+- **`.github/workflows/ci.yml`** - GitHub Actions workflow
+- **`.pre-commit-config.yaml`** - Pre-commit hooks
+- **`Makefile`** - Local CI commands
+- **`pyproject.toml`** - Tool configurations (pytest, coverage, ruff, bandit)
+
+### Branch Protection
+
+The `main` branch is protected with:
+- Required status checks (all CI stages must pass)
+- Required review approval
+- No force pushes
+- No deletions
+- Linear history required
+
+See [`docs/ci/BRANCH_PROTECTION.md`](docs/ci/BRANCH_PROTECTION.md) for complete branch protection documentation.
+
+---
+
 ## Specification Change Process (PEPs)
 
 **PEP = PEL Enhancement Proposal**
