@@ -163,23 +163,81 @@ pytest -m integration
 # Create a feature branch
 git checkout -b feature/your-feature-name
 
+# Install pre-commit hooks (first time only)
+make install-hooks
+
 # Make changes, add tests
 
-# Run tests
-pytest
+# Run all CI checks locally before committing
+make ci
 
-# Format code
-make fmt
+# Individual checks
+make lint        # Run linting (ruff + mypy)
+make typecheck   # Run type checking only
+make test        # Run tests
+make coverage    # Run tests with coverage report
+make security    # Run security scan
 
-# Lint
-make lint
-
-# Commit with descriptive message
+# Pre-commit hooks will run automatically on commit
+git add .
 git commit -m "feat: Add support for X"
 
 # Push and open pull request
 git push origin feature/your-feature-name
 ```
+
+**Note on CI triggers:**
+- CI runs automatically on `main` and `premerge/**` branches
+- Feature branches (`feature/**`) don't trigger CI - use local checks with `make ci`
+- CI runs on all pull requests targeting `main`
+
+### Running CI Locally
+
+Before pushing your code, always run the full CI suite locally:
+
+```bash
+# Run all CI checks (lint, typecheck, security, test)
+make ci
+```
+
+This command runs the same checks that will run in GitHub Actions:
+1. **Linting** - Code style with ruff and mypy type checking
+2. **Type Checking** - Strict mypy validation
+3. **Security** - Security scanning with bandit
+4. **Tests** - Full test suite with coverage ≥ 95%
+
+**Individual commands:**
+```bash
+make lint        # ruff check compiler/ runtime/ tests/
+make typecheck   # mypy compiler/ runtime/
+make security    # bandit security scan
+make test        # pytest with coverage
+make coverage    # generate HTML coverage report
+```
+
+**Pre-commit hooks:**
+```bash
+# Install hooks (one time setup)
+make install-hooks
+
+# Manually run hooks on all files
+pre-commit run --all-files
+
+# Hooks run automatically on git commit
+```
+
+The pre-commit hooks will:
+- Format code with ruff and black
+- Run linting checks
+- Run type checking with mypy (strict mode)
+- Check for common issues (trailing whitespace, large files, etc.)
+
+**Troubleshooting:**
+- If `make ci` fails, fix the reported issues before pushing
+- Coverage must be ≥ 95% for tests to pass
+- All mypy errors must be resolved (strict mode enabled)
+- See `.github/workflows/ci.yml` for exact CI configuration
+
 
 ---
 

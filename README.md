@@ -1,5 +1,7 @@
 # PEL — Programmable Economic Language
 
+[![CI Pipeline](https://github.com/Coding-Krakken/pel-lang/workflows/CI%20Pipeline/badge.svg)](https://github.com/Coding-Krakken/pel-lang/actions/workflows/ci.yml)
+
 **Version:** 0.1.0  
 **Status:** Production-ready specification and reference implementation  
 **License:** AGPL-3.0-or-later OR Commercial (Dual Licensed)
