@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import pytest
 
-from compiler.errors import ParseError
-from compiler.lexer import Lexer
-from compiler.parser import Parser
 from compiler.ast_nodes import (
-    BinaryOp,
     IfThenElse,
     Lambda,
     Literal,
     MemberAccess,
     UnaryOp,
 )
+from compiler.errors import ParseError
+from compiler.lexer import Lexer
+from compiler.parser import Parser
 
 
 @pytest.mark.unit

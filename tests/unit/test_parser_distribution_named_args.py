@@ -1,8 +1,8 @@
 import pytest
 
+from compiler.ast_nodes import Distribution
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.ast_nodes import Distribution
 
 
 @pytest.mark.unit

@@ -1,8 +1,8 @@
 import pytest
 
+from compiler.ast_nodes import BinaryOp, Literal
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.ast_nodes import BinaryOp, Literal
 from compiler.typechecker import TypeChecker
 
 
