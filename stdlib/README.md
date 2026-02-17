@@ -11,19 +11,20 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 
 ## Modules
 
-### 1. `demand/` - Demand Forecasting
+### 1. `demand/` - Demand Forecasting 🔜
 - Lead generation models
 - Seasonality handling
 - Bass diffusion curves
 - Market saturation
 
-### 2. `funnel/` - Conversion Funnels
+### 2. `funnel/` - Conversion Funnels ✅ **IMPLEMENTED**
 - Multi-stage conversion
-- Drop-off analysis
+- Drop-off analysis  
 - Cohort tracking
 - A/B test impact
+- Pre-built archetypes (SaaS, e-commerce, B2B sales)
 
-### 3. `pricing/` - Pricing Models
+### 3. `pricing/` - Pricing Models 🔜
 - Elasticity curves
 - Willingness-to-pay distributions
 - Dynamic pricing
@@ -37,35 +38,41 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - SaaS magic number, burn multiple, rule of 40
 - Usage-based revenue
 
-### 5. `cashflow/` - Cash Flow Waterfall
-- Accounts receivable timing
-- Accounts payable timing
-- Payroll schedules
-- Tax calculations
+### 5. `cashflow/` - Cash Flow Waterfall ✅ **IMPLEMENTED**
+- Accounts receivable timing (DSO, AR balance)
+- Accounts payable timing (DPO, AP balance)
+- Payroll schedules (semi-monthly, monthly)
+- Burn rate and runway calculations
+- Cash conversion cycle
+- Free cash flow
 
-### 6. `retention/` - Retention & Churn
-- Survival curves
+### 6. `retention/` - Retention & Churn ✅ **IMPLEMENTED**
+- Survival curves (exponential, power law)
 - Cohort retention
 - Expansion/contraction revenue
-- Net dollar retention
+- Net dollar retention (NDR)
+- Gross dollar retention (GDR)
+- Quick ratio
 
-### 7. `capacity/` - Capacity Planning
+### 7. `capacity/` - Capacity Planning 🔜
 - Queueing models
 - Utilization optimization
 - WIP limits
 - Bottleneck analysis
 
-### 8. `hiring/` - Hiring & Headcount
+### 8. `hiring/` - Hiring & Headcount 🔜
 - Ramp curves
 - Attrition models
 - Span of control
 - Cost per employee by level
 
-### 9. `shocks/` - Scenario Library
+### 9. `shocks/` - Scenario Library 🔜
 - Recession scenarios
 - Supply disruptions
 - Demand spikes
 - Platform risk events
+
+**Implementation Status:** 4 of 9 modules complete (44%)
 
 ## Usage
 

@@ -1,0 +1,206 @@
+// PEL Standard Library: Retention Module
+// Functions for customer retention, churn, and cohort analysis
+
+module retention {
+  
+  // ============================================================================
+  // Retention Curve Models
+  // ============================================================================
+  
+  /// Exponential retention curve (standard decay model)
+  /// Common for SaaS subscriptions
+  func exponential_retention_curve(
+    monthly_churn_rate: Rate per Month,
+    months: Count
+  ) -> Array<Fraction> {
+    var retention: Array<Fraction> = []
+    var retention_rate: Fraction = 1.0 - monthly_churn_rate * 1mo
+    
+    for i in 0..months {
+      retention[i] = retention_rate ^ i
+    }
+    
+    return retention
+  }
+  
+  /// Power law retention curve (long-tail retention)
+  /// Better for products with network effects or high engagement
+  func power_law_retention_curve(
+    alpha: Fraction,
+    beta: Fraction,
+    months: Count
+  ) -> Array<Fraction> {
+    var retention: Array<Fraction> = []
+    
+    for i in 0..months {
+      if i == 0 {
+        retention[i] = 1.0
+      } else {
+        retention[i] = alpha * (i ^ (-1 * beta))
+      }
+    }
+    
+    return retention
+  }
+  
+  /// Cohort retention table (period-by-period retention)
+  func cohort_retention_table(
+    initial_cohort_size: Count<Customer>,
+    retention_rates: Array<Fraction>
+  ) -> Array<Count<Customer>> {
+    var cohort_sizes: Array<Count<Customer>> = []
+    cohort_sizes[0] = initial_cohort_size
+    
+    for i in 1..retention_rates.length {
+      cohort_sizes[i] = cohort_sizes[i-1] * retention_rates[i-1]
+    }
+    
+    return cohort_sizes
+  }
+  
+  // ============================================================================
+  // Churn Metrics
+  // ============================================================================
+  
+  /// Simple monthly churn rate
+  func simple_churn_rate(
+    customers_start_of_month: Count<Customer>,
+    customers_lost: Count<Customer>
+  ) -> Rate per Month {
+    var churn: Fraction = customers_lost / customers_start_of_month
+    return churn / 1mo
+  }
+  
+  /// Cohort-specific churn rate
+  func cohort_churn_rate(
+    cohort_sizes_over_time: Array<Count<Customer>>
+  ) -> Array<Rate per Month> {
+    var churn_rates: Array<Rate per Month> = []
+    
+    for i in 1..cohort_sizes_over_time.length {
+      var lost: Count<Customer> = 
+        cohort_sizes_over_time[i-1] - cohort_sizes_over_time[i]
+      var rate: Fraction = lost / cohort_sizes_over_time[i-1]
+      churn_rates[i-1] = rate / 1mo
+    }
+    
+    return churn_rates
+  }
+  
+  /// Customer lifetime in months (average)
+  func customer_lifetime_months(
+    monthly_retention_rate: Fraction
+  ) -> Duration<Month> {
+    // Lifetime = 1 / churn_rate (in months)
+    var churn_rate: Fraction = 1.0 - monthly_retention_rate
+    
+    if churn_rate <= 0 {
+      return 999mo  // Effectively infinite
+    }
+    
+    var months: Fraction = 1.0 / churn_rate
+    return months * 1mo
+  }
+  
+  // ============================================================================
+  // Retention Metrics (Dollar-Based)
+  // ============================================================================
+  
+  /// Net Dollar Retention (NDR)
+  /// NDR = (Starting MRR + Expansion - Churn - Contraction) / Starting MRR
+  func net_dollar_retention(
+    starting_mrr: Currency<USD>,
+    expansion_mrr: Currency<USD>,
+    churned_mrr: Currency<USD>,
+    contraction_mrr: Currency<USD>
+  ) -> Fraction {
+    var ending_mrr: Currency<USD> = 
+      starting_mrr + expansion_mrr - churned_mrr - contraction_mrr
+    return ending_mrr / starting_mrr
+  }
+  
+  /// Gross Dollar Retention (GDR)
+  /// GDR = (Starting MRR - Churn - Contraction) / Starting MRR
+  func gross_dollar_retention(
+    starting_mrr: Currency<USD>,
+    churned_mrr: Currency<USD>,
+    contraction_mrr: Currency<USD>
+  ) -> Fraction {
+    var ending_mrr: Currency<USD> = 
+      starting_mrr - churned_mrr - contraction_mrr
+    return ending_mrr / starting_mrr
+  }
+  
+  /// Quick Ratio (retention edition)
+  /// Quick Ratio = (New MRR + Expansion MRR) / (Churned MRR + Contraction MRR)
+  func quick_ratio_retention(
+    new_mrr: Currency<USD>,
+    expansion_mrr: Currency<USD>,
+    churned_mrr: Currency<USD>,
+    contraction_mrr: Currency<USD>
+  ) -> Fraction {
+    var inflows: Currency<USD> = new_mrr + expansion_mrr
+    var outflows: Currency<USD> = churned_mrr + contraction_mrr
+    
+    if outflows == $0 {
+      return 999.0  // Effectively infinite (no churn)
+    }
+    
+    return inflows / outflows
+  }
+  
+  // ============================================================================
+  // Conversion Helpers
+  // ============================================================================
+  
+  /// Convert churn rate to retention rate
+  func retention_rate_from_churn(
+    churn_rate: Rate per Month
+  ) -> Fraction {
+    return 1.0 - (churn_rate * 1mo)
+  }
+  
+  /// Convert retention rate to churn rate
+  func churn_rate_from_retention(
+    retention_rate: Fraction
+  ) -> Rate per Month {
+    var churn: Fraction = 1.0 - retention_rate
+    return churn / 1mo
+  }
+  
+  // ============================================================================
+  // Advanced Retention Analysis
+  // ============================================================================
+  
+  /// Calculate retention hazard at specific month
+  /// Hazard = probability of churning in month t given survival to month t
+  func retention_hazard(
+    retention_curve: Array<Fraction>,
+    month: Count
+  ) -> Rate per Month {
+    if month == 0 || month >= retention_curve.length {
+      return 0.0/1mo
+    }
+    
+    var survival_to_t: Fraction = retention_curve[month]
+    var survival_to_t_minus_1: Fraction = retention_curve[month-1]
+    
+    var churn_in_month: Fraction = 
+      (survival_to_t_minus_1 - survival_to_t) / survival_to_t_minus_1
+    
+    return churn_in_month / 1mo
+  }
+  
+  /// Calculate cumulative churn over time
+  func cumulative_churn(
+    retention_curve: Array<Fraction>
+  ) -> Array<Fraction> {
+    var churn: Array<Fraction> = []
+    
+    for i in 0..retention_curve.length {
+      churn[i] = 1.0 - retention_curve[i]
+    }
+    
+    return churn
+  }
+}

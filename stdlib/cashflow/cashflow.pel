@@ -1,0 +1,206 @@
+// PEL Standard Library: Cashflow Module
+// Functions for cash flow timing, AR/AP, burn rate, and runway analysis
+
+module cashflow {
+  
+  // ============================================================================
+  // Accounts Receivable (AR) Functions
+  // ============================================================================
+  
+  /// Calculate Days Sales Outstanding (DSO)
+  /// DSO measures average collection period for receivables
+  func days_sales_outstanding(
+    ar_balance: Currency<USD>,
+    daily_revenue: Currency<USD> per Day
+  ) -> Duration<Day> {
+    return ar_balance / daily_revenue
+  }
+  
+  /// Calculate AR balance over time given revenue and collection lag
+  func accounts_receivable(
+    revenue: Currency<USD>,
+    dso: Duration<Day>,
+    payment_terms: Duration<Day>
+  ) -> Currency<USD> {
+    // Simplified: AR = revenue * (DSO / 30 days)
+    return revenue * (dso / 30d)
+  }
+  
+  /// Calculate collection schedule (when cash actually arrives)
+  func collection_schedule(
+    invoiced_amount: Currency<USD>,
+    payment_terms: Duration<Day>
+  ) -> TimeSeries<Currency<USD>> {
+    // Simplified model: all collected at once after payment terms
+    var collections: TimeSeries<Currency<USD>>
+    var collection_month: Count = payment_terms / 30d
+    collections[collection_month] = invoiced_amount
+    return collections
+  }
+  
+  // ============================================================================
+  // Accounts Payable (AP) Functions
+  // ============================================================================
+  
+  /// Calculate Days Payable Outstanding (DPO)
+  /// DPO measures average payment period for payables
+  func days_payable_outstanding(
+    ap_balance: Currency<USD>,
+    daily_expenses: Currency<USD> per Day
+  ) -> Duration<Day> {
+    return ap_balance / daily_expenses
+  }
+  
+  /// Calculate AP balance over time
+  func accounts_payable(
+    expenses: Currency<USD>,
+    dpo: Duration<Day>
+  ) -> Currency<USD> {
+    return expenses * (dpo / 30d)
+  }
+  
+  // ============================================================================
+  // Cash Conversion Cycle
+  // ============================================================================
+  
+  /// Calculate Cash Conversion Cycle (CCC)
+  /// CCC = DSO + Inventory Days - DPO
+  func cash_conversion_cycle(
+    dso: Duration<Day>,
+    inventory_days: Duration<Day>,
+    dpo: Duration<Day>
+  ) -> Duration<Day> {
+    return dso + inventory_days - dpo
+  }
+  
+  // ============================================================================
+  // Payroll Timing
+  // ============================================================================
+  
+  /// Calculate payroll timing for semi-monthly schedule
+  func payroll_timing_semi_monthly(
+    monthly_payroll: Currency<USD>,
+    month: Count
+  ) -> Array<Currency<USD>> {
+    // Two payments per month: 15th and end of month
+    var payments: Array<Currency<USD>> = [
+      monthly_payroll / 2,
+      monthly_payroll / 2
+    ]
+    return payments
+  }
+  
+  /// Calculate payroll timing for monthly schedule
+  func payroll_timing_monthly(
+    monthly_payroll: Currency<USD>
+  ) -> Currency<USD> {
+    return monthly_payroll
+  }
+  
+  // ============================================================================
+  // Cash Waterfall Analysis
+  // ============================================================================
+  
+  /// Calculate cash waterfall: opening balance → ending balance
+  func cash_waterfall(
+    opening_balance: Currency<USD>,
+    revenue_cash: Currency<USD>,
+    ar_collections: Currency<USD>,
+    opex_cash: Currency<USD>,
+    capex: Currency<USD>,
+    debt_service: Currency<USD>
+  ) -> Currency<USD> {
+    var ending_balance: Currency<USD> = 
+      opening_balance 
+      + revenue_cash 
+      + ar_collections 
+      - opex_cash 
+      - capex 
+      - debt_service
+    return ending_balance
+  }
+  
+  // ============================================================================
+  // Burn Rate and Runway
+  // ============================================================================
+  
+  /// Calculate monthly burn rate (negative = burning cash)
+  func burn_rate(
+    revenue_per_month: Currency<USD>,
+    expenses_per_month: Currency<USD>
+  ) -> Currency<USD> per Month {
+    return (revenue_per_month - expenses_per_month) / 1mo
+  }
+  
+  /// Calculate burn rate from historical cash balances
+  func burn_rate_from_history(
+    cash_balances: TimeSeries<Currency<USD>>,
+    window_months: Count
+  ) -> Currency<USD> per Month {
+    // Calculate average monthly change over window
+    var start_idx: Count = cash_balances.length - window_months
+    var end_idx: Count = cash_balances.length - 1
+    
+    var total_change: Currency<USD> = 
+      cash_balances[end_idx] - cash_balances[start_idx]
+    
+    return total_change / window_months / 1mo
+  }
+  
+  /// Calculate runway in months until cash depletion
+  func runway_months(
+    current_cash: Currency<USD>,
+    monthly_burn_rate: Currency<USD> per Month
+  ) -> Duration<Month> {
+    if monthly_burn_rate >= $0/1mo {
+      // Not burning cash (profitable or break-even)
+      return 999mo  // Effectively infinite
+    }
+    
+    var months_remaining: Fraction = 
+      current_cash / (monthly_burn_rate * -1)
+    
+    return months_remaining * 1mo
+  }
+  
+  /// Calculate runway to specific cash target
+  func runway_to_target(
+    current_cash: Currency<USD>,
+    target_cash: Currency<USD>,
+    monthly_burn_rate: Currency<USD> per Month
+  ) -> Duration<Month> {
+    var cash_gap: Currency<USD> = current_cash - target_cash
+    
+    if monthly_burn_rate >= $0/1mo {
+      return 999mo  // Profitable
+    }
+    
+    var months_to_target: Fraction = 
+      cash_gap / (monthly_burn_rate * -1)
+    
+    return months_to_target * 1mo
+  }
+  
+  // ============================================================================
+  // Working Capital Metrics
+  // ============================================================================
+  
+  /// Calculate change in working capital
+  func working_capital_change(
+    ar_change: Currency<USD>,
+    inventory_change: Currency<USD>,
+    ap_change: Currency<USD>
+  ) -> Currency<USD> {
+    // Increase in AR and inventory uses cash
+    // Increase in AP provides cash
+    return (ar_change + inventory_change - ap_change) * -1
+  }
+  
+  /// Calculate free cash flow
+  func free_cash_flow(
+    operating_cash_flow: Currency<USD>,
+    capex: Currency<USD>
+  ) -> Currency<USD> {
+    return operating_cash_flow - capex
+  }
+}
