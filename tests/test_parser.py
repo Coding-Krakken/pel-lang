@@ -1,7 +1,9 @@
 import unittest
+
+from compiler.ast_nodes import Distribution, PerDurationExpression
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.ast_nodes import PerDurationExpression, Distribution
+
 
 class TestParser(unittest.TestCase):
 

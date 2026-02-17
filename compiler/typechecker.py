@@ -376,6 +376,9 @@ class TypeChecker:
         elif isinstance(expr, Distribution):
             return self.infer_distribution(expr)
 
+        elif isinstance(expr, PerDurationExpression):
+            return self.infer_per_duration_expression(expr)
+
         elif isinstance(expr, ArrayLiteral):
             return self.infer_array_literal(expr)
 
@@ -617,6 +620,28 @@ class TypeChecker:
                 inner_type = first_param_type
 
         return inner_type
+
+    def infer_per_duration_expression(self, expr: PerDurationExpression) -> PELType:
+        """Infer type of per-duration expression (e.g., $500/1mo -> Rate per Month)."""
+        # Parse duration to extract time unit
+        duration_str = expr.duration
+        match = re.match(r"^(\d+)(d|w|mo|q|yr)$", duration_str)
+        if not match:
+            # Invalid duration format, fallback to Fraction
+            return PELType.fraction()
+
+        unit_abbrev = match.group(2)
+        unit_map = {
+            "d": "Day",
+            "w": "Week",
+            "mo": "Month",
+            "q": "Quarter",
+            "yr": "Year",
+        }
+        time_unit = unit_map.get(unit_abbrev, "Month")
+
+        # Return Rate type with the appropriate time unit
+        return PELType.rate(time_unit)
 
     def infer_array_literal(self, expr: ArrayLiteral) -> PELType:
         """Infer type of array literal."""

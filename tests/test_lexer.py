@@ -1,5 +1,7 @@
 import unittest
+
 from compiler.lexer import Lexer, TokenType
+
 
 class TestLexer(unittest.TestCase):
 
