@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: E-commerce Wholesale (B2B)
+// Large orders, net terms, and channel margining
+
+model ecommerce_wholesale_b2b {
+  param monthly_orders: Count<Order> = 500
+  param avg_order_value: Currency<USD> = $4_500
+  param net_terms_days: Duration<Day> = 60d
+  param cogs_pct: Fraction = 0.55
+
+  var monthly_revenue: Currency<USD> = monthly_orders * avg_order_value
+  var monthly_cogs: Currency<USD> = monthly_revenue * cogs_pct
+  var gross_profit: Currency<USD> = monthly_revenue - monthly_cogs
+
+  constraint gross_positive: gross_profit > $0 {
+    severity: fatal,
+    message: "Wholesale gross profit must be positive"
+  }
+}

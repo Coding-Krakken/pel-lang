@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: SaaS Enterprise Sales
+// Long sales cycles, ARR, multi-year contracts, and ramp
+
+model saas_enterprise_sales {
+  param enterprise_deals: Count<Deal> = 30
+  param avg_arr_per_deal: Currency<USD> = $250_000
+  param average_contract_length_months: Duration<Month> = 24mo
+  param average_expected_renewal_rate: Fraction = 0.85
+
+  var annualized_revenue: Currency<USD> = enterprise_deals * avg_arr_per_deal
+  var monthly_recurring_equivalent: Currency<USD> = annualized_revenue / 12
+  var expected_renewed_revenue: Currency<USD> = annualized_revenue * average_expected_renewal_rate
+
+  constraint nonzero_deals: enterprise_deals >= 0 {
+    severity: warning,
+    message: "Enterprise deals count must be non-negative"
+  }
+}

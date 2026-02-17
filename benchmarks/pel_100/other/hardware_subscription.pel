@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: Hardware + Subscription
+// One-time hardware revenue + recurring service subscription
+
+model hardware_plus_subscription {
+  param units_sold_monthly: Count<Unit> = 500
+  param hardware_price: Currency<USD> = $350
+  param monthly_subscribers: Count<Subscriber> = 2_000
+  param subscription_price: Currency<USD> per Month = $14/1mo
+  param cogs_per_unit: Currency<USD> = $120
+
+  var hardware_revenue: Currency<USD> = units_sold_monthly * hardware_price
+  var subscription_revenue: Currency<USD> = monthly_subscribers * subscription_price
+  var gross_margin: Currency<USD> = hardware_revenue - (units_sold_monthly * cogs_per_unit) + subscription_revenue
+
+  constraint healthy_business: gross_margin > $0 {
+    severity: warning,
+    message: "Gross margin should be positive"
+  }
+}
