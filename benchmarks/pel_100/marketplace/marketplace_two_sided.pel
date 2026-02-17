@@ -1,0 +1,97 @@
+// PEL-100 Benchmark: Two-Sided Marketplace Model
+// Marketplace with supply and demand matching, take rate economics
+
+model marketplace_two_sided_bench {
+  // Demand side (buyers)
+  param monthly_buyers: Count<User> = 10_000 {
+    source: "platform_analytics",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Supply side (sellers/providers)
+  param active_sellers: Count<Provider> = 500 {
+    source: "platform_analytics",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Matching rate (buyers who transact)
+  param buyer_conversion_rate: Fraction = 0.15 {
+    source: "transaction_data",
+    method: "fitted",
+    confidence: 0.80,
+    notes: "15% of browsers become buyers"
+  }
+  
+  // Average transaction value
+  param avg_transaction_value: Currency<USD> = $200 {
+    source: "gmv_analysis",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // Take rate (platform commission)
+  param take_rate: Fraction = 0.15 {
+    source: "pricing_policy",
+    method: "observed",
+    confidence: 1.0,
+    notes: "15% commission on GMV"
+  }
+  
+  // Seller acquisition cost
+  param seller_cac: Currency<USD> = $500 {
+    source: "seller_marketing",
+    method: "derived",
+    confidence: 0.75
+  }
+  
+  // Buyer acquisition cost
+  param buyer_cac: Currency<USD> = $25 {
+    source: "buyer_marketing",
+    method: "derived",
+    confidence: 0.75
+  }
+  
+  // Platform costs
+  param monthly_opex: Currency<USD> = $150_000 {
+    source: "budget",
+    method: "assumption ",
+    confidence: 0.80
+  }
+  
+  // Calculations
+  var monthly_transactions: Count<Transaction> = 
+    monthly_buyers * buyer_conversion_rate
+  
+  var gmv: Currency<USD> = 
+    monthly_transactions * avg_transaction_value
+  
+  var platform_revenue: Currency<USD> = 
+    gmv * take_rate
+  
+  var monthly_profit: Currency<USD> = 
+    platform_revenue - monthly_opex
+  
+  var liquidity_ratio: Fraction = 
+    monthly_buyers / active_sellers
+  
+  var revenue_per_seller: Currency<USD> = 
+    platform_revenue / active_sellers
+  
+  // Constraints
+  constraint profitable: monthly_profit > $0 {
+    severity: warning,
+    message: "Marketplace not yet profitable"
+  }
+  
+  constraint liquidity: liquidity_ratio >= 10.0 {
+    severity: warning,
+    message: "Need at least 10 buyers per seller for good liquidity"
+  }
+  
+  constraint gmv_growth: gmv >= $300_000 {
+    severity: warning,
+    message: "GMV below $300K/month target"
+  }
+}

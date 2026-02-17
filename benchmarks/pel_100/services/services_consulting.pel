@@ -1,0 +1,80 @@
+// PEL-100 Benchmark: Consulting Services Model
+// Professional services with utilization rates and hourly billing
+
+model services_consulting_bench {
+  // Team size
+  param consultants: Count<Employee> = 10 {
+    source: "hr_system",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // Billable hourly rate
+  param billable_rate: Currency<USD> per Hour = $250/1h {
+    source: "rate_card",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // Utilization rate (billable hours / available hours)
+  param utilization_rate: Fraction = 0.70 {
+    source: "timesheet_analysis",
+    method: "derived",
+    confidence: 0.85,
+    notes: "70% utilization is strong for consulting"
+  }
+  
+  // Available hours per consultant per month
+  param hours_per_month: Duration<Hour> = 160h {
+    source: "standard_work_month",
+    method: "assumption",
+    confidence: 1.0,
+    notes: "~40 hours/week * 4 weeks"
+  }
+  
+  // Fully loaded cost per consultant
+  param cost_per_consultant: Currency<USD> per Month = $12_000/1mo {
+    source: "payroll_plus_overhead",
+    method: "derived",
+    confidence: 0.90,
+    notes: "Salary + benefits + overhead allocation"
+  }
+  
+  // Calculations
+  var total_available_hours: Duration<Hour> = 
+    consultants * hours_per_month
+  
+  var billable_hours: Duration<Hour> = 
+    total_available_hours * utilization_rate
+  
+  var monthly_revenue: Currency<USD> = 
+    billable_hours * billable_rate
+  
+  var monthly_cost: Currency<USD> = 
+    consultants * cost_per_consultant
+  
+  var monthly_profit: Currency<USD> = 
+    monthly_revenue - monthly_cost
+  
+  var profit_margin_pct: Fraction = 
+    monthly_profit / monthly_revenue
+  
+  var revenue_per_employee: Currency<USD> = 
+    monthly_revenue / consultants
+  
+  // Constraints
+  constraint profitable: monthly_profit > $0 {
+    severity: warning,
+    message: "Not profitable"
+  }
+  
+  constraint margin_target: profit_margin_pct >= 0.30 {
+    severity: warning,
+    message: "Profit margin below 30% target for consulting"
+  }
+  
+  constraint utilization_floor: utilization_rate >= 0.60 {
+    severity: warning,
+    message: "Utilization below 60% - need more client work"
+  }
+}
