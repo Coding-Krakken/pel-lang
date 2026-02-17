@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: Fintech Payments P&L
+// Net interchange income, processing costs, and volume scaling
+
+model fintech_payments_pnl {
+  param monthly_volume: Currency<USD> = $10_000_000
+  param interchange_take_pct: Fraction = 0.0025
+  param processing_cost_pct: Fraction = 0.0008
+  param chargeback_rate: Fraction = 0.0005
+  param average_chargeback_cost: Currency<USD> = $100
+
+  var interchange_revenue: Currency<USD> = monthly_volume * interchange_take_pct
+  var processing_costs: Currency<USD> = monthly_volume * processing_cost_pct
+  var expected_chargebacks: Count<Chargeback> = monthly_volume / 100.0 * chargeback_rate
+  var chargeback_costs: Currency<USD> = expected_chargebacks * average_chargeback_cost
+  var net_income: Currency<USD> = interchange_revenue - processing_costs - chargeback_costs
+
+  constraint positive_net: net_income > $0 {
+    severity: warning,
+    message: "Payments business not net profitable"
+  }
+}

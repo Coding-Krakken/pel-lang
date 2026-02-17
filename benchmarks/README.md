@@ -72,30 +72,50 @@ cat benchmarks/PEL_100_RESULTS.md
 
 ## Current Status
 
-**Implemented:** 20/100 models (20%)
+**Implemented:** 40/100 models (40%)
 
 - ✅ saas/saas_subscription.pel
 - ✅ saas/saas_tiered_pricing.pel
 - ✅ saas/saas_freemium_conversion.pel
 - ✅ saas/saas_usage_based.pel
 - ✅ saas/saas_enterprise_sales.pel
+- ✅ saas/saas_churn_cohort.pel
+- ✅ saas/saas_trial_retention.pel
+- ✅ saas/saas_plg_activation.pel
+- ✅ saas/saas_support_costs.pel
 - ✅ ecommerce/ecommerce_b2c.pel
 - ✅ ecommerce/subscription_box.pel
 - ✅ ecommerce/marketplace_dropshipping.pel
 - ✅ ecommerce/ecommerce_wholesale_b2b.pel
 - ✅ ecommerce/ecommerce_high_aov_luxury.pel
+- ✅ ecommerce/ecommerce_returns_and_refunds.pel
+- ✅ ecommerce/ecommerce_fulfillment_costs.pel
+- ✅ ecommerce/ecommerce_fees_marketplaces.pel
+- ✅ ecommerce/ecommerce_fraud_loss.pel
 - ✅ services/services_consulting.pel
 - ✅ services/agency_retainers.pel
 - ✅ services/freelance_platform.pel
 - ✅ services/services_training_platform.pel
+- ✅ services/services_subcontracting.pel
+- ✅ services/services_utilization_ramp.pel
+- ✅ services/services_saas_plus_services.pel
+- ✅ services/services_retainer_churn.pel
 - ✅ marketplace/marketplace_two_sided.pel
 - ✅ marketplace/gig_economy.pel
 - ✅ marketplace/marketplace_rental.pel
+- ✅ marketplace/marketplace_supply_growth.pel
+- ✅ marketplace/marketplace_surge_pricing.pel
+- ✅ marketplace/marketplace_take_rate_elasticity.pel
+- ✅ marketplace/marketplace_referral_network.pel
 - ✅ other/advertising_media.pel
 - ✅ other/fintech_lending.pel
 - ✅ other/hardware_subscription.pel
+- ✅ other/fintech_payments_pnl.pel
+- ✅ other/manufacturing_bom_cost.pel
+- ✅ other/real_estate_portfolio.pel
+- ✅ other/franchise_royalty.pel
 
-**Next batch (Q2 2026):** expand to 40 models and add CI scoring job
+**Next batch (Q2 2026):** expand to 60 models and add CI thresholds
 
 ## Success Criteria
 

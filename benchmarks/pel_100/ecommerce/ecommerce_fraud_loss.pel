@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Fraud & Chargeback Loss
+// Estimate fraud rate, chargeback costs, and net margin impact
+
+model ecommerce_fraud_loss {
+  param monthly_transactions: Count<Transaction> = 40_000
+  param aov: Currency<USD> = $35
+  param fraud_rate: Fraction = 0.003
+  param chargeback_cost_pct: Fraction = 0.8
+
+  var fraud_count: Count<Transaction> = monthly_transactions * fraud_rate
+  var gross_loss: Currency<USD> = fraud_count * aov
+  var chargeback_costs: Currency<USD> = gross_loss * chargeback_cost_pct
+  var net_loss: Currency<USD> = gross_loss + chargeback_costs
+  var loss_pct_of_revenue: Fraction = net_loss / (monthly_transactions * aov)
+
+  constraint fraud_alert: loss_pct_of_revenue < 0.01 {
+    severity: warning,
+    message: "Fraud loss > 1% of revenue"
+  }
+}

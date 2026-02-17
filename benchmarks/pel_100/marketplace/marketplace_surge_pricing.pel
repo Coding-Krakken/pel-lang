@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: Surge Pricing
+// Model price elasticity under surge multipliers and supply response
+
+model marketplace_surge_pricing {
+  param base_price: Currency<USD> = $15
+  param surge_multiplier: Fraction = 1.3
+  param base_demand: Count<Request> = 100_000
+  param demand_elasticity: Fraction = 0.20  # drop in demand per 1x price increase
+  param active_providers: Count<Provider> = 20_000
+
+  var effective_price: Currency<USD> = base_price * surge_multiplier
+  var demand_change: Fraction = 1 - (demand_elasticity * (surge_multiplier - 1))
+  var effective_demand: Count<Request> = base_demand * demand_change
+  var gmv: Currency<USD> = effective_demand * effective_price
+  var revenue: Currency<USD> = gmv * 0.20
+
+  constraint revenue_upside: revenue > $100_000 {
+    severity: warning,
+    message: "Surge pricing not generating expected revenue uplift"
+  }
+}

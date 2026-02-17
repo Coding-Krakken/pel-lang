@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: SaaS Support & CSM Costs
+// Link support load to active users and compute CAC payback impact
+
+model saas_support_costs {
+  param active_customers: Count<Customer> = 12_000
+  param tickets_per_customer_per_month: Fraction = 0.12
+  param cost_per_ticket: Currency<USD> = $15
+  param csm_headcount_cost_per_month: Currency<USD> = $12_000
+  param customers_per_csm: Count<Customer> = 250
+
+  var monthly_tickets: Count<Ticket> = active_customers * tickets_per_customer_per_month
+  var support_cost: Currency<USD> = monthly_tickets * cost_per_ticket
+  var csm_cost: Currency<USD> = ((active_customers / customers_per_csm) * csm_headcount_cost_per_month)
+  var total_support_cost: Currency<USD> = support_cost + csm_cost
+
+  var cost_per_customer: Currency<USD> = total_support_cost / active_customers
+
+  constraint cost_reasonable: cost_per_customer < $50 {
+    severity: warning,
+    message: "Support cost per customer unusually high"
+  }
+}

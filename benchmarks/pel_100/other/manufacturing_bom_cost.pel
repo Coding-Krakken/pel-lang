@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Manufacturing BOM Cost
+// Bill of materials cost aggregation and margin
+
+model manufacturing_bom_cost {
+  param units_produced_monthly: Count<Unit> = 2_000
+  param bom_components_cost: Currency<USD> = $45
+  param assembly_labor_per_unit: Currency<USD> = $8
+  param opex_monthly: Currency<USD> = $20_000
+  param sell_price_per_unit: Currency<USD> = $120
+
+  var cogs_per_unit: Currency<USD> = bom_components_cost + assembly_labor_per_unit
+  var total_cogs: Currency<USD> = cogs_per_unit * units_produced_monthly
+  var revenue: Currency<USD> = sell_price_per_unit * units_produced_monthly
+  var gross_margin: Currency<USD> = revenue - total_cogs - opex_monthly
+
+  constraint margin_positive: gross_margin > $0 {
+    severity: fatal,
+    message: "Manufacturing margin negative"
+  }
+}

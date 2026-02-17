@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Real Estate Portfolio
+// Rental income, occupancy, and weighted average yield
+
+model real_estate_portfolio {
+  param properties: Count<Property> = 25
+  param avg_nightly_rate: Currency<USD> = $180
+  param avg_occupancy_pct: Fraction = 0.6
+  param avg_nights_per_month: Duration<Night> = 12n
+  param monthly_opex_per_property: Currency<USD> = $1_200
+
+  var monthly_bookings: Count<Booking> = properties * avg_occupancy_pct * (avg_nights_per_month/1n)
+  var gmv: Currency<USD> = monthly_bookings * avg_nightly_rate
+  var opex: Currency<USD> = properties * monthly_opex_per_property
+  var net_income: Currency<USD> = gmv - opex
+
+  constraint occupancy_floor: avg_occupancy_pct >= 0.35 {
+    severity: warning,
+    message: "Occupancy below expected floor"
+  }
+}
