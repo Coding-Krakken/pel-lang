@@ -1,0 +1,17 @@
+id: CONF-LEX-012
+category: lexical
+spec_ref: spec/pel_language_spec.md#identifiers
+description: Identifiers - with numbers
+input: 'revenue2025 q1_sales project_v2
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: IDENTIFIER
+    value: revenue2025
+  - type: IDENTIFIER
+    value: q1_sales
+  - type: IDENTIFIER
+    value: project_v2
+  - type: EOF

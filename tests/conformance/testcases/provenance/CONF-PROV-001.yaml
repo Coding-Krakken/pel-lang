@@ -1,0 +1,13 @@
+id: CONF-PROV-001
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Basic provenance metadata
+input: "model test {\n  param x: Int = 42 {\n    source: \"database\",\n    method:\
+  \ \"observed\",\n    confidence: 0.95\n  }\n}\n"
+expected:
+  type: success
+  provenance:
+    x:
+      source: database
+      method: observed
+      confidence: 0.95

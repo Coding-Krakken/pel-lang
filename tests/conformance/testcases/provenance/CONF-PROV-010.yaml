@@ -1,0 +1,12 @@
+id: CONF-PROV-010
+category: provenance
+spec_ref: spec/pel_language_spec.md#assumption-tracking
+description: Assumption tracking
+input: "model test {\n  param tax_rate: Fraction = 0.21 {\n    source: \"tax_law_2025\"\
+  ,\n    method: \"assumption\",\n    notes: \"Corporate tax rate\"\n  }\n}\n"
+expected:
+  type: success
+  assumptions:
+    tax_rate:
+      method: assumption
+      notes: Corporate tax rate

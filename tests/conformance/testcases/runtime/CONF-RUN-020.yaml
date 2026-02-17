@@ -1,0 +1,9 @@
+id: CONF-RUN-020
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: If expression - true
+input: "model test {\n  var x = if true then 1 else 0;\n}\n"
+expected:
+  type: success
+  values:
+    x: 1

@@ -1,0 +1,9 @@
+id: CONF-PROV-019
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Error - invalid correlation
+input: "model test {\n  param a = 1 { correlated_with: [(\"nonexistent\", 0.5)] }\n\
+  }\n"
+expected:
+  type: error
+  error_type: ProvenanceError

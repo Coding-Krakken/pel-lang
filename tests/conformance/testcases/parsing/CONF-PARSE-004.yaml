@@ -1,0 +1,18 @@
+id: CONF-PARSE-004
+category: parsing
+spec_ref: spec/pel_language_spec.md#parameter-declaration
+description: Param with Fraction type
+input: "model test {\n  param tax_rate: Fraction = 5%;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    params:
+    - type: ParamDecl
+      name: tax_rate
+      type_annotation:
+        type_kind: Fraction
+      default_value:
+        type: Literal
+        value: 5%

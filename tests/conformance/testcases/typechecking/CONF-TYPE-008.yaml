@@ -1,0 +1,9 @@
+id: CONF-TYPE-008
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Explicit type annotation
+input: "model test {\n  var x: Int = 42;\n}\n"
+expected:
+  type: success
+  types:
+    x: Int

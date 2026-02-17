@@ -1,0 +1,19 @@
+id: CONF-LEX-026
+category: lexical
+spec_ref: spec/pel_language_spec.md#type-annotations
+description: Type annotations - all types
+input: 'Currency Rate Duration Capacity Count Fraction TimeSeries Distribution
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: CURRENCY_TYPE
+  - type: RATE_TYPE
+  - type: DURATION_TYPE
+  - type: CAPACITY_TYPE
+  - type: COUNT_TYPE
+  - type: FRACTION_TYPE
+  - type: TIMESERIES_TYPE
+  - type: DISTRIBUTION_TYPE
+  - type: EOF

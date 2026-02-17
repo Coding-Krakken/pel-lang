@@ -1,0 +1,9 @@
+id: CONF-PARSE-066
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Multi-line string
+input: "model test {\n  var doc = \"\"\"Line 1\nLine 2\nLine 3\"\"\";\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

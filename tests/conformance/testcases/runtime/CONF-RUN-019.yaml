@@ -1,0 +1,10 @@
+id: CONF-RUN-019
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Function call
+input: "model test {\n  func double(x: Int) -> Int { return x * 2; }\n  var result\
+  \ = double(21);\n}\n"
+expected:
+  type: success
+  values:
+    result: 42

@@ -1,0 +1,8 @@
+id: CONF-TYPE-059
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: TimeSeries recurrence
+input: "model test {\n  var revenue: TimeSeries<Currency<USD>>;\n  revenue[0] = $1000;\n\
+  \  revenue[t+1] = revenue[t] * 1.05;\n}\n"
+expected:
+  type: success

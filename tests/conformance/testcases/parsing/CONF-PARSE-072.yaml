@@ -1,0 +1,9 @@
+id: CONF-PARSE-072
+category: parsing
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - Missing closing brace
+input: "model test {\n  param x = 1;"
+expected:
+  type: error
+  error_type: ParseError
+  error_message: Expected closing brace

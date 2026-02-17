@@ -1,0 +1,8 @@
+id: CONF-PROV-020
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Error - invalid confidence
+input: "model test {\n  param x = 1 { confidence: 1.5 }\n}\n"
+expected:
+  type: error
+  error_type: ProvenanceError

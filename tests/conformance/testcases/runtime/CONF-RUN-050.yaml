@@ -1,0 +1,8 @@
+id: CONF-RUN-050
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-analysis
+description: Drift detection
+input: "model test {\n  param baseline = 100;\n  var current = 150;\n}\n"
+expected:
+  type: success
+  analysis_type: drift

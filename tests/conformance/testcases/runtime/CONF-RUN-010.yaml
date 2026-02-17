@@ -1,0 +1,9 @@
+id: CONF-RUN-010
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Comparison - equal
+input: "model test {\n  var result = 5 == 5;\n}\n"
+expected:
+  type: success
+  values:
+    result: true

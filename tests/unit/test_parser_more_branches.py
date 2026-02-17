@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from compiler.ast_nodes import Action, Assignment, BlockExpr, Constraint, IfStmt, Lambda, Literal, Policy, Variable
+from compiler.ast_nodes import (
+    Action,
+    Assignment,
+    BlockExpr,
+    Constraint,
+    IfStmt,
+    Lambda,
+    Literal,
+    Policy,
+    Variable,
+)
 from compiler.errors import ParseError
 from compiler.lexer import Lexer
 from compiler.parser import Parser

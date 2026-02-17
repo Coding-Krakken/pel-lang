@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from compiler.ast_nodes import Action, Model
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.ast_nodes import Action, Model
 
 
 @pytest.mark.unit

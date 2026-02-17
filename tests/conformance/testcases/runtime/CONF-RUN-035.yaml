@@ -1,0 +1,10 @@
+id: CONF-RUN-035
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Reproducibility with seed
+input: "model test {\n  param x = ~Normal(μ=0, σ=1);\n}\n"
+expected:
+  type: success
+  values:
+    seed: 42
+    reproducible: true

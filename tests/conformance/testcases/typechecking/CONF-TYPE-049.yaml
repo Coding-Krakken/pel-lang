@@ -1,0 +1,9 @@
+id: CONF-TYPE-049
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Percentage comparison
+input: "model test {\n  var result = 5% > 3%;\n}\n"
+expected:
+  type: success
+  types:
+    result: Bool

@@ -1,0 +1,9 @@
+id: CONF-TYPE-045
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Type error - NOT with non-bool
+input: "model test {\n  var result = !42;\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Logical NOT requires Bool operand

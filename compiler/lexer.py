@@ -12,10 +12,13 @@ Converts source code to sequence of tokens
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional
 from enum import Enum, auto
 
-from compiler.errors import LexicalError, SourceLocation, lexical_error, invalid_number, unterminated_string
+from compiler.errors import (
+    SourceLocation,
+    lexical_error,
+    unterminated_string,
+)
 
 
 class TokenType(Enum):
@@ -28,7 +31,7 @@ class TokenType(Enum):
     DURATION = auto()  # 30d
     TRUE = auto()  # true
     FALSE = auto()  # false
-    
+
     # Keywords
     MODEL = auto()
     PARAM = auto()
@@ -49,7 +52,7 @@ class TokenType(Enum):
     EVENT = auto()
     RETURN = auto()
     SIMULATE = auto()
-    
+
     # Types
     CURRENCY_TYPE = auto()  # Currency
     RATE_TYPE = auto()  # Rate
@@ -59,7 +62,7 @@ class TokenType(Enum):
     FRACTION_TYPE = auto()  # Fraction
     TIMESERIES_TYPE = auto()  # TimeSeries
     DISTRIBUTION_TYPE = auto()  # Distribution
-    
+
     # Operators
     PLUS = auto()  # +
     MINUS = auto()  # -
@@ -68,7 +71,7 @@ class TokenType(Enum):
     PERCENT = auto()  # %
     CARET = auto()  # ^
     TILDE = auto()  # ~
-    
+
     # Comparisons
     EQ = auto()  # ==
     NE = auto()  # !=
@@ -76,12 +79,12 @@ class TokenType(Enum):
     LE = auto()  # <=
     GT = auto()  # >
     GE = auto()  # >=
-    
+
     # Logical
     AND = auto()  # &&
     OR = auto()  # ||
     NOT = auto()  # !
-    
+
     # Punctuation
     LPAREN = auto()  # (
     RPAREN = auto()  # )
@@ -95,7 +98,7 @@ class TokenType(Enum):
     DOT = auto()  # .
     ASSIGN = auto()  # =
     ARROW = auto()  # ->
-    
+
     # Special
     IDENTIFIER = auto()
     EOF = auto()
@@ -109,7 +112,7 @@ class Token:
     value: str
     line: int
     column: int
-    
+
     def __repr__(self):
         return f"Token({self.type.name}, '{self.value}', {self.line}:{self.column})"
 
@@ -117,10 +120,10 @@ class Token:
 class Lexer:
     """
     Tokenize PEL source code.
-    
+
     Implements lexical rules from spec/pel_language_spec.md
     """
-    
+
     KEYWORDS = {
         'model': TokenType.MODEL,
         'param': TokenType.PARAM,
@@ -143,7 +146,7 @@ class Lexer:
         'simulate': TokenType.SIMULATE,
         'true': TokenType.TRUE,
         'false': TokenType.FALSE,
-        
+
         # Types
         'Currency': TokenType.CURRENCY_TYPE,
         'Rate': TokenType.RATE_TYPE,
@@ -156,77 +159,95 @@ class Lexer:
     }
 
     DURATION_UNITS = ("mo", "yr", "q", "w", "d")
-    
+
     def __init__(self, source: str, filename: str = "<input>"):
         self.source = source
         self.filename = filename
         self.pos = 0
         self.line = 1
         self.column = 1
-        self.tokens: List[Token] = []
-    
+        self.tokens: list[Token] = []
+
     def current_location(self) -> SourceLocation:
         return SourceLocation(self.filename, self.line, self.column)
-    
-    def peek(self, offset: int = 0) -> Optional[str]:
+
+    def peek(self, offset: int = 0) -> str | None:
         """Peek at character without consuming."""
         pos = self.pos + offset
         return self.source[pos] if pos < len(self.source) else None
-    
-    def advance(self) -> Optional[str]:
+
+    def advance(self) -> str | None:
         """Consume and return current character."""
         if self.pos >= len(self.source):
             return None
-        
+
         char = self.source[self.pos]
         self.pos += 1
-        
+
         if char == '\n':
             self.line += 1
             self.column = 1
         else:
             self.column += 1
-        
+
         return char
-    
-    def skip_whitespace(self):
+
+    def skip_whitespace(self) -> None:
         """Skip spaces and tabs (not newlines)."""
-        while self.peek() in ' \t':
+        while True:
+            ch = self.peek()
+            if ch is None or ch not in ' \t':
+                break
             self.advance()
-    
-    def skip_comment(self):
+
+    def skip_comment(self) -> None:
         """Skip // comments."""
         if self.peek() == '/' and self.peek(1) == '/':
-            while self.peek() and self.peek() != '\n':
+            while True:
+                ch = self.peek()
+                if ch is None or ch == '\n':
+                    break
                 self.advance()
-    
+
     def read_number(self) -> Token:
         """Read number literal (integer or decimal)."""
         start_line, start_col = self.line, self.column
         num_str = ''
 
         # Integer part (allow '_' as a separator).
-        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-            num_str += self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isdigit() or ch == '_'):
+                break
+            num_str += ch
+            self.advance()
 
         # Decimal part: only treat '.' as decimal if followed by a digit.
         # This avoids lexing `0..time_horizon` as NUMBER("0.."), which should be
         # NUMBER("0") DOT DOT IDENTIFIER(...).
-        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
-            num_str += self.advance()  # '.'
-            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-                num_str += self.advance()
-        
+        p1 = self.peek(1)
+        if self.peek() == '.' and p1 is not None and p1.isdigit():
+            # consume '.'
+            num_str += self.advance() or ''
+            while True:
+                ch = self.peek()
+                if ch is None or not (ch.isdigit() or ch == '_'):
+                    break
+                num_str += ch
+                self.advance()
+
         # Check for numeric suffix (k, m, M, B, T)
         # NOTE: 'd' is reserved for duration literals (e.g., 30d).
-        if self.peek() in 'kmМMBТ':
-            num_str += self.advance()
+        ch = self.peek()
+        if ch is not None and ch in 'kmМMBТ':
+            num_str += self.advance() or ''
 
         # Percentage literal (e.g., 5%)
-        if self.peek() == '%':
+        ch = self.peek()
+        if ch == '%':
             self.advance()
             return Token(TokenType.PERCENTAGE, num_str + '%', start_line, start_col)
-        
+
         return Token(TokenType.NUMBER, num_str, start_line, start_col)
 
     def read_number_or_duration(self) -> Token:
@@ -246,51 +267,71 @@ class Lexer:
 
         # Fallback: ordinary number literal (may include decimals and numeric suffixes)
         return self.read_number()
-    
+
     def read_currency(self) -> Token:
         """Read currency literal ($100, €50)."""
         start_line, start_col = self.line, self.column
-        symbol = self.advance()  # $, €, £, ¥
-        
+        symbol = self.advance() or ''  # $, €, £, ¥
+
         # Read amount
         amount = ''
-        while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-            amount += self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isdigit() or ch == '_'):
+                break
+            amount += ch
+            self.advance()
 
-        if self.peek() == '.' and self.peek(1) and self.peek(1).isdigit():
-            amount += self.advance()  # '.'
-            while self.peek() and (self.peek().isdigit() or self.peek() == '_'):
-                amount += self.advance()
-        
+        p1 = self.peek(1)
+        if self.peek() == '.' and p1 is not None and p1.isdigit():
+            amount += self.advance() or ''  # '.'
+            while True:
+                ch = self.peek()
+                if ch is None or not (ch.isdigit() or ch == '_'):
+                    break
+                amount += ch
+                self.advance()
+
         # Check for unit suffix (k, m, M, B)
-        if self.peek() and self.peek() in 'kmМMBТ':
-            amount += self.advance()
-        
+        ch = self.peek()
+        if ch is not None and ch in 'kmМMBТ':
+            amount += self.advance() or ''
+
         value = symbol + amount
         return Token(TokenType.CURRENCY, value, start_line, start_col)
-    
+
     def read_identifier(self) -> Token:
         """Read identifier or keyword."""
         start_line, start_col = self.line, self.column
         ident = ''
-        
-        while self.peek() and (self.peek().isalnum() or self.peek() in '_'):
-            ident += self.advance()
-        
+
+        while True:
+            ch = self.peek()
+            if ch is None or not (ch.isalnum() or ch in '_'):
+                break
+            ident += ch
+            self.advance()
+
         # Check if keyword
         token_type = self.KEYWORDS.get(ident, TokenType.IDENTIFIER)
         return Token(token_type, ident, start_line, start_col)
-    
+
     def read_string(self) -> Token:
         """Read string literal."""
         start_line, start_col = self.line, self.column
         quote = self.advance()  # " or '
-        
+
         string_val = ''
-        while self.peek() and self.peek() != quote:
-            char = self.advance()
-            if char == '\\' and self.peek():  # Escape sequence
-                next_char = self.advance()
+        while True:
+            ch = self.peek()
+            if ch is None or ch == quote:
+                break
+            char = self.advance() or ''
+            if char == '\\':
+                next_ch = self.peek()
+                if next_ch is None:
+                    break
+                next_char = self.advance() or ''
                 if next_char == 'n':
                     string_val += '\n'
                 elif next_char == 't':
@@ -301,44 +342,44 @@ class Lexer:
                     string_val += '\\' + next_char
             else:
                 string_val += char
-        
+
         if self.peek() != quote:
             raise unterminated_string(self.current_location())
-        
+
         self.advance()  # Closing quote
         return Token(TokenType.STRING, string_val, start_line, start_col)
-    
-    def tokenize(self) -> List[Token]:
+
+    def tokenize(self) -> list[Token]:
         """Tokenize entire source."""
         while self.pos < len(self.source):
             self.skip_whitespace()
             self.skip_comment()
-            
+
             char = self.peek()
-            if not char:
+            if char is None:
                 break
-            
+
             # Newlines (statement terminators)
             if char == '\n':
                 self.advance()
                 continue
-            
+
             # Currency literals
             if char in '$€£¥':
                 self.tokens.append(self.read_currency())
-            
+
             # Numbers
             elif char.isdigit():
                 self.tokens.append(self.read_number_or_duration())
-            
+
             # Identifiers and keywords
             elif char.isalpha() or char == '_':
                 self.tokens.append(self.read_identifier())
-            
+
             # Strings
             elif char in '"\'':
                 self.tokens.append(self.read_string())
-            
+
             # Operators (two-char first)
             elif char == '=' and self.peek(1) == '=':
                 self.advance()
@@ -368,7 +409,7 @@ class Lexer:
                 self.advance()
                 self.advance()
                 self.tokens.append(Token(TokenType.ARROW, '->', self.line, self.column-2))
-            
+
             # Single-char operators
             elif char == '+':
                 self.advance()
@@ -400,7 +441,7 @@ class Lexer:
             elif char == '!':
                 self.advance()
                 self.tokens.append(Token(TokenType.NOT, '!', self.line, self.column-1))
-            
+
             # Punctuation
             elif char == '(':
                 self.advance()
@@ -435,10 +476,10 @@ class Lexer:
             elif char == '=':
                 self.advance()
                 self.tokens.append(Token(TokenType.ASSIGN, '=', self.line, self.column-1))
-            
+
             else:
                 raise lexical_error(f"Unexpected character: '{char}'", self.current_location())
-        
+
         # EOF token
         self.tokens.append(Token(TokenType.EOF, '', self.line, self.column))
         return self.tokens

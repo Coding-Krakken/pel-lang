@@ -1,0 +1,10 @@
+id: CONF-TYPE-073
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Type inference with param
+input: "model test {\n  param initial: Currency<USD> = $1000;\n  var current = initial\
+  \ * 1.1;\n}\n"
+expected:
+  type: success
+  types:
+    current: Currency<USD>

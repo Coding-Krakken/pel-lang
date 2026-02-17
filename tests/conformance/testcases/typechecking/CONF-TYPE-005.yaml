@@ -1,0 +1,9 @@
+id: CONF-TYPE-005
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Percentage literal type
+input: "model test {\n  var x = 5%;\n}\n"
+expected:
+  type: success
+  types:
+    x: Fraction

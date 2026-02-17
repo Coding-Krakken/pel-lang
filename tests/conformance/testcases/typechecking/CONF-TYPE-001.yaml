@@ -1,0 +1,9 @@
+id: CONF-TYPE-001
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Integer literal type
+input: "model test {\n  var x = 42;\n}\n"
+expected:
+  type: success
+  types:
+    x: Int

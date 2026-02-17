@@ -1,0 +1,9 @@
+id: CONF-TYPE-086
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Type checking scenario 86
+input: "model test_86 {\n  var x = 86;\n}\n"
+expected:
+  type: success
+  types:
+    x: Int

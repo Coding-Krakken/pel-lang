@@ -1,0 +1,10 @@
+id: CONF-TYPE-052
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Function call type
+input: "model test {\n  func double(x: Int) -> Int { return x * 2; }\n  var result\
+  \ = double(5);\n}\n"
+expected:
+  type: success
+  types:
+    result: Int

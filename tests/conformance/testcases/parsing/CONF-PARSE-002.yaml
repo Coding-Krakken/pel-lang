@@ -1,0 +1,18 @@
+id: CONF-PARSE-002
+category: parsing
+spec_ref: spec/pel_language_spec.md#parameter-declaration
+description: Simple param declaration
+input: "model test {\n  param x: Duration = 30d;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    params:
+    - type: ParamDecl
+      name: x
+      type_annotation:
+        type_kind: Duration
+      default_value:
+        type: Literal
+        value: 30d

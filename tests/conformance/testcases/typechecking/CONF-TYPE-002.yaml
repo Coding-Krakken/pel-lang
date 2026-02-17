@@ -1,0 +1,9 @@
+id: CONF-TYPE-002
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Float literal type
+input: "model test {\n  var x = 3.14;\n}\n"
+expected:
+  type: success
+  types:
+    x: Float

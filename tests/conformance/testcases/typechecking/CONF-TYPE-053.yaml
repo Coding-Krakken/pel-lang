@@ -1,0 +1,10 @@
+id: CONF-TYPE-053
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Function wrong arg count
+input: "model test {\n  func add(a: Int, b: Int) -> Int { return a + b; }\n  var result\
+  \ = add(5);\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Wrong number of arguments

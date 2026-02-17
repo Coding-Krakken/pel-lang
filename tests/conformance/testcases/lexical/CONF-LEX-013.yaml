@@ -1,0 +1,17 @@
+id: CONF-LEX-013
+category: lexical
+spec_ref: spec/pel_language_spec.md#number-literals
+description: Number literals - integer
+input: '42 1000 999999
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: NUMBER
+    value: '42'
+  - type: NUMBER
+    value: '1000'
+  - type: NUMBER
+    value: '999999'
+  - type: EOF

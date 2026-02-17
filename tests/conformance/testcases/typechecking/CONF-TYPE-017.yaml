@@ -1,0 +1,9 @@
+id: CONF-TYPE-017
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Multiplication of integer and float
+input: "model test {\n  var result = 2 * 3.5;\n}\n"
+expected:
+  type: success
+  types:
+    result: Float
