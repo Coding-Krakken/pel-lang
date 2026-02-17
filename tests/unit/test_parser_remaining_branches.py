@@ -89,7 +89,8 @@ def test_parser_provenance_and_constraint_trailing_commas_and_generic_fields() -
     )
     model = Parser(Lexer(src).tokenize()).parse()
     prov = model.params[0].provenance
-    assert isinstance(prov, dict)
+    from compiler.ast_nodes import Provenance
+    assert isinstance(prov, Provenance)
 
     # slack is parsed as a generic expression field in constraint metadata
     assert model.constraints[0].scope is None
@@ -109,7 +110,7 @@ def test_parser_correlated_with_trailing_comma_and_scope_all_timesteps() -> None
         '}\n'
     )
     model = Parser(Lexer(src).tokenize()).parse()
-    assert model.params[0].provenance["correlated_with"] == [("y", 0.1)]
+    assert model.params[0].provenance.correlated_with == [("y", 0.1)]
     assert model.constraints[0].scope == "all timesteps"
 
 

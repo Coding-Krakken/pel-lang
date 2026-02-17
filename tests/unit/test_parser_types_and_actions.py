@@ -76,7 +76,8 @@ def test_parser_provenance_optional_fields_cover_number_and_expression() -> None
 
     model = Parser(Lexer(src).tokenize()).parse()
     prov = model.params[0].provenance
-    assert isinstance(prov, dict)
-    assert prov["quality"] == 0.7
-    # budget is parsed as an expression (currency literal)
-    assert "budget" in prov
+    from compiler.ast_nodes import Provenance
+    assert isinstance(prov, Provenance)
+    assert prov.source == "s"
+    assert prov.method == "m"
+    assert prov.confidence == 0.9

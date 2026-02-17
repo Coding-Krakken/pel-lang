@@ -25,9 +25,10 @@ def test_parser_function_decl_uses_parse_block() -> None:
     assert len(model.funcs) == 1
     fn = model.funcs[0]
     assert isinstance(fn, FuncDecl)
-    # parse_block returns a list of expressions in this parser implementation.
-    assert isinstance(fn.body, list)
-    assert len(fn.body) == 2
+    # Function body is now a BlockExpr
+    from compiler.ast_nodes import BlockExpr
+    assert isinstance(fn.body, BlockExpr)
+    assert len(fn.body.statements) == 2
 
 
 @pytest.mark.unit

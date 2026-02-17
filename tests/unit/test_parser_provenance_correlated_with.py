@@ -22,5 +22,6 @@ def test_parse_provenance_correlated_with_allows_negative_coefficients() -> None
 
     assert len(model.params) == 1
     prov = model.params[0].provenance
-    assert isinstance(prov, dict)
-    assert prov["correlated_with"] == [("y", -0.4), ("z", 0.6)]
+    from compiler.ast_nodes import Provenance
+    assert isinstance(prov, Provenance)
+    assert prov.correlated_with == [("y", -0.4), ("z", 0.6)]
