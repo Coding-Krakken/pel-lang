@@ -1,0 +1,23 @@
+id: CONF-PARSE-045
+category: parsing
+spec_ref: spec/pel_language_spec.md#function-declaration
+description: Function declaration - with params
+input: "model test {\n  func add(a: Int, b: Int) -> Int {\n    return a + b;\n  }\n\
+  }\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    funcs:
+    - type: FuncDecl
+      name: add
+      params:
+      - name: a
+        type_annotation:
+          type_kind: Int
+      - name: b
+        type_annotation:
+          type_kind: Int
+      return_type:
+        type_kind: Int

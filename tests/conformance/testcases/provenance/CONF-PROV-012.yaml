@@ -1,0 +1,8 @@
+id: CONF-PROV-012
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Confidence propagation
+input: "model test {\n  param a: Int = 100 { confidence: 0.95 }\n  param b: Int =\
+  \ 200 { confidence: 0.90 }\n  var sum = a + b;\n}\n"
+expected:
+  type: success

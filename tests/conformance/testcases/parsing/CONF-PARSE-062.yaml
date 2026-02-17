@@ -1,0 +1,9 @@
+id: CONF-PARSE-062
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Multiple return types
+input: "model test {\n  func calc() -> (Int, Int) {\n    return (1, 2);\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

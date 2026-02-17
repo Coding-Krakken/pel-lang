@@ -1,0 +1,9 @@
+id: CONF-TYPE-019
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Division - integers
+input: "model test {\n  var result = 10 / 2;\n}\n"
+expected:
+  type: success
+  types:
+    result: Float

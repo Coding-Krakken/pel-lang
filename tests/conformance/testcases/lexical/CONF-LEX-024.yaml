@@ -1,0 +1,22 @@
+id: CONF-LEX-024
+category: lexical
+spec_ref: spec/pel_language_spec.md#comments
+description: Comments - single line
+input: '// This is a comment
+
+  param x: Duration = 1d; // end comment
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: x
+  - type: COLON
+  - type: DURATION_TYPE
+  - type: ASSIGN
+  - type: DURATION
+    value: 1d
+  - type: SEMICOLON
+  - type: EOF

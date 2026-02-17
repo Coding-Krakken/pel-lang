@@ -1,0 +1,9 @@
+id: CONF-RUN-033
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Distribution sampling
+input: "model test {\n  param x = ~Normal(μ=100, σ=10);\n}\n"
+expected:
+  type: success
+  values:
+    x_mean: 100

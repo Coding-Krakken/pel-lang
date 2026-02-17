@@ -1,0 +1,9 @@
+id: CONF-PARSE-068
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Enum declaration
+input: "model test {\n  enum Status { Pending, Active, Completed }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

@@ -1,0 +1,22 @@
+id: CONF-PARSE-018
+category: parsing
+spec_ref: spec/pel_language_spec.md#comparison-expressions
+description: Inequality comparison
+input: "model test {\n  var result = a != b;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    vars:
+    - type: VarDecl
+      name: result
+      init_value:
+        type: BinaryOp
+        operator: '!='
+        left:
+          type: Variable
+          name: a
+        right:
+          type: Variable
+          name: b

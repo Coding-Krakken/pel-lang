@@ -1,0 +1,9 @@
+id: CONF-TYPE-043
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Type error - AND with non-bool
+input: "model test {\n  var result = 5 && true;\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Logical AND requires Bool operands

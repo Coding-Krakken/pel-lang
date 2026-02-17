@@ -1,0 +1,9 @@
+id: CONF-TYPE-026
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Unary minus - integer
+input: "model test {\n  var result = -42;\n}\n"
+expected:
+  type: success
+  types:
+    result: Int

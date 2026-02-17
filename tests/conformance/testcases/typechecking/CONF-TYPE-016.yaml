@@ -1,0 +1,9 @@
+id: CONF-TYPE-016
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Subtraction of currencies
+input: "model test {\n  var result = $100 - $50;\n}\n"
+expected:
+  type: success
+  types:
+    result: Currency<USD>

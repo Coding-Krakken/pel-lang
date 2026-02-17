@@ -1,0 +1,17 @@
+id: CONF-LEX-018
+category: lexical
+spec_ref: spec/pel_language_spec.md#string-literals
+description: String literals - with escapes
+input: '"line1\nline2" "tab\there" "quote\"mark"
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: STRING
+    value: line1\nline2
+  - type: STRING
+    value: tab\there
+  - type: STRING
+    value: quote\"mark
+  - type: EOF

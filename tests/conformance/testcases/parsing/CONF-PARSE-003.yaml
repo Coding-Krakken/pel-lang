@@ -1,0 +1,20 @@
+id: CONF-PARSE-003
+category: parsing
+spec_ref: spec/pel_language_spec.md#parameter-declaration
+description: Param with Currency type
+input: "model test {\n  param revenue: Currency<USD> = $100;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    params:
+    - type: ParamDecl
+      name: revenue
+      type_annotation:
+        type_kind: Currency
+        params:
+          currency_code: USD
+      default_value:
+        type: Literal
+        value: $100

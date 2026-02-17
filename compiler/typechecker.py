@@ -659,7 +659,6 @@ class TypeChecker:
             return array_type
 
     # ===== Type Conversion and Compatibility =====
-
     def ast_type_to_pel_type(self, ast_type: TypeAnnotation) -> PELType:
         """Convert AST type annotation to PELType."""
         if ast_type.type_kind == "Currency":

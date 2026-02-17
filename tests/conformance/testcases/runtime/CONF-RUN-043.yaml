@@ -1,0 +1,10 @@
+id: CONF-RUN-043
+category: runtime
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - type mismatch at runtime
+input: "model test {\n  func add(a: Int, b: Int) -> Int { return a + b; }\n  var x\
+  \ = add(5, \"invalid\");\n}\n"
+expected:
+  type: error
+  error_type: RuntimeError
+  error_message: Type mismatch

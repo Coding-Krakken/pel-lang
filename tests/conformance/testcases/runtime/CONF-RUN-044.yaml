@@ -1,0 +1,10 @@
+id: CONF-RUN-044
+category: runtime
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - constraint violation
+input: "model test {\n  param revenue: Currency<USD> = -$100;\n  constraint positive:\
+  \ revenue >= $0 { severity: fatal };\n}\n"
+expected:
+  type: error
+  error_type: RuntimeError
+  error_message: Constraint violation

@@ -1,0 +1,9 @@
+id: CONF-PARSE-061
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Return statement
+input: "model test {\n  func get_value() -> Int {\n    return 42;\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

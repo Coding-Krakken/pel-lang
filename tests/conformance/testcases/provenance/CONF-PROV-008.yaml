@@ -1,0 +1,13 @@
+id: CONF-PROV-008
+category: provenance
+spec_ref: spec/pel_language_spec.md#uncertainty-propagation
+description: Uncertainty propagation - addition
+input: "model test {\n  param a: Int = ~Normal(μ=100, σ=10);\n  param b: Int = ~Normal(μ=200,\
+  \ σ=20);\n  var sum = a + b;\n}\n"
+expected:
+  type: success
+  uncertainty:
+    sum:
+      distribution: Normal
+      mean: 300
+      std_dev: 22.36

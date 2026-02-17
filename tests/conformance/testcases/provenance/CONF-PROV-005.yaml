@@ -1,0 +1,11 @@
+id: CONF-PROV-005
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Dependency tracking - simple
+input: "model test {\n  param base: Currency<USD> = $1000;\n  var doubled = base *\
+  \ 2;\n}\n"
+expected:
+  type: success
+  dependencies:
+    doubled:
+    - base

@@ -1,0 +1,10 @@
+id: CONF-RUN-025
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Constraint evaluation - pass
+input: "model test {\n  param revenue: Currency<USD> = $1000;\n  constraint positive:\
+  \ revenue >= $0;\n}\n"
+expected:
+  type: success
+  values:
+    constraints_passed: true
