@@ -1,0 +1,11 @@
+id: CONF-PROV-003
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Provenance with owner
+input: "model test {\n  param budget: Currency<USD> = $100000 {\n    source: \"board_policy_2025\"\
+  ,\n    method: \"assumption\",\n    owner: \"cfo@company.com\"\n  }\n}\n"
+expected:
+  type: success
+  provenance:
+    budget:
+      owner: cfo@company.com

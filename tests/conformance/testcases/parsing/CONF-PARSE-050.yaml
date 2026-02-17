@@ -1,0 +1,9 @@
+id: CONF-PARSE-050
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: Beta distribution
+input: "model test {\n  param churn: Fraction = ~Beta(α=2, β=38);\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

@@ -1,0 +1,9 @@
+id: CONF-RUN-022
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Array indexing
+input: "model test {\n  var nums = [10, 20, 30];\n  var x = nums[1];\n}\n"
+expected:
+  type: success
+  values:
+    x: 20

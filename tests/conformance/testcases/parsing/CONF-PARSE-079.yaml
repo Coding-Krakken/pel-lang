@@ -1,0 +1,9 @@
+id: CONF-PARSE-079
+category: parsing
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - Invalid constraint syntax
+input: "model test {\n  constraint: revenue >= 0;\n}\n"
+expected:
+  type: error
+  error_type: ParseError
+  error_message: Invalid constraint

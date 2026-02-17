@@ -1,0 +1,20 @@
+id: CONF-LEX-008
+category: lexical
+spec_ref: spec/pel_language_spec.md#percentage-literals
+description: Percentage literal - integer
+input: 'param tax_rate: Fraction = 5%;
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: tax_rate
+  - type: COLON
+  - type: FRACTION_TYPE
+  - type: ASSIGN
+  - type: PERCENTAGE
+    value: 5%
+  - type: SEMICOLON
+  - type: EOF

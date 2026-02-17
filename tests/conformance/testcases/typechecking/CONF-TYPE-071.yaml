@@ -1,0 +1,10 @@
+id: CONF-TYPE-071
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Dimensional analysis - valid
+input: "model test {\n  var distance = 100;\n  var time = 10;\n  var speed = distance\
+  \ / time;\n}\n"
+expected:
+  type: success
+  types:
+    speed: Float

@@ -1,0 +1,13 @@
+id: CONF-PROV-009
+category: provenance
+spec_ref: spec/pel_language_spec.md#uncertainty-propagation
+description: Uncertainty propagation - multiplication
+input: "model test {\n  param price: Currency<USD> = ~Normal(μ=$100, σ=$10);\n  param\
+  \ quantity: Int = 10;\n  var revenue = price * quantity;\n}\n"
+expected:
+  type: success
+  uncertainty:
+    revenue:
+      distribution: Normal
+      mean: $1000
+      std_dev: $100

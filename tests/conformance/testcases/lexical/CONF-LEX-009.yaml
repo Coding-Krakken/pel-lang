@@ -1,0 +1,20 @@
+id: CONF-LEX-009
+category: lexical
+spec_ref: spec/pel_language_spec.md#percentage-literals
+description: Percentage literal - decimal
+input: 'param commission: Fraction = 2.5%;
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: commission
+  - type: COLON
+  - type: FRACTION_TYPE
+  - type: ASSIGN
+  - type: PERCENTAGE
+    value: 2.5%
+  - type: SEMICOLON
+  - type: EOF

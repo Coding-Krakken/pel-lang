@@ -1,0 +1,9 @@
+id: CONF-TYPE-044
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Type error - OR with non-bool
+input: "model test {\n  var result = 10 || false;\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Logical OR requires Bool operands

@@ -1,0 +1,14 @@
+id: CONF-PROV-004
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance-correlation
+description: Correlated parameters
+input: "model test {\n  param growth_rate: Rate = 0.05/1mo {\n    source: \"historical_data\"\
+  ,\n    correlated_with: [(\"churn_rate\", -0.4)]\n  }\n  param churn_rate: Rate\
+  \ = 0.02/1mo {\n    source: \"historical_data\"\n  }\n}\n"
+expected:
+  type: success
+  provenance:
+    growth_rate:
+      correlated_with:
+      - - churn_rate
+        - -0.4

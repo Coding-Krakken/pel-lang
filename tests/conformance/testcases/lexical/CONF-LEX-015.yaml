@@ -1,0 +1,15 @@
+id: CONF-LEX-015
+category: lexical
+spec_ref: spec/pel_language_spec.md#number-literals
+description: Number literals - with underscores
+input: '1_000_000 3.14_159
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: NUMBER
+    value: '1_000_000'
+  - type: NUMBER
+    value: '3.14_159'
+  - type: EOF

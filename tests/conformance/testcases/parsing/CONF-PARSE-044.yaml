@@ -1,0 +1,16 @@
+id: CONF-PARSE-044
+category: parsing
+spec_ref: spec/pel_language_spec.md#function-declaration
+description: Function declaration - no params
+input: "model test {\n  func calculate() -> Duration {\n    return 30d;\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    funcs:
+    - type: FuncDecl
+      name: calculate
+      params: []
+      return_type:
+        type_kind: Duration

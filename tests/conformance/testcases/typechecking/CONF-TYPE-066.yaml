@@ -1,0 +1,9 @@
+id: CONF-TYPE-066
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Distribution type
+input: "model test {\n  var x: Distribution<Int> = ~Normal(μ=0, σ=1);\n}\n"
+expected:
+  type: success
+  types:
+    x: Distribution<Int>

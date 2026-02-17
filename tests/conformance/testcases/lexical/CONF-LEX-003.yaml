@@ -1,0 +1,23 @@
+id: CONF-LEX-003
+category: lexical
+spec_ref: spec/pel_language_spec.md#duration-literals
+description: Duration literal - months
+input: "model test {\n  param x: Duration = 6mo;\n}\n"
+expected:
+  type: success
+  tokens:
+  - type: MODEL
+  - type: IDENTIFIER
+    value: test
+  - type: LBRACE
+  - type: PARAM
+  - type: IDENTIFIER
+    value: x
+  - type: COLON
+  - type: DURATION_TYPE
+  - type: ASSIGN
+  - type: DURATION
+    value: 6mo
+  - type: SEMICOLON
+  - type: RBRACE
+  - type: EOF

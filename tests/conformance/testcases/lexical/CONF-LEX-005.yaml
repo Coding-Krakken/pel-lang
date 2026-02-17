@@ -1,0 +1,24 @@
+id: CONF-LEX-005
+category: lexical
+spec_ref: spec/pel_language_spec.md#currency-literals
+description: Currency literal - simple
+input: 'param revenue: Currency<USD> = $100;
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: revenue
+  - type: COLON
+  - type: CURRENCY_TYPE
+  - type: LT
+  - type: IDENTIFIER
+    value: USD
+  - type: GT
+  - type: ASSIGN
+  - type: CURRENCY
+    value: $100
+  - type: SEMICOLON
+  - type: EOF

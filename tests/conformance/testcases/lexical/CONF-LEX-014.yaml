@@ -1,0 +1,17 @@
+id: CONF-LEX-014
+category: lexical
+spec_ref: spec/pel_language_spec.md#number-literals
+description: Number literals - decimal
+input: '3.14 0.5 99.99
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: NUMBER
+    value: '3.14'
+  - type: NUMBER
+    value: '0.5'
+  - type: NUMBER
+    value: '99.99'
+  - type: EOF

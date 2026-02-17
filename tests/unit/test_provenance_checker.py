@@ -1,9 +1,9 @@
 import pytest
 
 from compiler.ast_nodes import Literal, Model, ParamDecl, TypeAnnotation
+from compiler.errors import ParseError
 from compiler.lexer import Lexer
 from compiler.parser import Parser
-from compiler.errors import ParseError
 from compiler.provenance_checker import ProvenanceChecker
 from compiler.typechecker import TypeChecker
 

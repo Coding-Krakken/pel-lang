@@ -1,0 +1,10 @@
+id: CONF-TYPE-030
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Percentage as fraction
+input: "model test {\n  var rate = 5%;\n  var amount = $100 * rate;\n}\n"
+expected:
+  type: success
+  types:
+    rate: Fraction
+    amount: Currency<USD>

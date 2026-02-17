@@ -1,0 +1,9 @@
+id: CONF-PARSE-053
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: If expression
+input: "model test {\n  var result = if x > 0 then 1 else 0;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

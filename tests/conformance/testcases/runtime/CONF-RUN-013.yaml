@@ -1,0 +1,9 @@
+id: CONF-RUN-013
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Comparison - greater than
+input: "model test {\n  var result = 10 > 5;\n}\n"
+expected:
+  type: success
+  values:
+    result: true

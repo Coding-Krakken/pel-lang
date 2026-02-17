@@ -1,0 +1,17 @@
+id: CONF-LEX-021
+category: lexical
+spec_ref: spec/pel_language_spec.md#operators
+description: Operators - comparison
+input: '== != < <= > >=
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: EQ
+  - type: NE
+  - type: LT
+  - type: LE
+  - type: GT
+  - type: GE
+  - type: EOF

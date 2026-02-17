@@ -1,0 +1,9 @@
+id: CONF-TYPE-010
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Currency type with code
+input: "model test {\n  var x: Currency<USD> = $100;\n}\n"
+expected:
+  type: success
+  types:
+    x: Currency<USD>

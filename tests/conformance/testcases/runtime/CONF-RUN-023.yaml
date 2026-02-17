@@ -1,0 +1,9 @@
+id: CONF-RUN-023
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Array length
+input: "model test {\n  var nums = [1, 2, 3, 4, 5];\n  var len = length(nums);\n}\n"
+expected:
+  type: success
+  values:
+    len: 5

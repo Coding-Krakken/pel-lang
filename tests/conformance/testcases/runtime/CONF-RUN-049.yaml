@@ -1,0 +1,8 @@
+id: CONF-RUN-049
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-analysis
+description: Calibration test
+input: "model test {\n  param growth_rate = ~Normal(μ=0.05, σ=0.01);\n}\n"
+expected:
+  type: success
+  analysis_type: calibration

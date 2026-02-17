@@ -1,0 +1,9 @@
+id: CONF-TYPE-062
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Array type mismatch
+input: "model test {\n  var nums: [Int] = [1, 2.5, 3];\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Array element type mismatch

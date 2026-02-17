@@ -1,0 +1,9 @@
+id: CONF-RUN-031
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: For loop
+input: "model test {\n  var sum = 0;\n  for i in 1..5 { sum = sum + i; }\n}\n"
+expected:
+  type: success
+  values:
+    sum: 15
