@@ -25,7 +25,7 @@ from compiler.errors import (
     type_mismatch,
     undefined_variable,
 )
-from compiler.semantic_contracts import SemanticContracts, ConversionReason
+from compiler.semantic_contracts import SemanticContracts
 
 
 @dataclass
