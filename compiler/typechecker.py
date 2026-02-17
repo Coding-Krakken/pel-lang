@@ -34,6 +34,7 @@ class Dimension:
     - Count<Customer>: {count: 'Customer'}
     - Fraction: {} (dimensionless)
     """
+
     units: dict[str, Any]  # e.g., {'currency': 'USD'}, {'rate': 'Month', 'time': -1}
 
     def __eq__(self, other):
@@ -53,56 +54,60 @@ class Dimension:
     @staticmethod
     def currency(code: str):
         """Currency type: USD, EUR, etc."""
-        return Dimension({'currency': code})
+        return Dimension({"currency": code})
 
     @staticmethod
     def rate(time_unit: str):
         """Rate per time unit."""
-        return Dimension({'rate': time_unit})
+        return Dimension({"rate": time_unit})
 
     @staticmethod
     def duration(time_unit: str | None = None):
         """Duration (time interval)."""
-        return Dimension({'time': time_unit or 'generic'})
+        return Dimension({"time": time_unit or "generic"})
 
     @staticmethod
     def count(entity: str):
         """Count of entities."""
-        return Dimension({'count': entity})
+        return Dimension({"count": entity})
 
     @staticmethod
     def capacity(resource: str):
         """Capacity of resource."""
-        return Dimension({'capacity': resource})
+        return Dimension({"capacity": resource})
 
-    def multiply(self, other: 'Dimension') -> 'Dimension':
+    def multiply(self, other: "Dimension") -> "Dimension":
         """Multiply dimensions: Currency * Count -> Currency, Rate * Duration -> Fraction."""
         # Special rules for economic types
 
         # Currency * scalar = Currency
-        if 'currency' in self.units and not other.units:
+        if "currency" in self.units and not other.units:
             return self
-        if 'currency' in other.units and not self.units:
+        if "currency" in other.units and not self.units:
             return other
 
         # Currency / Currency = scalar
-        if 'currency' in self.units and 'currency' in other.units:
-            if self.units['currency'] == other.units['currency']:
+        if "currency" in self.units and "currency" in other.units:
+            if self.units["currency"] == other.units["currency"]:
                 return Dimension.dimensionless()
             raise ValueError(f"Cannot divide {self.units['currency']} by {other.units['currency']}")
 
         # Rate * Duration = scalar (if time units match)
-        if 'rate' in self.units and 'time' in other.units:
-            if self.units['rate'] == other.units['time'] or other.units['time'] == 'generic':
+        if "rate" in self.units and "time" in other.units:
+            if self.units["rate"] == other.units["time"] or other.units["time"] == "generic":
                 return Dimension.dimensionless()
 
         # Count * scoped type = aggregated type
         # e.g., Count<Customer> * Currency<USD> per Customer = Currency<USD>
-        if 'count' in self.units and 'scoped' in other.units:
-            if self.units['count'] == other.units['scoped']:
+        if "count" in self.units and "scoped" in other.units:
+            if self.units["count"] == other.units["scoped"]:
                 # Remove scoped dimension
-                new_units = {k: v for k, v in other.units.items() if k != 'scoped'}
+                new_units = {k: v for k, v in other.units.items() if k != "scoped"}
                 return Dimension(new_units)
+
+        # Count * Currency = Currency (e.g., headcount * salary_per_employee -> total payroll)
+        if "count" in self.units and "currency" in other.units:
+            return Dimension({"currency": other.units["currency"]})
 
         # Generic multiplication: combine units
         combined = dict(self.units)
@@ -116,28 +121,40 @@ class Dimension:
 
         return Dimension(combined)
 
-    def divide(self, other: 'Dimension') -> 'Dimension':
+    def divide(self, other: "Dimension") -> "Dimension":
         """Divide dimensions."""
         # Currency / Currency = scalar
-        if 'currency' in self.units and 'currency' in other.units:
-            if self.units['currency'] == other.units['currency']:
+        if "currency" in self.units and "currency" in other.units:
+            if self.units["currency"] == other.units["currency"]:
                 return Dimension.dimensionless()
             raise ValueError(f"Cannot divide {self.units['currency']} by {other.units['currency']}")
 
         # Currency / Duration = Currency per time
-        if 'currency' in self.units and 'time' in other.units:
-            return Dimension({'currency': self.units['currency'], 'per_time': other.units['time']})
+        if "currency" in self.units and "time" in other.units:
+            return Dimension({"currency": self.units["currency"], "per_time": other.units["time"]})
 
         # Currency / Rate = Currency (e.g., $/churn_rate -> LTV)
-        if 'currency' in self.units and 'rate' in other.units:
-            return Dimension.currency(self.units['currency'])
+        if "currency" in self.units and "rate" in other.units:
+            return Dimension.currency(self.units["currency"])
 
-        # Currency / Count = Currency per entity (scoped)
-        if 'currency' in self.units and 'count' in other.units:
-            return Dimension({'currency': self.units['currency'], 'scoped': other.units['count']})
+        # Currency / Count = Currency per entity (scoped), or Rate when count is time unit
+        if "currency" in self.units and "count" in other.units:
+            # Currency / Count<Month> -> Rate per Month (e.g. burn rate = total_burn / months)
+            if other.units.get("count") in ("Month", "Year", "Day", "Week", "Quarter"):
+                return Dimension({"rate": other.units["count"]})
+            return Dimension({"currency": self.units["currency"], "scoped": other.units["count"]})
 
         # Duration / Duration = scalar
-        if 'time' in self.units and 'time' in other.units:
+        if "time" in self.units and "time" in other.units:
+            return Dimension.dimensionless()
+
+        # Count / Count = scalar (e.g., retained / initial -> retention rate)
+        if "count" in self.units and "count" in other.units:
+            if self.units.get("count") == other.units.get("count"):
+                return Dimension.dimensionless()
+
+        # Dimensionless / Rate = dimensionless (e.g., 0.693 / churn_rate -> Fraction)
+        if not self.units and "rate" in other.units:
             return Dimension.dimensionless()
 
         # Generic division
@@ -157,6 +174,7 @@ class Dimension:
 @dataclass
 class PELType:
     """Complete PEL type representation."""
+
     type_kind: str  # "Currency", "Rate", "Duration", "TimeSeries", etc.
     params: dict[str, Any]  # Type parameters
     dimension: Dimension  # Dimensional units
@@ -168,91 +186,69 @@ class PELType:
         return self.type_kind
 
     @staticmethod
-    def currency(code: str) -> 'PELType':
+    def currency(code: str) -> "PELType":
         """Currency type."""
         return PELType(
-            type_kind="Currency",
-            params={"currency_code": code},
-            dimension=Dimension.currency(code)
+            type_kind="Currency", params={"currency_code": code}, dimension=Dimension.currency(code)
         )
 
     @staticmethod
-    def rate(time_unit: str) -> 'PELType':
+    def rate(time_unit: str) -> "PELType":
         """Rate per time unit."""
         return PELType(
-            type_kind="Rate",
-            params={"per": time_unit},
-            dimension=Dimension.rate(time_unit)
+            type_kind="Rate", params={"per": time_unit}, dimension=Dimension.rate(time_unit)
         )
 
     @staticmethod
-    def duration(time_unit: str | None = None) -> 'PELType':
+    def duration(time_unit: str | None = None) -> "PELType":
         """Duration type."""
         return PELType(
             type_kind="Duration",
             params={"unit": time_unit} if time_unit else {},
-            dimension=Dimension.duration(time_unit)
+            dimension=Dimension.duration(time_unit),
         )
 
     @staticmethod
-    def fraction() -> 'PELType':
+    def fraction() -> "PELType":
         """Dimensionless fraction."""
-        return PELType(
-            type_kind="Fraction",
-            params={},
-            dimension=Dimension.dimensionless()
-        )
+        return PELType(type_kind="Fraction", params={}, dimension=Dimension.dimensionless())
 
     @staticmethod
-    def count(entity: str) -> 'PELType':
+    def count(entity: str) -> "PELType":
         """Count of entities."""
         return PELType(
-            type_kind="Count",
-            params={"entity": entity},
-            dimension=Dimension.count(entity)
+            type_kind="Count", params={"entity": entity}, dimension=Dimension.count(entity)
         )
 
     @staticmethod
-    def capacity(resource: str) -> 'PELType':
+    def capacity(resource: str) -> "PELType":
         """Capacity type."""
         return PELType(
             type_kind="Capacity",
             params={"resource": resource},
-            dimension=Dimension.capacity(resource)
+            dimension=Dimension.capacity(resource),
         )
 
     @staticmethod
-    def boolean() -> 'PELType':
+    def boolean() -> "PELType":
         """Boolean type."""
-        return PELType(
-            type_kind="Boolean",
-            params={},
-            dimension=Dimension.dimensionless()
-        )
+        return PELType(type_kind="Boolean", params={}, dimension=Dimension.dimensionless())
 
     @staticmethod
-    def timeseries(inner: 'PELType') -> 'PELType':
+    def timeseries(inner: "PELType") -> "PELType":
         """TimeSeries<T> type."""
-        return PELType(
-            type_kind="TimeSeries",
-            params={"inner": inner},
-            dimension=inner.dimension
-        )
+        return PELType(type_kind="TimeSeries", params={"inner": inner}, dimension=inner.dimension)
 
     @staticmethod
-    def distribution(inner: 'PELType') -> 'PELType':
+    def distribution(inner: "PELType") -> "PELType":
         """Distribution<T> type."""
-        return PELType(
-            type_kind="Distribution",
-            params={"inner": inner},
-            dimension=inner.dimension
-        )
+        return PELType(type_kind="Distribution", params={"inner": inner}, dimension=inner.dimension)
 
 
 class TypeEnvironment:
     """Type environment for variable bindings."""
 
-    def __init__(self, parent: Optional['TypeEnvironment'] = None):
+    def __init__(self, parent: Optional["TypeEnvironment"] = None):
         self.parent = parent
         self.bindings: dict[str, PELType] = {}
 
@@ -268,7 +264,7 @@ class TypeEnvironment:
             return self.parent.lookup(name)
         return None
 
-    def child_scope(self) -> 'TypeEnvironment':
+    def child_scope(self) -> "TypeEnvironment":
         """Create child scope."""
         return TypeEnvironment(parent=self)
 
@@ -392,7 +388,11 @@ class TypeChecker:
         def find_returns(statements: list[Statement]) -> PELType | None:
             for stmt in statements:
                 if isinstance(stmt, Return):
-                    return self.infer_expression(stmt.value) if stmt.value is not None else PELType.fraction()
+                    return (
+                        self.infer_expression(stmt.value)
+                        if stmt.value is not None
+                        else PELType.fraction()
+                    )
                 if isinstance(stmt, IfStmt):
                     then_t = find_returns(stmt.then_body)
                     else_t = find_returns(stmt.else_body or [])
@@ -412,11 +412,11 @@ class TypeChecker:
 
         elif lit.literal_type == "currency":
             # Parse currency code from literal (e.g., "$100" -> USD)
-            if lit.value.startswith('$'):
+            if lit.value.startswith("$"):
                 return PELType.currency("USD")
-            elif lit.value.startswith('€'):
+            elif lit.value.startswith("€"):
                 return PELType.currency("EUR")
-            elif lit.value.startswith('£'):
+            elif lit.value.startswith("£"):
                 return PELType.currency("GBP")
             else:
                 return PELType.currency("USD")  # Default
@@ -455,7 +455,7 @@ class TypeChecker:
         operator = expr.operator
 
         # Addition and subtraction: types must match
-        if operator in ['+', '-']:
+        if operator in ["+", "-"]:
             if not self.dimensions_compatible(left_type.dimension, right_type.dimension):
                 self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
                 return left_type  # Fallback
@@ -463,7 +463,7 @@ class TypeChecker:
             return left_type  # Result has same type
 
         # Multiplication: dimensional multiplication
-        elif operator == '*':
+        elif operator == "*":
             # Duration * scalar = Duration
             if left_type.type_kind == "Duration" and not right_type.dimension.units:
                 return left_type
@@ -473,16 +473,19 @@ class TypeChecker:
             result_dim = left_type.dimension.multiply(right_type.dimension)
 
             # Determine result type kind
-            if 'currency' in result_dim.units:
-                return PELType.currency(result_dim.units['currency'])
+            if "currency" in result_dim.units:
+                return PELType.currency(result_dim.units["currency"])
             elif not result_dim.units:
                 return PELType.fraction()
+            elif set(result_dim.units.keys()) == {"time"}:
+                # Fraction * Duration -> Duration (e.g., half_life_ratio * 1mo)
+                return PELType.duration(result_dim.units.get("time"))
             else:
                 # Generic result
                 return PELType(type_kind="Product", params={}, dimension=result_dim)
 
         # Division: dimensional division
-        elif operator == '/':
+        elif operator == "/":
             # Dimensionless per Duration => Rate per time unit (e.g., 0.30/1mo)
             if not left_type.dimension.units and right_type.type_kind == "Duration":
                 time_unit = right_type.dimension.units.get("time", "generic")
@@ -493,17 +496,20 @@ class TypeChecker:
             # Determine result type kind
             if not result_dim.units:
                 return PELType.fraction()
-            elif 'currency' in result_dim.units and len(result_dim.units) == 1:
-                return PELType.currency(result_dim.units['currency'])
-            elif 'currency' in result_dim.units and 'per_time' in result_dim.units:
+            elif "currency" in result_dim.units and len(result_dim.units) == 1:
+                return PELType.currency(result_dim.units["currency"])
+            elif "currency" in result_dim.units and "per_time" in result_dim.units:
                 # Currency per time
-                return PELType.rate(result_dim.units['per_time'])
+                return PELType.rate(result_dim.units["per_time"])
+            elif "rate" in result_dim.units and len(result_dim.units) == 1:
+                # e.g. Currency / Count<Month> -> Rate per Month
+                return PELType.rate(result_dim.units["rate"])
             else:
                 # Generic result
                 return PELType(type_kind="Quotient", params={}, dimension=result_dim)
 
         # Exponentiation: exponent must be dimensionless
-        elif operator == '^':
+        elif operator == "^":
             if right_type.dimension.units:
                 self.errors.append(
                     TypeError(
@@ -516,14 +522,14 @@ class TypeChecker:
             return left_type
 
         # Comparison operators: operands must be compatible, result is Boolean
-        elif operator in ['==', '!=', '<', '>', '<=', '>=']:
+        elif operator in ["==", "!=", "<", ">", "<=", ">="]:
             if not self.dimensions_compatible(left_type.dimension, right_type.dimension):
                 self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
 
             return PELType.boolean()
 
         # Logical operators: operands must be Boolean
-        elif operator in ['&&', '||']:
+        elif operator in ["&&", "||"]:
             if left_type.type_kind != "Boolean":
                 self.errors.append(type_mismatch("Boolean", str(left_type)))
             if right_type.type_kind != "Boolean":
@@ -539,11 +545,11 @@ class TypeChecker:
         """Infer type of unary operation."""
         operand_type = self.infer_expression(expr.operand)
 
-        if expr.operator == '-':
+        if expr.operator == "-":
             # Negation preserves type
             return operand_type
 
-        elif expr.operator == '!':
+        elif expr.operator == "!":
             # Logical NOT: operand must be Boolean
             if operand_type.type_kind != "Boolean":
                 self.errors.append(type_mismatch("Boolean", str(operand_type)))
@@ -555,7 +561,7 @@ class TypeChecker:
     def infer_function_call(self, expr: FunctionCall) -> PELType:
         """Infer type of function call."""
         # Built-in functions
-        if expr.function_name == 'sqrt':
+        if expr.function_name == "sqrt":
             if len(expr.arguments) != 1:
                 self.errors.append(
                     TypeError(
@@ -567,7 +573,7 @@ class TypeChecker:
             # sqrt preserves dimension (with exponent adjustment)
             return arg_type
 
-        elif expr.function_name == 'sum':
+        elif expr.function_name == "sum":
             if len(expr.arguments) != 1:
                 self.errors.append(
                     TypeError(
@@ -614,7 +620,11 @@ class TypeChecker:
         """Infer type of array literal."""
         if not expr.elements:
             # Empty array
-            return PELType(type_kind="Array", params={"element_type": PELType.fraction()}, dimension=Dimension.dimensionless())
+            return PELType(
+                type_kind="Array",
+                params={"element_type": PELType.fraction()},
+                dimension=Dimension.dimensionless(),
+            )
 
         # Infer element type from first element
         element_type = self.infer_expression(expr.elements[0])
@@ -628,7 +638,7 @@ class TypeChecker:
         return PELType(
             type_kind="Array",
             params={"element_type": element_type},
-            dimension=Dimension.dimensionless()
+            dimension=Dimension.dimensionless(),
         )
 
     def infer_indexing(self, expr: Indexing) -> PELType:
@@ -698,7 +708,7 @@ class TypeChecker:
             return PELType(
                 type_kind=ast_type.type_kind,
                 params=ast_type.params,
-                dimension=Dimension.dimensionless()
+                dimension=Dimension.dimensionless(),
             )
 
     def pel_type_to_ast_type(self, pel_type: PELType) -> TypeAnnotation:
@@ -707,6 +717,24 @@ class TypeChecker:
 
     def types_compatible(self, t1: PELType, t2: PELType) -> bool:
         """Check if two types are compatible."""
+        # Quotient/Product with dimensionless dimension is compatible with Fraction
+        if t1.type_kind == "Fraction" and t2.type_kind == "Quotient" and not t2.dimension.units:
+            return True
+        if t1.type_kind == "Quotient" and t2.type_kind == "Fraction" and not t1.dimension.units:
+            return True
+        # Product with only time dimension is compatible with Duration
+        if t1.type_kind == "Duration" and t2.type_kind == "Product":
+            if set(t2.dimension.units.keys()) == {"time"}:
+                return self.dimensions_compatible(t1.dimension, t2.dimension)
+        if t1.type_kind == "Product" and t2.type_kind == "Duration":
+            if set(t1.dimension.units.keys()) == {"time"}:
+                return self.dimensions_compatible(t1.dimension, t2.dimension)
+        # Numeric literal (Fraction) can initialize Count (e.g. param x: Count<Customer> = 1000)
+        if t1.type_kind == "Count" and t2.type_kind == "Fraction" and not t2.dimension.units:
+            return True
+        if t1.type_kind == "Fraction" and not t1.dimension.units and t2.type_kind == "Count":
+            return True
+
         # Same type kind
         if t1.type_kind != t2.type_kind:
             return False

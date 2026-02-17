@@ -23,6 +23,7 @@ from compiler.errors import (
 
 class TokenType(Enum):
     """Token types from PEL grammar."""
+
     # Literals
     NUMBER = auto()
     STRING = auto()
@@ -108,6 +109,7 @@ class TokenType(Enum):
 @dataclass
 class Token:
     """Single lexical token."""
+
     type: TokenType
     value: str
     line: int
@@ -125,40 +127,40 @@ class Lexer:
     """
 
     KEYWORDS = {
-        'model': TokenType.MODEL,
-        'param': TokenType.PARAM,
-        'var': TokenType.VAR,
-        'mut': TokenType.MUT,
-        'func': TokenType.FUNC,
-        'constraint': TokenType.CONSTRAINT,
-        'policy': TokenType.POLICY,
-        'if': TokenType.IF,
-        'then': TokenType.THEN,
-        'else': TokenType.ELSE,
-        'for': TokenType.FOR,
-        'when': TokenType.WHEN,
-        'per': TokenType.PER,
-        'import': TokenType.IMPORT,
-        'as': TokenType.AS,
-        'emit': TokenType.EMIT,
-        'event': TokenType.EVENT,
-        'return': TokenType.RETURN,
-        'simulate': TokenType.SIMULATE,
-        'true': TokenType.TRUE,
-        'false': TokenType.FALSE,
-
+        "model": TokenType.MODEL,
+        "param": TokenType.PARAM,
+        "var": TokenType.VAR,
+        "mut": TokenType.MUT,
+        "func": TokenType.FUNC,
+        "constraint": TokenType.CONSTRAINT,
+        "policy": TokenType.POLICY,
+        "if": TokenType.IF,
+        "then": TokenType.THEN,
+        "else": TokenType.ELSE,
+        "for": TokenType.FOR,
+        "when": TokenType.WHEN,
+        "per": TokenType.PER,
+        "import": TokenType.IMPORT,
+        "as": TokenType.AS,
+        "emit": TokenType.EMIT,
+        "event": TokenType.EVENT,
+        "return": TokenType.RETURN,
+        "simulate": TokenType.SIMULATE,
+        "true": TokenType.TRUE,
+        "false": TokenType.FALSE,
         # Types
-        'Currency': TokenType.CURRENCY_TYPE,
-        'Rate': TokenType.RATE_TYPE,
-        'Duration': TokenType.DURATION_TYPE,
-        'Capacity': TokenType.CAPACITY_TYPE,
-        'Count': TokenType.COUNT_TYPE,
-        'Fraction': TokenType.FRACTION_TYPE,
-        'TimeSeries': TokenType.TIMESERIES_TYPE,
-        'Distribution': TokenType.DISTRIBUTION_TYPE,
+        "Currency": TokenType.CURRENCY_TYPE,
+        "Rate": TokenType.RATE_TYPE,
+        "Duration": TokenType.DURATION_TYPE,
+        "Capacity": TokenType.CAPACITY_TYPE,
+        "Count": TokenType.COUNT_TYPE,
+        "Fraction": TokenType.FRACTION_TYPE,
+        "TimeSeries": TokenType.TIMESERIES_TYPE,
+        "Distribution": TokenType.DISTRIBUTION_TYPE,
     }
 
-    DURATION_UNITS = ("mo", "yr", "q", "w", "d")
+    # Longest units first so "day" matches before "d"
+    DURATION_UNITS = ("mo", "yr", "day", "d", "q", "w")
 
     def __init__(self, source: str, filename: str = "<input>"):
         self.source = source
@@ -184,7 +186,7 @@ class Lexer:
         char = self.source[self.pos]
         self.pos += 1
 
-        if char == '\n':
+        if char == "\n":
             self.line += 1
             self.column = 1
         else:
@@ -196,28 +198,28 @@ class Lexer:
         """Skip spaces and tabs (not newlines)."""
         while True:
             ch = self.peek()
-            if ch is None or ch not in ' \t':
+            if ch is None or ch not in " \t":
                 break
             self.advance()
 
     def skip_comment(self) -> None:
         """Skip // comments."""
-        if self.peek() == '/' and self.peek(1) == '/':
+        if self.peek() == "/" and self.peek(1) == "/":
             while True:
                 ch = self.peek()
-                if ch is None or ch == '\n':
+                if ch is None or ch == "\n":
                     break
                 self.advance()
 
     def read_number(self) -> Token:
         """Read number literal (integer or decimal)."""
         start_line, start_col = self.line, self.column
-        num_str = ''
+        num_str = ""
 
         # Integer part (allow '_' as a separator).
         while True:
             ch = self.peek()
-            if ch is None or not (ch.isdigit() or ch == '_'):
+            if ch is None or not (ch.isdigit() or ch == "_"):
                 break
             num_str += ch
             self.advance()
@@ -226,12 +228,12 @@ class Lexer:
         # This avoids lexing `0..time_horizon` as NUMBER("0.."), which should be
         # NUMBER("0") DOT DOT IDENTIFIER(...).
         p1 = self.peek(1)
-        if self.peek() == '.' and p1 is not None and p1.isdigit():
+        if self.peek() == "." and p1 is not None and p1.isdigit():
             # consume '.'
-            num_str += self.advance() or ''
+            num_str += self.advance() or ""
             while True:
                 ch = self.peek()
-                if ch is None or not (ch.isdigit() or ch == '_'):
+                if ch is None or not (ch.isdigit() or ch == "_"):
                     break
                 num_str += ch
                 self.advance()
@@ -239,14 +241,14 @@ class Lexer:
         # Check for numeric suffix (k, m, M, B, T)
         # NOTE: 'd' is reserved for duration literals (e.g., 30d).
         ch = self.peek()
-        if ch is not None and ch in 'kmМMBТ':
-            num_str += self.advance() or ''
+        if ch is not None and ch in "kmМMBТ":
+            num_str += self.advance() or ""
 
         # Percentage literal (e.g., 5%)
         ch = self.peek()
-        if ch == '%':
+        if ch == "%":
             self.advance()
-            return Token(TokenType.PERCENTAGE, num_str + '%', start_line, start_col)
+            return Token(TokenType.PERCENTAGE, num_str + "%", start_line, start_col)
 
         return Token(TokenType.NUMBER, num_str, start_line, start_col)
 
@@ -271,31 +273,31 @@ class Lexer:
     def read_currency(self) -> Token:
         """Read currency literal ($100, €50)."""
         start_line, start_col = self.line, self.column
-        symbol = self.advance() or ''  # $, €, £, ¥
+        symbol = self.advance() or ""  # $, €, £, ¥
 
         # Read amount
-        amount = ''
+        amount = ""
         while True:
             ch = self.peek()
-            if ch is None or not (ch.isdigit() or ch == '_'):
+            if ch is None or not (ch.isdigit() or ch == "_"):
                 break
             amount += ch
             self.advance()
 
         p1 = self.peek(1)
-        if self.peek() == '.' and p1 is not None and p1.isdigit():
-            amount += self.advance() or ''  # '.'
+        if self.peek() == "." and p1 is not None and p1.isdigit():
+            amount += self.advance() or ""  # '.'
             while True:
                 ch = self.peek()
-                if ch is None or not (ch.isdigit() or ch == '_'):
+                if ch is None or not (ch.isdigit() or ch == "_"):
                     break
                 amount += ch
                 self.advance()
 
         # Check for unit suffix (k, m, M, B)
         ch = self.peek()
-        if ch is not None and ch in 'kmМMBТ':
-            amount += self.advance() or ''
+        if ch is not None and ch in "kmМMBТ":
+            amount += self.advance() or ""
 
         value = symbol + amount
         return Token(TokenType.CURRENCY, value, start_line, start_col)
@@ -303,11 +305,11 @@ class Lexer:
     def read_identifier(self) -> Token:
         """Read identifier or keyword."""
         start_line, start_col = self.line, self.column
-        ident = ''
+        ident = ""
 
         while True:
             ch = self.peek()
-            if ch is None or not (ch.isalnum() or ch in '_'):
+            if ch is None or not (ch.isalnum() or ch in "_"):
                 break
             ident += ch
             self.advance()
@@ -321,25 +323,25 @@ class Lexer:
         start_line, start_col = self.line, self.column
         quote = self.advance()  # " or '
 
-        string_val = ''
+        string_val = ""
         while True:
             ch = self.peek()
             if ch is None or ch == quote:
                 break
-            char = self.advance() or ''
-            if char == '\\':
+            char = self.advance() or ""
+            if char == "\\":
                 next_ch = self.peek()
                 if next_ch is None:
                     break
-                next_char = self.advance() or ''
-                if next_char == 'n':
-                    string_val += '\n'
-                elif next_char == 't':
-                    string_val += '\t'
-                elif next_char in '"\\\'':
+                next_char = self.advance() or ""
+                if next_char == "n":
+                    string_val += "\n"
+                elif next_char == "t":
+                    string_val += "\t"
+                elif next_char in "\"\\'":
                     string_val += next_char
                 else:
-                    string_val += '\\' + next_char
+                    string_val += "\\" + next_char
             else:
                 string_val += char
 
@@ -360,12 +362,12 @@ class Lexer:
                 break
 
             # Newlines (statement terminators)
-            if char == '\n':
+            if char == "\n":
                 self.advance()
                 continue
 
             # Currency literals
-            if char in '$€£¥':
+            if char in "$€£¥":
                 self.tokens.append(self.read_currency())
 
             # Numbers
@@ -373,113 +375,113 @@ class Lexer:
                 self.tokens.append(self.read_number_or_duration())
 
             # Identifiers and keywords
-            elif char.isalpha() or char == '_':
+            elif char.isalpha() or char == "_":
                 self.tokens.append(self.read_identifier())
 
             # Strings
-            elif char in '"\'':
+            elif char in "\"'":
                 self.tokens.append(self.read_string())
 
             # Operators (two-char first)
-            elif char == '=' and self.peek(1) == '=':
+            elif char == "=" and self.peek(1) == "=":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.EQ, '==', self.line, self.column-2))
-            elif char == '!' and self.peek(1) == '=':
+                self.tokens.append(Token(TokenType.EQ, "==", self.line, self.column - 2))
+            elif char == "!" and self.peek(1) == "=":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.NE, '!=', self.line, self.column-2))
-            elif char == '<' and self.peek(1) == '=':
+                self.tokens.append(Token(TokenType.NE, "!=", self.line, self.column - 2))
+            elif char == "<" and self.peek(1) == "=":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.LE, '<=', self.line, self.column-2))
-            elif char == '>' and self.peek(1) == '=':
+                self.tokens.append(Token(TokenType.LE, "<=", self.line, self.column - 2))
+            elif char == ">" and self.peek(1) == "=":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.GE, '>=', self.line, self.column-2))
-            elif char == '&' and self.peek(1) == '&':
+                self.tokens.append(Token(TokenType.GE, ">=", self.line, self.column - 2))
+            elif char == "&" and self.peek(1) == "&":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.AND, '&&', self.line, self.column-2))
-            elif char == '|' and self.peek(1) == '|':
+                self.tokens.append(Token(TokenType.AND, "&&", self.line, self.column - 2))
+            elif char == "|" and self.peek(1) == "|":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.OR, '||', self.line, self.column-2))
-            elif char == '-' and self.peek(1) == '>':
+                self.tokens.append(Token(TokenType.OR, "||", self.line, self.column - 2))
+            elif char == "-" and self.peek(1) == ">":
                 self.advance()
                 self.advance()
-                self.tokens.append(Token(TokenType.ARROW, '->', self.line, self.column-2))
+                self.tokens.append(Token(TokenType.ARROW, "->", self.line, self.column - 2))
 
             # Single-char operators
-            elif char == '+':
+            elif char == "+":
                 self.advance()
-                self.tokens.append(Token(TokenType.PLUS, '+', self.line, self.column-1))
-            elif char == '-':
+                self.tokens.append(Token(TokenType.PLUS, "+", self.line, self.column - 1))
+            elif char == "-":
                 self.advance()
-                self.tokens.append(Token(TokenType.MINUS, '-', self.line, self.column-1))
-            elif char == '*':
+                self.tokens.append(Token(TokenType.MINUS, "-", self.line, self.column - 1))
+            elif char == "*":
                 self.advance()
-                self.tokens.append(Token(TokenType.STAR, '*', self.line, self.column-1))
-            elif char == '/':
+                self.tokens.append(Token(TokenType.STAR, "*", self.line, self.column - 1))
+            elif char == "/":
                 self.advance()
-                self.tokens.append(Token(TokenType.SLASH, '/', self.line, self.column-1))
-            elif char == '%':
+                self.tokens.append(Token(TokenType.SLASH, "/", self.line, self.column - 1))
+            elif char == "%":
                 self.advance()
-                self.tokens.append(Token(TokenType.PERCENT, '%', self.line, self.column-1))
-            elif char == '^':
+                self.tokens.append(Token(TokenType.PERCENT, "%", self.line, self.column - 1))
+            elif char == "^":
                 self.advance()
-                self.tokens.append(Token(TokenType.CARET, '^', self.line, self.column-1))
-            elif char == '~':
+                self.tokens.append(Token(TokenType.CARET, "^", self.line, self.column - 1))
+            elif char == "~":
                 self.advance()
-                self.tokens.append(Token(TokenType.TILDE, '~', self.line, self.column-1))
-            elif char == '<':
+                self.tokens.append(Token(TokenType.TILDE, "~", self.line, self.column - 1))
+            elif char == "<":
                 self.advance()
-                self.tokens.append(Token(TokenType.LT, '<', self.line, self.column-1))
-            elif char == '>':
+                self.tokens.append(Token(TokenType.LT, "<", self.line, self.column - 1))
+            elif char == ">":
                 self.advance()
-                self.tokens.append(Token(TokenType.GT, '>', self.line, self.column-1))
-            elif char == '!':
+                self.tokens.append(Token(TokenType.GT, ">", self.line, self.column - 1))
+            elif char == "!":
                 self.advance()
-                self.tokens.append(Token(TokenType.NOT, '!', self.line, self.column-1))
+                self.tokens.append(Token(TokenType.NOT, "!", self.line, self.column - 1))
 
             # Punctuation
-            elif char == '(':
+            elif char == "(":
                 self.advance()
-                self.tokens.append(Token(TokenType.LPAREN, '(', self.line, self.column-1))
-            elif char == ')':
+                self.tokens.append(Token(TokenType.LPAREN, "(", self.line, self.column - 1))
+            elif char == ")":
                 self.advance()
-                self.tokens.append(Token(TokenType.RPAREN, ')', self.line, self.column-1))
-            elif char == '{':
+                self.tokens.append(Token(TokenType.RPAREN, ")", self.line, self.column - 1))
+            elif char == "{":
                 self.advance()
-                self.tokens.append(Token(TokenType.LBRACE, '{', self.line, self.column-1))
-            elif char == '}':
+                self.tokens.append(Token(TokenType.LBRACE, "{", self.line, self.column - 1))
+            elif char == "}":
                 self.advance()
-                self.tokens.append(Token(TokenType.RBRACE, '}', self.line, self.column-1))
-            elif char == '[':
+                self.tokens.append(Token(TokenType.RBRACE, "}", self.line, self.column - 1))
+            elif char == "[":
                 self.advance()
-                self.tokens.append(Token(TokenType.LBRACKET, '[', self.line, self.column-1))
-            elif char == ']':
+                self.tokens.append(Token(TokenType.LBRACKET, "[", self.line, self.column - 1))
+            elif char == "]":
                 self.advance()
-                self.tokens.append(Token(TokenType.RBRACKET, ']', self.line, self.column-1))
-            elif char == ':':
+                self.tokens.append(Token(TokenType.RBRACKET, "]", self.line, self.column - 1))
+            elif char == ":":
                 self.advance()
-                self.tokens.append(Token(TokenType.COLON, ':', self.line, self.column-1))
-            elif char == ';':
+                self.tokens.append(Token(TokenType.COLON, ":", self.line, self.column - 1))
+            elif char == ";":
                 self.advance()
-                self.tokens.append(Token(TokenType.SEMICOLON, ';', self.line, self.column-1))
-            elif char == ',':
+                self.tokens.append(Token(TokenType.SEMICOLON, ";", self.line, self.column - 1))
+            elif char == ",":
                 self.advance()
-                self.tokens.append(Token(TokenType.COMMA, ',', self.line, self.column-1))
-            elif char == '.':
+                self.tokens.append(Token(TokenType.COMMA, ",", self.line, self.column - 1))
+            elif char == ".":
                 self.advance()
-                self.tokens.append(Token(TokenType.DOT, '.', self.line, self.column-1))
-            elif char == '=':
+                self.tokens.append(Token(TokenType.DOT, ".", self.line, self.column - 1))
+            elif char == "=":
                 self.advance()
-                self.tokens.append(Token(TokenType.ASSIGN, '=', self.line, self.column-1))
+                self.tokens.append(Token(TokenType.ASSIGN, "=", self.line, self.column - 1))
 
             else:
                 raise lexical_error(f"Unexpected character: '{char}'", self.current_location())
 
         # EOF token
-        self.tokens.append(Token(TokenType.EOF, '', self.line, self.column))
+        self.tokens.append(Token(TokenType.EOF, "", self.line, self.column))
         return self.tokens

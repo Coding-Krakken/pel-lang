@@ -1,268 +1,647 @@
 # Retention Module Guide
 
+The retention module provides customer retention, churn analysis, expansion revenue tracking, and lifetime value calculations for subscription and recurring revenue businesses.
+
 ## Overview
 
-The `retention` module provides functions for customer retention analysis, churn modeling, and lifetime value calculations. It enables data-driven analysis of customer behavior, expansion revenue, and cohort dynamics.
+**Module:** `stdlib/retention/retention.pel`  
+**Functions:** 20  
+**Categories:**
+- Cohort Analysis (3 functions)
+- Churn Metrics (4 functions)
+- Expansion & Contraction (3 functions)
+- Dollar Retention (3 functions)
+- Retention Curves (3 functions)
+- Lifetime Value (2 functions)
+- Advanced Metrics (2 functions)
 
-## Key Concepts
+## Installation
 
-### Retention vs. Churn
-
-- **Retention Rate**: Percentage of customers remaining (e.g., 95%)
-- **Churn Rate**: Percentage of customers lost (e.g., 5%)
-- **Relationship**: Churn = 1 - Retention
-
-### Cohort Analysis
-
-A **cohort** is a group of customers who started in the same time period. Analyzing cohorts reveals:
-
-- How retention changes over customer lifetime
-- Whether product improvements reduce churn
-- Impact of customer segments on retention
-
-### Net Dollar Retention (NDR)
-
-**NDR** measures revenue retention including expansion and contraction:
-
-```
-NDR = (Starting MRR + Expansion - Contraction - Churn) / Starting MRR
+```pel
+import stdlib.retention as ret
 ```
 
-- **NDR > 100%**: Net expansion (excellent!)
-- **NDR = 100%**: Flat retention
-- **NDR < 100%**: Net contraction
+## Cohort Analysis Functions
 
-**Benchmarks:**
-- **Best-in-class SaaS**: 120%+
-- **Good SaaS**: 100-120%
-- **Acceptable**: 90-100%
-- **Concerning**: < 90%
+### cohort_retention_curve
 
-## Module Functions
+Calculate retention rate for a cohort at a specific period.
 
-### Cohort Functions
-
-#### `cohort_survival_rate(retained_customers, initial_customers)`
-
-Calculate what percentage of a cohort remains.
+**Signature:**
+```pel
+func cohort_retention_curve(
+  initial_customers: Count<Customer>,
+  retained_customers: Count<Customer>,
+  period: Count<Month>
+) -> Fraction
+```
 
 **Example:**
 ```pel
-// Started with 1000 customers, 950 remain after 1 month
-var survival = cohort_survival_rate(950, 1000)
-// Result: 0.95 (95%)
+var initial: Count<Customer> = 1000
+var month_6_retained: Count<Customer> = 850
+var retention_6mo = ret.cohort_retention_curve(initial, month_6_retained, 6)
+// Result: 0.85 (85% retention)
 ```
 
-#### `cohort_half_life(monthly_churn_rate)`
+**Interpretation:**
+- Month 1: 95%+ is excellent
+- Month 6: 80%+ is good for SaaS
+- Month 12: 70%+ is healthy
 
-Calculate time for cohort to shrink to 50%.
+---
+
+### cohort_survival_rate
+
+Calculate percentage of customers still active.
+
+**Signature:**
+```pel
+func cohort_survival_rate(
+  initial_customers: Count<Customer>,
+  surviving_customers: Count<Customer>
+) -> Fraction
+```
+
+**Use Case:** Track long-term cohort health over years.
+
+---
+
+### cohort_half_life
+
+Calculate time for cohort to lose half its customers.
+
+**Signature:**
+```pel
+func cohort_half_life(
+  monthly_churn_rate: Rate per Month
+) -> Duration<Month>
+```
+
+**Formula:** Approximately 0.693 / churn_rate
 
 **Example:**
 ```pel
-// 5% monthly churn
-var half_life = cohort_half_life(0.05)
-// Result: ~14 months
+var churn: Rate per Month = 0.05/1mo  // 5% monthly churn
+var half_life = ret.cohort_half_life(churn)
+// Result: ~13.86 months
 ```
 
-### Churn Metrics
+**Interpretation:**
+- \> 24 months: Excellent (consumer apps)
+- 12-24 months: Good (SMB SaaS)
+- 6-12 months: Acceptable (high-churn segments)
+- < 6 months: Warning - fix retention
 
-#### `customer_churn_rate(churned_customers, starting_customers)`
+## Churn Metrics
+
+### customer_churn_rate
+
+Calculate monthly customer churn rate (logo churn).
+
+**Signature:**
+```pel
+func customer_churn_rate(
+  churned_customers: Count<Customer>,
+  starting_customers: Count<Customer>
+) -> Rate per Month
+```
 
 **Example:**
 ```pel
-// 2000 starting, 100 churned
-var churn = customer_churn_rate(100, 2000)
-// Result: 0.05 (5%)
+var churned: Count<Customer> = 50
+var starting: Count<Customer> = 1000
+var churn_rate = ret.customer_churn_rate(churned, starting)
+// Result: 0.05/1mo (5% monthly churn)
 ```
 
-#### `revenue_churn_rate(churned_mrr, starting_mrr)`
+**Benchmarks by Segment:**
+- Enterprise: 0.5-1.5% monthly (~6-18% annual)
+- Mid-market: 2-3% monthly (~24-36% annual)
+- SMB: 3-7% monthly (~36-84% annual)
+- Consumer: 5-10% monthly
+
+---
+
+### revenue_churn_rate
+
+Calculate monthly revenue churn (MRR churn).
+
+**Signature:**
+```pel
+func revenue_churn_rate(
+  churned_mrr: Currency<USD> per Month,
+  starting_mrr: Currency<USD> per Month
+) -> Rate per Month
+```
 
 **Example:**
 ```pel
-// $100k starting MRR, $3k churned
-var rev_churn = revenue_churn_rate($3_000/1mo, $100_000/1mo)
-// Result: 0.03 (3%)
+var churned_mrr: Currency<USD> per Month = $5000/1mo
+var starting_mrr: Currency<USD> per Month = $100000/1mo
+var revenue_churn = ret.revenue_churn_rate(churned_mrr, starting_mrr)
+// Result: 0.05/1mo (5% monthly revenue churn)
 ```
 
-### NDR Functions
+**Key Insight:** Revenue churn < Customer churn means larger customers stay longer.
 
-#### `net_dollar_retention(starting_cohort_mrr, expansion_mrr, contraction_mrr, churned_mrr)`
+---
+
+### logo_churn
+
+Calculate logo churn rate (account-level churn).
+
+**Signature:**
+```pel
+func logo_churn(
+  churned_accounts: Count<Account>,
+  starting_accounts: Count<Account>,
+  period_months: Count<Month>
+) -> Rate per Month
+```
+
+**Use Case:** B2B companies tracking at account level, not individual user.
+
+---
+
+### churn_rate_from_retention
+
+Convert retention rate to churn rate.
+
+**Signature:**
+```pel
+func churn_rate_from_retention(
+  retention_rate: Fraction
+) -> Rate per Month
+```
 
 **Example:**
 ```pel
-// $100k starting, $20k expansion, $5k contraction, $10k churn
-var ndr = net_dollar_retention($100_000/1mo, $20_000/1mo, $5_000/1mo, $10_000/1mo)
+var retention: Fraction = 0.95  // 95% retention
+var churn = ret.churn_rate_from_retention(retention)
+// Result: 0.05/1mo (5% churn)
+```
+
+## Expansion & Contraction
+
+### expansion_mrr
+
+Calculate total expansion MRR from upsells and cross-sells.
+
+**Signature:**
+```pel
+func expansion_mrr(
+  upsell_mrr: Currency<USD> per Month,
+  cross_sell_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month
+```
+
+**Example:**
+```pel
+var upsells: Currency<USD> per Month = $15000/1mo
+var cross_sells: Currency<USD> per Month = $5000/1mo
+var expansion = ret.expansion_mrr(upsells, cross_sells)
+// Result: $20,000/month expansion
+```
+
+---
+
+### contraction_mrr
+
+Calculate total contraction MRR from downgrades and partial churn.
+
+**Signature:**
+```pel
+func contraction_mrr(
+  downgrade_mrr: Currency<USD> per Month,
+  partial_churn_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month
+```
+
+**Use Case:** Track revenue lost from customers staying but spending less.
+
+---
+
+### reactivation_mrr
+
+Calculate MRR from reactivated (win-back) customers.
+
+**Signature:**
+```pel
+func reactivation_mrr(
+  reactivated_customers: Count<Customer>,
+  average_mrr_per_customer: Currency<USD> per Month per Customer
+) -> Currency<USD> per Month
+```
+
+**Example:**
+```pel
+var reactivated: Count<Customer> = 20
+var avg_mrr: Currency<USD> per Month per Customer = $150/1mo
+var reactivation = ret.reactivation_mrr(reactivated, avg_mrr)
+// Result: $3,000/month from win-backs
+```
+
+## Dollar Retention Metrics
+
+### net_dollar_retention
+
+Calculate Net Dollar Retention (NDR) - the holy grail SaaS metric.
+
+**Signature:**
+```pel
+func net_dollar_retention(
+  starting_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month
+) -> Fraction
+```
+
+**Formula:** NDR = (Starting + Expansion - Contraction - Churned) / Starting
+
+**Example:**
+```pel
+var start: Currency<USD> per Month = $100000/1mo
+var expansion: Currency<USD> per Month = $20000/1mo
+var contraction: Currency<USD> per Month = $5000/1mo
+var churned: Currency<USD> per Month = $10000/1mo
+var ndr = ret.net_dollar_retention(start, expansion, contraction, churned)
 // Result: 1.05 (105% NDR)
 ```
 
-#### `quick_ratio(new_mrr, expansion_mrr, churned_mrr, contraction_mrr)`
+**Benchmarks:**
+- \> 120%: Best-in-class (Snowflake, Datadog)
+- 110-120%: Excellent (top quartile public SaaS)
+- 100-110%: Good (median public SaaS)
+- 90-100%: Acceptable (growth stage)
+- < 90%: Warning - expansion < churn
 
-Measures growth efficiency.
+**Why NDR Matters:**
+- NDR > 100%: Grow without new customers
+- High NDR = pricing power, product value, low churn
+- Public SaaS companies trade on NDR multiples
+
+---
+
+### gross_dollar_retention
+
+Calculate Gross Dollar Retention (GDR) - measures retention without expansion.
+
+**Signature:**
+```pel
+func gross_dollar_retention(
+  starting_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month
+) -> Fraction
+```
+
+**Formula:** GDR = (Starting - Contraction - Churned) / Starting
 
 **Example:**
 ```pel
-// $50k new, $20k expansion, $15k churn, $5k contraction
-var qr = quick_ratio($50_000/1mo, $20_000/1mo, $15_000/1mo, $5_000/1mo)
-// Result: 3.5
+var start: Currency<USD> per Month = $100000/1mo
+var contraction: Currency<USD> per Month = $5000/1mo
+var churned: Currency<USD> per Month = $10000/1mo
+var gdr = ret.gross_dollar_retention(start, contraction, churned)
+// Result: 0.85 (85% GDR)
 ```
 
 **Benchmarks:**
-- **> 4.0**: Excellent growth efficiency
-- **2.0-4.0**: Good
-- **< 2.0**: Growth challenged
+- \> 95%: Excellent (enterprise)
+- 90-95%: Good (mid-market)
+- 85-90%: Acceptable (SMB)
+- < 85%: Warning - high churn
 
-### LTV Functions
+---
 
-#### `ltv_from_retention_curve(monthly_arpu, avg_retention_rate)`
+### quick_ratio_retention
+
+Calculate quick ratio (growth efficiency).
+
+**Signature:**
+```pel
+func quick_ratio_retention(
+  new_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month
+) -> Fraction
+```
+
+**Formula:** (New + Expansion) / (Churned + Contraction)
 
 **Example:**
 ```pel
-// $100 ARPU, 95% retention (5% churn)
-var ltv = ltv_from_retention_curve($100/1mo, 0.95)
-// Result: $2000
+var new: Currency<USD> per Month = $30000/1mo
+var expansion: Currency<USD> per Month = $20000/1mo
+var churned: Currency<USD> per Month = $10000/1mo
+var contraction: Currency<USD> per Month = $5000/1mo
+var qr = ret.quick_ratio_retention(new, expansion, churned, contraction)
+// Result: 3.33
 ```
 
-**Formula:**
-```
-LTV = ARPU / Churn Rate
+**Benchmarks:**
+- \> 4.0: Excellent
+- 2.0-4.0: Good
+- 1.0-2.0: Acceptable
+- < 1.0: Shrinking (negative growth)
+
+## Retention Curve Models
+
+### exponential_churn_curve
+
+Model retention using exponential decay (constant churn rate).
+
+**Signature:**
+```pel
+func exponential_churn_curve(
+  initial_retention: Fraction,
+  monthly_churn_rate: Rate per Month,
+  months: Count<Month>
+) -> Fraction
 ```
 
-#### `discounted_ltv(monthly_arpu, avg_retention_rate, monthly_discount_rate)`
+**Use Case:** Simplest model, good for short-term projections.
 
-Accounts for time value of money.
+---
+
+### power_law_churn_curve
+
+Model retention using power law (decreasing churn over time).
+
+**Signature:**
+```pel
+func power_law_churn_curve(
+  initial_retention: Fraction,
+  decay_exponent: Fraction,
+  months: Count<Month>
+) -> Fraction
+```
+
+**Use Case:** More realistic - older customers churn less (habit formation).
+
+---
+
+### weibull_churn_curve
+
+Model retention using Weibull distribution (flexible shape).
+
+**Signature:**
+```pel
+func weibull_churn_curve(
+  initial_retention: Fraction,
+  shape_param: Fraction,
+  scale_param: Fraction,
+  months: Count<Month>
+) -> Fraction
+```
+
+**Use Case:** Best fit for empirical data, captures complex retention patterns.
+
+## Lifetime Value Functions
+
+### ltv_from_retention_curve
+
+Calculate LTV from average customer lifetime.
+
+**Signature:**
+```pel
+func ltv_from_retention_curve(
+  monthly_revenue_per_customer: Currency<USD> per Month per Customer,
+  average_lifetime_months: Duration<Month>
+) -> Currency<USD> per Customer
+```
 
 **Example:**
 ```pel
-// $100 ARPU, 95% retention, 1% discount rate
-var discounted = discounted_ltv($100/1mo, 0.95, 0.01)
-// Result: $1667 (lower than simple LTV)
+var arpu: Currency<USD> per Month per Customer = $125/1mo
+var lifetime: Duration<Month> = 20mo
+var ltv = ret.ltv_from_retention_curve(arpu, lifetime)
+// Result: $2,500 per customer
 ```
 
-## Complete Example: Cohort Analysis
+---
+
+### discounted_ltv
+
+Calculate discounted LTV (accounts for time value of money).
+
+**Signature:**
+```pel
+func discounted_ltv(
+  monthly_revenue_per_customer: Currency<USD> per Month per Customer,
+  monthly_churn_rate: Rate per Month,
+  monthly_discount_rate: Rate per Month
+) -> Currency<USD> per Customer
+```
+
+**Formula:** LTV = ARPU / (churn_rate + discount_rate)
+
+**Example:**
+```pel
+var arpu: Currency<USD> per Month per Customer = $125/1mo
+var churn: Rate per Month = 0.05/1mo
+var discount: Rate per Month = 0.01/1mo  // 12% annual discount
+var ltv = ret.discounted_ltv(arpu, churn, discount)
+// Result: $2,083 per customer
+```
+
+## Advanced Metrics
+
+### retention_improvement_impact
+
+Calculate revenue impact of improving retention.
+
+**Signature:**
+```pel
+func retention_improvement_impact(
+  starting_retention: Fraction,
+  improved_retention: Fraction,
+  monthly_revenue: Currency<USD> per Month
+) -> Currency<USD> per Month
+```
+
+**Use Case:** Model ROI of retention initiatives.
+
+---
+
+### churn_probability_by_tenure
+
+Model decreasing churn probability as customers age.
+
+**Signature:**
+```pel
+func churn_probability_by_tenure(
+  months_since_signup: Count<Month>,
+  base_churn_rate: Rate per Month,
+  tenure_discount_factor: Fraction
+) -> Fraction
+```
+
+**Use Case:** More accurate churn forecasting by cohort age.
+
+## Complete Example: SaaS Retention Dashboard
 
 ```pel
-model cohort_analysis {
-  // Starting cohort
-  param initial_customers: Count<Customer> = 1000
-  param starting_mrr: Currency<USD> per Month = $100_000/1mo
-  param arpu: Currency<USD> per Month per Customer = $100/1mo
+model saas_retention_dashboard {
+  // Cohort Data
+  param cohort_jan_2024_initial: Count<Customer> = 1000 {
+    source: "analytics",
+    method: "observed",
+    confidence: 1.0
+  }
   
-  // Retention metrics
-  param monthly_churn_rate: Fraction = 0.05
-  param expansion_rate: Fraction = 0.03
-  param contraction_rate: Fraction = 0.01
+  param cohort_jan_2024_month_6: Count<Customer> = 850 {
+    source: "analytics",
+    method: "observed",
+    confidence: 0.95
+  }
   
-  // Calculate retention
-  var retention_rate = 1.0 - monthly_churn_rate
-  var retained = initial_customers * retention_rate
-  var survival = cohort_survival_rate(retained, initial_customers)
-  
-  // Calculate churn
-  var churned_count = customer_churn_rate(
-    initial_customers * monthly_churn_rate,
-    initial_customers
+  var retention_6mo = ret.cohort_retention_curve(
+    cohort_jan_2024_initial,
+    cohort_jan_2024_month_6,
+    6
   )
-  var churned_mrr = starting_mrr * monthly_churn_rate
   
-  // Calculate expansion/contraction
-  var expansion = starting_mrr * expansion_rate
-  var contraction = starting_mrr * contraction_rate
+  // Churn Analysis
+  var monthly_churn = ret.churn_rate_from_retention(retention_6mo)
+  var half_life = ret.cohort_half_life(monthly_churn)
   
-  // Calculate NDR
-  var ndr = net_dollar_retention(
+  // MRR Movement
+  param starting_mrr: Currency<USD> per Month = $500000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param new_mrr: Currency<USD> per Month = $100000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param upsell_mrr: Currency<USD> per Month = $50000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param cross_sell_mrr: Currency<USD> per Month = $20000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param downgrade_mrr: Currency<USD> per Month = $10000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param churned_mrr: Currency<USD> per Month = $30000/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  var expansion = ret.expansion_mrr(upsell_mrr, cross_sell_mrr)
+  var contraction = ret.contraction_mrr(downgrade_mrr, 0)
+  
+  // Dollar Retention
+  var ndr = ret.net_dollar_retention(
     starting_mrr,
     expansion,
     contraction,
     churned_mrr
   )
   
-  // Calculate LTV
-  var ltv = ltv_from_retention_curve(arpu, retention_rate)
+  var gdr = ret.gross_dollar_retention(
+    starting_mrr,
+    contraction,
+    churned_mrr
+  )
   
-  // Results:
-  // - Survival: 95% after 1 month
-  // - Churn: 5% (50 customers)
-  // - NDR: 103% (net expansion!)
-  // - LTV: $2000 per customer
+  var quick_ratio = ret.quick_ratio_retention(
+    new_mrr,
+    expansion,
+    churned_mrr,
+    contraction
+  )
+  
+  // LTV
+  param arpu: Currency<USD> per Month per Customer = $125/1mo {
+    source: "billing",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  var lifetime = ret.cohort_half_life(monthly_churn) * 2  // 2x half-life
+  var ltv = ret.ltv_from_retention_curve(arpu, lifetime)
+  
+  // Constraints
+  constraint healthy_ndr: ndr >= 1.0 {
+    severity: warning,
+    message: "NDR below 100% - expansion not offsetting churn"
+  }
+  
+  constraint acceptable_gdr: gdr >= 0.85 {
+    severity: warning,
+    message: "GDR below 85% - high revenue churn"
+  }
+  
+  constraint strong_quick_ratio: quick_ratio >= 2.0 {
+    severity: warning,
+    message: "Quick ratio below 2.0 - growth efficiency concern"
+  }
 }
 ```
 
 ## Best Practices
 
-### 1. Track NDR by Cohort
+1. **Track Cohorts, Not Averages**: Retention varies dramatically by cohort age
+2. **NDR is King**: Public markets value NDR > 110% with premium multiples
+3. **Expansion > Retention**: Easier to expand existing customers than reduce churn
+4. **Segment Retention**: SMB, mid-market, enterprise have different patterns
+5. **Leading Indicators**: Track product usage, NPS before churn happens
+6. **Curve Fitting**: Use historical data to choose best retention curve model
+7. **LTV Updates**: Recalculate LTV quarterly as retention patterns change
 
-```pel
-constraint ndr_healthy {
-  severity: "info"
-  condition: ndr >= 1.0
-  message: "Cohort achieving net expansion"
-}
+## Retention Improvement Strategies
 
-constraint ndr_warning {
-  severity: "warning"
-  condition: ndr < 0.90
-  message: "Cohort NDR below 90% - investigate churn drivers"
-}
-```
+### For Low GDR (< 85%)
+- Improve onboarding (80% of churn happens in first 90 days)
+- Customer success team for high-value accounts
+- Product-led growth to increase stickiness
+- Pricing optimization (willingness to pay vs. value delivered)
 
-### 2. Monitor Quick Ratio
+### For Low NDR (< 100%)
+- Land-and-expand strategy (start small, grow over time)
+- Usage-based pricing (customers grow with you)
+- Multi-product cross-sell
+- Enterprise features for upsell
 
-```pel
-constraint growth_efficiency {
-  severity: "warning"
-  condition: quick_ratio < 2.0
-  message: "Quick ratio below 2.0 - growth challenged"
-}
-```
+### For Low Quick Ratio (< 2.0)
+- Improve new customer acquisition (top of funnel)
+- Accelerate expansion motion
+- Reduce churn through product improvements
+- Increase prices (if value justifies)
 
-### 3. Segment Cohorts
+## Related Modules
 
-Different customer segments have different retention:
+- **unit_econ**: Calculate LTV:CAC ratio, payback period
+- **cashflow**: Model cash impact of churn on runway
+- **pricing**: Optimize pricing to reduce contraction
 
-- **Enterprise**: Lower churn (< 2%), higher expansion
-- **SMB**: Higher churn (5-10%), lower expansion
-- **Self-serve**: Highest churn (10-20%), moderate expansion
+## References
 
-### 4. Use Retention Curves
-
-Different churn patterns over time:
-
-- **Exponential**: Constant churn rate (most common)
-- **Power Law**: Decreasing churn (improving retention)
-- **Weibull**: Flexible shape (early churn then stable)
-
-## Integration with Other Modules
-
-### With `unit_econ`:
-
-```pel
-import stdlib.unit_econ as ue
-import stdlib.retention as ret
-
-// LTV/CAC ratio using retention-based LTV
-var ltv = ret.ltv_from_retention_curve(arpu, retention_rate)
-var ltv_cac = ue.ltv_to_cac_ratio(ltv, cac)
-```
-
-### With `cashflow`:
-
-```pel
-import stdlib.cashflow as cf
-import stdlib.retention as ret
-
-// Churn affects revenue and cash
-var churn_rate = ret.customer_churn_rate(churned, starting)
-var churned_revenue = revenue * churn_rate
-var reduced_cash = cf.cash_balance_projection(
-  starting_cash,
-  revenue - churned_revenue - expenses,
-  12mo
-)
-```
+- "SaaS Metrics 2.0" - David Skok
+- "The Ultimate Guide to SaaS Retention" - ChartMogul
+- Public SaaS company S-1 filings (NDR/GDR benchmarks)
 
 ---
 
-**Module:** `stdlib/retention/retention.pel`  
 **Version:** 0.1.0  
-**Status:** Complete (18 functions)  
-**Dependencies:** None
+**Last Updated:** 2026-02-16  
+**Maintainer:** PEL Project Contributors

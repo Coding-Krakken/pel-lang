@@ -165,7 +165,7 @@ class Parser:
         self.expect(TokenType.RPAREN)
         self.expect(TokenType.ARROW)
         return_type = self.parse_type()
-        body = self.parse_block()
+        body = self.parse_block_expression()
 
         return FuncDecl(name=name, parameters=params, return_type=return_type, body=body)
 
@@ -685,17 +685,17 @@ class Parser:
 
     # ===== Provenance and Metadata =====
 
-    def parse_provenance_block(self) -> dict[str, Any]:
+    def parse_provenance_block(self) -> Provenance:
         """Parse provenance block: { source: ..., method: ..., ... }"""
         self.expect(TokenType.LBRACE)
-        provenance: dict[str, Any] = {}
+        provenance_data: dict[str, Any] = {}
 
         # Required: source, method, confidence
-        provenance['source'] = self.parse_metadata_field('source')
+        provenance_data['source'] = self.parse_metadata_field('source')
         self.expect(TokenType.COMMA)
-        provenance['method'] = self.parse_metadata_field('method')
+        provenance_data['method'] = self.parse_metadata_field('method')
         self.expect(TokenType.COMMA)
-        provenance['confidence'] = self.parse_metadata_number_field('confidence')
+        provenance_data['confidence'] = self.parse_metadata_number_field('confidence')
 
         # Optional fields
         while self.consume_if(TokenType.COMMA):
@@ -706,17 +706,31 @@ class Parser:
             self.expect(TokenType.COLON)
 
             if field_name == 'correlated_with':
-                provenance[field_name] = self.parse_correlation_list()
-            elif self.match(TokenType.NUMBER):
-                provenance[field_name] = float(self.advance().value)
-            elif self.match(TokenType.STRING):
-                provenance[field_name] = self.advance().value
+                provenance_data[field_name] = self.parse_correlation_list()
+            elif field_name in {'freshness', 'owner', 'notes'}:
+                # These are string fields - just parse the STRING token
+                provenance_data[field_name] = self.expect(TokenType.STRING).value
             else:
-                # Default: parse as expression
-                provenance[field_name] = self.parse_expression()
+                # Ignore unknown fields
+                if self.match(TokenType.STRING):
+                    self.advance()
+                elif self.match(TokenType.NUMBER):
+                    self.advance()
+                else:
+                    self.parse_expression()
 
         self.expect(TokenType.RBRACE)
-        return provenance
+
+        # Construct and return Provenance object
+        return Provenance(
+            source=provenance_data['source'],
+            method=provenance_data['method'],
+            confidence=provenance_data['confidence'],
+            freshness=provenance_data.get('freshness'),
+            owner=provenance_data.get('owner'),
+            correlated_with=provenance_data.get('correlated_with', []),
+            notes=provenance_data.get('notes')
+        )
 
     def parse_metadata_field(self, field_name: str) -> str:
         """Parse a string metadata field."""

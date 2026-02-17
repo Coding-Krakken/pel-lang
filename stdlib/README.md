@@ -2,19 +2,22 @@
 
 The PEL Standard Library provides battle-tested, reusable economic modeling components.
 
-## Progress
+## Implementation Status
 
-**3 of 9 modules complete (33%)**
+**3 of 9 modules implemented (33% complete)**
 
-- ✅ `unit_econ/` - Unit Economics (20 functions)
-- ✅ `cashflow/` - Cash Flow Waterfall (17 functions)
-- ✅ `retention/` - Retention & Churn (18 functions)
-- 🔜 `demand/` - Demand Forecasting (planned)
-- 🔜 `funnel/` - Conversion Funnels (planned)
-- 🔜 `pricing/` - Pricing Models (planned)
-- 🔜 `capacity/` - Capacity Planning (planned)
-- 🔜 `hiring/` - Hiring & Headcount (planned)
-- 🔜 `shocks/` - Scenario Library (planned)
+✅ Completed:
+- `unit_econ/` - Unit Economics (17 functions)
+- `cashflow/` - Cash Flow Analysis (20 functions)  
+- `retention/` - Retention & Churn (20 functions)
+
+🔜 Planned:
+- `demand/` - Demand Forecasting
+- `funnel/` - Conversion Funnels
+- `pricing/` - Pricing Models
+- `capacity/` - Capacity Planning
+- `hiring/` - Hiring & Headcount
+- `shocks/` - Scenario Library
 
 ## Philosophy
 
@@ -52,19 +55,20 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - Usage-based revenue
 
 ### 5. `cashflow/` - Cash Flow Waterfall ✅ **IMPLEMENTED**
-- Accounts receivable timing (AR functions)
-- Accounts payable timing (AP functions)
-- Payroll schedules and tax timing
-- Working capital calculations (CCC, burn rate, runway)
-- Cash waterfall (OCF, FCF, projections)
+- Accounts receivable timing (AR with payment terms, aging, DSO, bad debt)
+- Accounts payable timing (AP with payment terms, aging, DPO)
+- Payroll schedules (timing, taxes, accruals)
+- Working capital metrics (CCC, current ratio, quick ratio)
+- Cash runway and burn rate
+- Operating and free cash flow
 
 ### 6. `retention/` - Retention & Churn ✅ **IMPLEMENTED**
 - Cohort retention curves and survival rates
 - Customer and revenue churn metrics
-- Expansion/contraction revenue (upsells, downgrades)
-- Net dollar retention (NDR, GDR, Quick Ratio)
+- Expansion, contraction, and reactivation MRR
+- Net and gross dollar retention (NDR, GDR)
 - Retention curve models (exponential, power-law, Weibull)
-- LTV integration (retention-based LTV, discounted LTV)
+- Lifetime value from retention curves
 
 ### 7. `capacity/` - Capacity Planning
 - Queueing models
