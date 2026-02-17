@@ -1,0 +1,88 @@
+// E-Commerce B2B Wholesale Portal
+// Models wholesale distributor with volume-based pricing tiers
+
+model EcommerceB2BWholesalePortal {
+  param total_business_customers: Count<Item> = 850
+  param avg_order_value: Currency<USD> = 2800.0
+  param orders_per_customer_month: Count<Item> = 3
+  
+  // Volume discount tiers
+  param tier_1_discount: Fraction = 0.00 // < $1000
+  param tier_2_discount: Fraction = 0.08 // $1000-$5000
+  param tier_3_discount: Fraction = 0.15 // $5000-$15000
+  param tier_4_discount: Fraction = 0.22 // > $15000
+  param tier_1_pct: Fraction = 0.25
+  param tier_2_pct: Fraction = 0.45
+  param tier_3_pct: Fraction = 0.22
+  param tier_4_pct: Fraction = 0.08
+  
+  // Cost of goods sold
+  param avg_cogs_pct: Fraction = 0.68 // wholesale margins
+  
+  // Fulfillment costs
+  param pick_pack_cost_per_order: Currency<USD> = 12.50
+  param avg_shipping_cost: Currency<USD> = 35.0 // freight/LTL shipping
+  param warehouse_costs: Currency<USD> = 28000.0
+  
+  // Operating expenses
+  param sales_team_headcount: Count<Item> = 8
+  param cost_per_sales_rep: Currency<USD> = 11000.0
+  param account_management_headcount: Count<Item> = 6
+  param cost_per_am: Currency<USD> = 9500.0
+  param platform_development: Currency<USD> = 22000.0
+  param admin_overhead: Currency<USD> = 18000.0
+  
+  // Payment terms impact
+  param avg_payment_terms_days: Count<Item> = 45 // net-45 payment terms
+  param working_capital_cost_rate: Fraction = 0.06 // annual cost
+  
+  // Calculate order distribution
+  var total_orders: Count<Item> = total_business_customers * orders_per_customer_month
+  var tier_1_orders: Count<Item> = total_orders * tier_1_pct
+  var tier_2_orders: Count<Item> = total_orders * tier_2_pct
+  var tier_3_orders: Count<Item> = total_orders * tier_3_pct
+  var tier_4_orders: Count<Item> = total_orders * tier_4_pct
+  
+  // Gross merchandise value (before discounts)
+  var gmv: Currency<USD> = total_orders * avg_order_value
+  
+  // Revenue after volume discounts
+  var tier_1_revenue: Currency<USD> = tier_1_orders * avg_order_value * (1.0 - tier_1_discount)
+  var tier_2_revenue: Currency<USD> = tier_2_orders * avg_order_value * (1.0 - tier_2_discount)
+  var tier_3_revenue: Currency<USD> = tier_3_orders * avg_order_value * (1.0 - tier_3_discount)
+  var tier_4_revenue: Currency<USD> = tier_4_orders * avg_order_value * (1.0 - tier_4_discount)
+  var total_revenue: Currency<USD> = tier_1_revenue + tier_2_revenue + tier_3_revenue + tier_4_revenue
+  
+  // Cost of goods sold
+  var cogs: Currency<USD> = gmv * avg_cogs_pct
+  var gross_profit_before_fulfillment: Currency<USD> = total_revenue - cogs
+  
+  // Fulfillment costs
+  var pick_pack_costs: Currency<USD> = total_orders * pick_pack_cost_per_order
+  var shipping_costs: Currency<USD> = total_orders * avg_shipping_cost
+  var total_fulfillment: Currency<USD> = pick_pack_costs + shipping_costs + warehouse_costs
+  
+  var gross_profit: Currency<USD> = gross_profit_before_fulfillment - total_fulfillment
+  var gross_margin: Fraction = gross_profit / total_revenue
+  
+  // Operating expenses
+  var sales_cost: Currency<USD> = sales_team_headcount * cost_per_sales_rep
+  var account_management_cost: Currency<USD> = account_management_headcount * cost_per_am
+  var total_opex: Currency<USD> = sales_cost + account_management_cost + platform_development + admin_overhead
+  
+  // Working capital financing cost
+  var avg_receivables: Currency<USD> = total_revenue * (avg_payment_terms_days / 30.0)
+  var working_capital_cost: Currency<USD> = avg_receivables * (working_capital_cost_rate / 12.0)
+  
+  var net_income: Currency<USD> = gross_profit - total_opex - working_capital_cost
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // B2B metrics
+  var customer_ltv_annual: Currency<USD> = (avg_order_value * orders_per_customer_month * 12.0) * gross_margin
+  var revenue_per_customer: Currency<USD> = total_revenue / total_business_customers
+  var avg_discount_pct: Fraction = 1.0 - (total_revenue / gmv)
+  
+  constraint healthy_margins: gross_margin > 0.18
+  constraint profitable_operations: operating_margin > 0.05
+  constraint manageable_discounting: avg_discount_pct < 0.12
+}

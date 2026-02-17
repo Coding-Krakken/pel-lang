@@ -5,10 +5,10 @@ model marketplace_rental {
   param listings: Count<Listing> = 2_000
   param avg_nightly_rate: Currency<USD> = $120
   param avg_occupancy_pct: Fraction = 0.40
-  param avg_nights_per_month: Duration<Night> = 10n
+  param avg_nights_per_month: Duration = 10d
   param platform_take: Fraction = 0.18
 
-  var monthly_bookings: Count<Booking> = listings * avg_occupancy_pct * (avg_nights_per_month/1n)
+  var monthly_bookings: Count<Booking> = listings * avg_occupancy_pct * 10
   var gmv: Currency<USD> = monthly_bookings * avg_nightly_rate
   var platform_revenue: Currency<USD> = gmv * platform_take
 

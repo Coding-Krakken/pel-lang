@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Handyman Services Marketplace
+// Local services with instant booking
+
+model marketplace_handyman_services_bench {
+  param monthly_bookings: Count<Booking> = 8500
+  param avg_job_value: Currency<USD> = $185
+  param take_rate: Fraction = 0.22
+  param active_providers: Count<Provider> = 450
+  param background_check_cost_per_provider: Currency<USD> = $45
+
+  var gmv: Currency<USD> = monthly_bookings * avg_job_value
+  var platform_revenue: Currency<USD> = gmv * take_rate
+  var provider_screening_costs: Currency<USD> = active_providers * background_check_cost_per_provider
+  var net_revenue: Currency<USD> = platform_revenue - provider_screening_costs
+
+  constraint liquidity: (monthly_bookings / active_providers) >= 15 {
+    severity: warning,
+    message: "Need at least 15 bookings per provider monthly"
+  }
+}

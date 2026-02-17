@@ -5,10 +5,10 @@ model real_estate_portfolio {
   param properties: Count<Property> = 25
   param avg_nightly_rate: Currency<USD> = $180
   param avg_occupancy_pct: Fraction = 0.6
-  param avg_nights_per_month: Duration<Night> = 12n
+  param avg_nights_per_month: Duration = 12d
   param monthly_opex_per_property: Currency<USD> = $1_200
 
-  var monthly_bookings: Count<Booking> = properties * avg_occupancy_pct * (avg_nights_per_month/1n)
+  var monthly_bookings: Count<Booking> = properties * avg_occupancy_pct * 12
   var gmv: Currency<USD> = monthly_bookings * avg_nightly_rate
   var opex: Currency<USD> = properties * monthly_opex_per_property
   var net_income: Currency<USD> = gmv - opex

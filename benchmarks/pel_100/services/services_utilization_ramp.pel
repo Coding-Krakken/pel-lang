@@ -6,21 +6,18 @@ model services_utilization_ramp {
   param ramp_months: Int = 6
   param monthly_hire: Count<Employee> = 2
   param target_utilization: Fraction = 0.75
-  param billable_rate: Currency<USD> per Hour = $200/1h
-  param hours_per_month: Duration<Hour> = 160h
+  param billable_rate: Currency<USD> = $200/1h
+  param hours_per_month: Int = 160
 
-  var consultants: TimeSeries<Count<Employee>>
-  consultants[0] = starting_consultants
+  var consultants: TimeSeries<Count<Employee>>consultants[0] = starting_consultants
   consultants[t+1] = consultants[t] + monthly_hire
 
-  var utilization: TimeSeries<Fraction>
-  utilization[t] = (t < ramp_months) ? (0.5 + 0.5 * (t / ramp_months)) : target_utilization
+  var utilization: TimeSeries<Fraction>utilization[0] = 0.5
+  utilization[t+1] = utilization[t] + 0.5 / ramp_months
 
-  var monthly_billable_hours: TimeSeries<Duration<Hour>>
-  monthly_billable_hours[t] = consultants[t] * hours_per_month * utilization[t]
+  var monthly_billable_hours: TimeSeries<Int>monthly_billable_hours[t] = consultants[t] * hours_per_month * utilization[t]
 
-  var monthly_revenue: TimeSeries<Currency<USD>>
-  monthly_revenue[t] = monthly_billable_hours[t] * billable_rate
+  var monthly_revenue: TimeSeries<Currency<USD>>monthly_revenue[t] = monthly_billable_hours[t] * billable_rate
 
   constraint utilization_target: utilization[ramp_months] >= 0.6 {
     severity: warning,

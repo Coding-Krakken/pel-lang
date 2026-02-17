@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: AgTech Precision Farming SaaS
+// Farm management with satellite imagery costs
+
+model agtech_precision_farming_bench {
+  param farm_customers: Count<Farm> = 850
+  param avg_acres_per_farm: Count<Acre> = 1200
+  param price_per_acre_annually: Currency<USD> = $3.50/1yr
+  param satellite_imagery_cost_per_acre: Currency<USD> = $0.45/1yr
+  param agronomist_team_costs: Currency<USD> = $85_000
+
+  var total_acres: Count<Acre> = farm_customers * avg_acres_per_farm
+  var annual_revenue: Currency<USD> = total_acres * price_per_acre_annually
+  var monthly_revenue: Currency<USD> = annual_revenue / 12
+  var imagery_costs_monthly: Currency<USD> = (total_acres * satellite_imagery_cost_per_acre) / 12
+  var gross_profit: Currency<USD> = monthly_revenue - imagery_costs_monthly - agronomist_team_costs
+
+  constraint profitable_operations: gross_profit > $50_000 {
+    severity: warning,
+    message: "Gross profit below $50K monthly"
+  }
+}

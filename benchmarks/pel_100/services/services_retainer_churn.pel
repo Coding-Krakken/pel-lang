@@ -6,12 +6,10 @@ model services_retainer_churn {
   param monthly_churn: Fraction = 0.03
   param monthly_fee: Currency<USD> = $7_500
 
-  var active_retainers: TimeSeries<Count<Client>>
-  active_retainers[0] = retainers
+  var active_retainers: TimeSeries<Count<Client>>active_retainers[0] = retainers
   active_retainers[t+1] = active_retainers[t] * (1 - monthly_churn)
 
-  var monthly_revenue: TimeSeries<Currency<USD>>
-  monthly_revenue[t] = active_retainers[t] * monthly_fee
+  var monthly_revenue: TimeSeries<Currency<USD>>monthly_revenue[t] = active_retainers[t] * monthly_fee
 
   constraint churn_threshold: monthly_churn < 0.1 {
     severity: warning,

@@ -1,0 +1,105 @@
+// Education - Online Coding Bootcamp
+// Models income share agreement (ISA) and upfront tuition models
+
+model EducationOnlineBootcamp {
+  param monthly_cohort_size: Count<Item> = 85
+  param tuition_upfront: Currency<USD> = 14500.0
+  param upfront_payment_pct: Fraction = 0.40
+  param isa_pct: Fraction = 0.45 // income share agreement
+  param scholarship_pct: Fraction = 0.15
+  
+  // Program dynamics
+  param program_duration_weeks: Count<Item> = 16
+  param completion_rate: Fraction = 0.82
+  param job_placement_rate: Fraction = 0.76 // of completers
+  
+  // ISA economics
+  param isa_income_share_pct: Fraction = 0.15 // % of graduate salary
+  param isa_payment_months: Count<Item> = 24
+  param avg_graduate_salary: Currency<USD> = 5200.0 // monthly
+  param isa_collection_rate: Fraction = 0.88 // some defaults/unemployment
+  
+  // Deferred tuition recognition
+  param active_isa_graduates: Count<Item> = 420 // cumulative ISA grads paying
+  
+  // Cost of instruction
+  param instructors_per_cohort: Count<Item> = 3
+  param instructor_cost: Currency<USD> = 9500.0
+  param teaching_assistants_per_cohort: Count<Item> = 5
+  param ta_cost: Currency<USD> = 4500.0
+  param career_coaches: Count<Item> = 8 // serve all cohorts
+  param cost_per_coach: Currency<USD> = 7000.0
+  
+  // Technology and content
+  param learning_platform_costs: Currency<USD> = 12000.0
+  param video_hosting_storage: Currency<USD> = 3500.0
+  param software_licenses_per_student: Currency<USD> = 45.0 // dev tools
+  param content_development_team: Count<Item> = 6
+  param cost_per_content_dev: Currency<USD> = 10000.0
+  
+  // Student support and operations
+  param student_success_team: Count<Item> = 10
+  param cost_per_student_success: Currency<USD> = 6500.0
+  param admissions_team: Count<Item> = 8
+  param cost_per_admissions: Currency<USD> = 7500.0
+  param admin_overhead: Currency<USD> = 15000.0
+  
+  // Marketing and student acquisition
+  param cost_per_enrollment: Currency<USD> = 1200.0
+  param marketing_spend: Currency<USD> = 45000.0
+  
+  // Calculate revenue
+  var upfront_students: Count<Item> = monthly_cohort_size * upfront_payment_pct
+  var isa_students: Count<Item> = monthly_cohort_size * isa_pct
+  var scholarship_students: Count<Item> = monthly_cohort_size * scholarship_pct
+  
+  // Upfront tuition revenue (recognized immediately)
+  var upfront_revenue: Currency<USD> = upfront_students * tuition_upfront
+  
+  // ISA revenue (from existing graduate cohorts)
+   var isa_monthly_collections: Currency<USD> = active_isa_graduates * avg_graduate_salary *isa_income_share_pct * isa_collection_rate
+  
+  var total_revenue: Currency<USD> = upfront_revenue + isa_monthly_collections
+  
+  // Instructional costs
+  var instructor_costs: Currency<USD> = instructors_per_cohort * instructor_cost
+  var ta_costs: Currency<USD> = teaching_assistants_per_cohort * ta_cost
+  var coach_costs: Currency<USD> = career_coaches * cost_per_coach
+  var total_instructional_costs: Currency<USD> = instructor_costs + ta_costs + coach_costs
+  
+  // Technology and content costs
+  var software_license_costs: Currency<USD> = monthly_cohort_size * software_licenses_per_student
+  var content_dev_costs: Currency<USD> = content_development_team * cost_per_content_dev
+  var technology_costs: Currency<USD> = learning_platform_costs + video_hosting_storage +software_license_costs + content_dev_costs
+  
+  // Student support
+  var student_success_costs: Currency<USD> = student_success_team * cost_per_student_success
+  var admissions_costs: Currency<USD> = admissions_team * cost_per_admissions
+  var support_costs: Currency<USD> = student_success_costs + admissions_costs
+  
+  // Student acquisition
+  var acquisition_costs: Currency<USD> = (monthly_cohort_size * cost_per_enrollment) + marketing_spend
+  
+  var total_costs: Currency<USD> = total_instructional_costs + technology_costs + support_costs +acquisition_costs + admin_overhead
+  
+  var net_income: Currency<USD> = total_revenue - total_costs
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Education metrics
+  var revenue_per_student: Currency<USD> = total_revenue / monthly_cohort_size
+  var cost_per_student: Currency<USD> = total_costs / monthly_cohort_size
+  var completers: Count<Item> = monthly_cohort_size * completion_rate
+  var placed_graduates: Count<Item> = completers * job_placement_rate
+  var placement_success_rate: Fraction = placed_graduates / monthly_cohort_size
+  var upfront_vs_isa_mix: Fraction = upfront_revenue / total_revenue
+  var cac: Currency<USD> = acquisition_costs / monthly_cohort_size
+  
+  // ISA portfolio value (rough estimate)
+  var isa_students_completing: Count<Item> = isa_students * completion_rate
+  var isa_lifetime_value_per_student: Currency<USD> = avg_graduate_salary * isa_income_share_pct *isa_payment_months * isa_collection_rate
+  var isa_portfolio_value_monthly: Currency<USD> = isa_students_completing * isa_lifetime_value_per_student / isa_payment_months
+  
+  constraint healthy_completion: completion_rate > 0.75
+  constraint strong_placement: job_placement_rate > 0.70
+  constraint sustainable_unit_economics: revenue_per_student > cost_per_student
+}

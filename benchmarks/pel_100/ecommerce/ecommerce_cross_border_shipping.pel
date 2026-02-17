@@ -1,0 +1,45 @@
+model EcommerceCrossBorderShipping {
+  // Cross-border e-commerce model with import duties, taxes, and logistics complexity
+  
+  param avg_order_value: Count<Item> =75 USD
+  param international_orders_pct: Fraction =0.35
+  param annual_orders: Count<Item> =100000 orders
+  
+  param international_orders: Fraction =annual_orders * international_orders_pct
+  param domestic_orders: Fraction =annual_orders * (1 - international_orders_pct)
+  
+  param international_shipping_cost: Fraction =15 USD / order
+  param domestic_shipping_cost: Fraction =5 USD / order
+  param customs_handling_fee: Fraction =8 USD / order
+  
+  param international_import_duty_rate: Fraction =0.12
+  param international_vat_rate: Fraction =0.20
+  
+  param international_return_rate: Fraction =0.20
+  param domestic_return_rate: Fraction =0.10
+  
+  param carrier_discount_rate: Fraction =0.10
+  
+  // Shipping costs
+  var domestic_shipping_cost_total: Fraction =domestic_orders * domestic_shipping_cost * (1 - carrier_discount_rate)
+  var international_shipping_cost_total: Fraction =international_orders * international_shipping_cost * (1 - carrier_discount_rate)
+  var customs_revenue: Fraction =international_orders * customs_handling_fee
+  
+  var gross_revenue: Fraction =annual_orders * avg_order_value
+  var international_revenue: Fraction =international_orders * avg_order_value
+  
+  // Taxes and duties
+  var import_duty_cost: Fraction =international_revenue * international_import_duty_rate
+  var vat_cost: Fraction =international_revenue * international_vat_rate
+  
+  // Returns impact
+  var international_return_cost: Fraction =international_orders * international_return_rate * avg_order_value
+  var domestic_return_cost: Fraction =domestic_orders * domestic_return_rate * avg_order_value
+  
+  var total_logistics_costs: Fraction =domestic_shipping_cost_total + international_shipping_cost_total + import_duty_cost + vat_cost + international_return_cost + domestic_return_cost
+  
+  var contribution_margin: Fraction =gross_revenue + customs_revenue - total_logistics_costs
+  
+  constraint contribution_margin > 0 USD
+  constraint international_orders > 0 orders
+}

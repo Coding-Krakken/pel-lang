@@ -1,0 +1,55 @@
+model HealthcareClinicPnL {
+  // Healthcare clinic P&L with patient volume, reimbursement rates, and staffing
+  
+  param patient_visits_monthly = 2000 visits
+  param avg_reimbursement_per_visit = 180 USD
+  param payer_mix_cash_rate = 0.15
+  param cash_reimbursement_premium = 1.10
+  
+  param provider_fte_count = 8 providers
+  param provider_salary = 200000 USD / year / provider
+  param provider_benefits_rate = 0.30
+  
+  param nursing_fte_count = 12 nurses
+  param nursing_salary = 65000 USD / year / nurse
+  param nursing_benefits_rate = 0.25
+  
+  param admin_staff_fte = 6 staff
+  param admin_salary = 40000 USD / year / staff
+  
+  param facility_rent = 50000 USD / month
+  param medical_supplies_per_visit = 25 USD / visit
+  param equipment_maintenance = 15000 USD / month
+  param utilities_and_overhead = 30000 USD / month
+  param insurance_and_licensing = 20000 USD / month
+  
+  param bad_debt_rate = 0.08
+  param collection_rate = 1 - bad_debt_rate
+  
+  // Revenue
+  var insurance_patient_visits = patient_visits_monthly * (1 - payer_mix_cash_rate)
+  var cash_patient_visits = patient_visits_monthly * payer_mix_cash_rate
+  
+  var insurance_revenue = insurance_patient_visits * avg_reimbursement_per_visit
+  var cash_revenue = cash_patient_visits * (avg_reimbursement_per_visit * cash_reimbursement_premium)
+  
+  var gross_revenue = (insurance_revenue + cash_revenue) * collection_rate
+  var monthly_revenue = gross_revenue
+  
+  // Payroll
+  var provider_payroll = provider_fte_count * provider_salary * (1 + provider_benefits_rate) / 12 month
+  var nursing_payroll = nursing_fte_count * nursing_salary * (1 + nursing_benefits_rate) / 12 month
+  var admin_payroll = admin_staff_fte * admin_salary / 12 month
+  
+  var total_payroll = provider_payroll + nursing_payroll + admin_payroll
+  
+  // Operating costs
+  var medical_supplies_cost = patient_visits_monthly * medical_supplies_per_visit
+  var total_opex = facility_rent + medical_supplies_cost + equipment_maintenance + utilities_and_overhead + insurance_and_licensing
+  
+  var monthly_ebitda = monthly_revenue - total_payroll - total_opex
+  
+  constraint patient_visits_monthly > 0 visits
+  constraint collection_rate > 0.80
+  constraint monthly_ebitda > 0 USD
+}

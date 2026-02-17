@@ -1,0 +1,82 @@
+// E-Commerce Luxury Consignment Platform
+// Models high-end consignment marketplace for authenticated luxury goods
+
+model EcommerceLuxuryConsignment {
+  param monthly_transactions: Count<Item> = 420
+  param avg_item_price: Currency<USD> = 3200.0
+  param commission_rate: Fraction = 0.25 // take rate on consignor payout
+  
+  // Authentication and quality control
+  param authentication_cost_per_item: Currency<USD> = 45.0
+  param rejection_rate: Fraction = 0.12 // items that fail authentication
+  
+  // Inventory management
+  param avg_holding_period_days: Count<Item> = 35 // time to sale
+  param storage_cost_per_item_day: Currency<USD> = 1.20
+  param insurance_rate: Fraction = 0.008 // monthly insurance as % of value
+  
+  // Shipping and handling
+  param inbound_shipping_cost: Currency<USD> = 15.0 // consignor → warehouse
+  param outbound_shipping_cost: Currency<USD> = 22.0 // warehouse → buyer
+  param packaging_cost_per_item: Currency<USD> = 8.50
+  
+  // Returns and customer service
+  param return_rate: Fraction = 0.08
+  param return_processing_cost: Currency<USD> = 35.0
+  
+  // Operating expenses
+  param authentication_team_headcount: Count<Item> = 8
+  param cost_per_authenticator: Currency<USD> = 7500.0
+  param operations_headcount: Count<Item> = 12
+  param cost_per_ops: Currency<USD> = 6500.0
+  param marketing_spend: Currency<USD> = 55000.0
+  param technology_costs: Currency<USD> = 18000.0
+  param warehouse_lease: Currency<USD> = 12000.0
+  
+  // Payment processing
+  param payment_processing_rate: Fraction = 0.029
+  
+  // Calculate metrics
+  var successful_transactions: Count<Item> = monthly_transactions * (1.0 - rejection_rate)
+  var gmv: Currency<USD> = successful_transactions * avg_item_price
+  
+  // Revenue (commission on sales)
+  var gross_revenue: Currency<USD> = gmv * commission_rate
+  var payment_processing_fees: Currency<USD> = gmv * payment_processing_rate
+  var net_revenue: Currency<USD> = gross_revenue - payment_processing_fees
+  
+  // Cost of goods sold (authentication + handling)
+  var authentication_costs: Currency<USD> = monthly_transactions * authentication_cost_per_item // auth happens before rejection
+  var storage_costs: Currency<USD> = monthly_transactions * avg_holding_period_days * storage_cost_per_item_day
+  var insurance_costs: Currency<USD> = (monthly_transactions * avg_item_price) * insurance_rate
+  var inbound_shipping: Currency<USD> = monthly_transactions * inbound_shipping_cost
+  var outbound_shipping: Currency<USD> = successful_transactions * outbound_shipping_cost
+  var packaging_costs: Currency<USD> = successful_transactions * packaging_cost_per_item
+  
+  var cogs: Currency<USD> = authentication_costs + storage_costs + insurance_costs +inbound_shipping + outbound_shipping + packaging_costs
+  
+  // Returns handling
+  var returned_items: Count<Item> = successful_transactions * return_rate
+  var return_costs: Currency<USD> = returned_items * return_processing_cost
+  
+  var gross_profit: Currency<USD> = net_revenue - cogs - return_costs
+  var gross_margin: Fraction = gross_profit / net_revenue
+  
+  // Operating expenses
+  var authentication_team_cost: Currency<USD> = authentication_team_headcount * cost_per_authenticator
+  var operations_cost: Currency<USD> = operations_headcount * cost_per_ops
+  var total_opex: Currency<USD> = authentication_team_cost + operations_cost + marketing_spend +technology_costs + warehouse_lease
+  
+  var net_income: Currency<USD> = gross_profit - total_opex
+  var operating_margin: Fraction = net_income / net_revenue
+  
+  // Unit economics
+  var revenue_per_transaction: Currency<USD> = gross_revenue / successful_transactions
+  var cogs_per_transaction: Currency<USD> = cogs / successful_transactions
+  var contribution_margin: Currency<USD> = revenue_per_transaction - cogs_per_transaction
+  var contribution_margin_pct: Fraction = contribution_margin / revenue_per_transaction
+  
+  constraint healthy_take_rate: commission_rate > 0.20
+  constraint acceptable_rejection: rejection_rate < 0.15
+  constraint positive_contribution: contribution_margin_pct > 0.35
+}

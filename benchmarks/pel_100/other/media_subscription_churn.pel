@@ -1,0 +1,46 @@
+model MediaSubscriptionChurn {
+  // Media/content subscription platform with churn and content cost dynamics
+  
+  param current_subscribers = 2000000 subscribers
+  param monthly_subscription_price = 12 USD / month
+  param monthly_new_subscriber_target = 150000 subscribers
+  param monthly_churn_rate = 0.055
+  
+  param annual_churn = (1 - monthly_churn_rate) ^ 12 month
+  
+  // Content costs
+  param original_content_budget = 500000000 USD / year
+  param content_cost_per_subscriber = original_content_budget / current_subscribers
+  
+  param licensed_content_cost = 100000000 USD / year
+  param infrastructure_cost = 80000000 USD / year
+  param marketing_spend = 300000000 USD / year
+  param general_opex = 120000000 USD / year
+  
+  param cac = 35 USD
+  param ltv_months = 1 / monthly_churn_rate
+  param ltv = monthly_subscription_price * ltv_months
+  
+  // Subscriber dynamics
+  var ending_subscribers = current_subscribers * annual_churn + monthly_new_subscriber_target * 12 month
+  var avg_subscriber_base = (current_subscribers + ending_subscribers) / 2
+  
+  // Revenue
+  var annual_subscription_revenue = avg_subscriber_base * monthly_subscription_price * 12 month
+  
+  // Costs
+  var annual_content_cost = avg_subscriber_base * content_cost_per_subscriber
+  var total_cogs = annual_content_cost + licensed_content_cost + infrastructure_cost
+  
+  var acquisition_cost = monthly_new_subscriber_target * 12 month * cac
+  var total_opex_cost = marketing_spend + general_opex + acquisition_cost
+  
+  var ebitda = annual_subscription_revenue - total_cogs - total_opex_cost
+  var ebitda_margin = ebitda / annual_subscription_revenue
+  
+  var cac_payback_months = cac / (monthly_subscription_price * 0.50)
+  
+  constraint ending_subscribers > 0 subscribers
+  constraint ltv > cac
+  constraint ebitda > 0 USD
+}

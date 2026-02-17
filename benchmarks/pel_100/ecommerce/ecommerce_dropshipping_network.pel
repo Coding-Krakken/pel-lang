@@ -1,0 +1,86 @@
+// E-Commerce Dropshipping Network
+// Models dropshipping business with no inventory holding
+
+model EcommerceDropshippingNetwork {
+  param monthly_orders: Count<Item> = 2800
+  param avg_order_value: Currency<USD> = 65.0
+  param wholesale_cost_pct: Fraction = 0.58 // price paid to supplier
+  
+  // Supplier and product mix
+  param domestic_suppliers_pct: Fraction = 0.35
+  param international_suppliers_pct: Fraction = 0.65
+  param domestic_shipping_time_days: Count<Item> = 5
+  param international_shipping_time_days: Count<Item> = 18
+  
+  // Dropship fees from suppliers
+  param domestic_dropship_fee: Currency<USD> = 3.50
+  param international_dropship_fee: Currency<USD> = 8.00
+  
+  // Customer acquisition
+  param paid_ad_spend: Currency<USD> = 42000.0
+  param conversion_rate: Fraction = 0.028
+  param ad_clicks: Count<Item> = 100000
+  
+  // Returns and customer issues
+  param return_rate_domestic: Fraction = 0.08
+  param return_rate_international: Fraction = 0.18 // higher for long ship times
+  param return_shipping_cost_avg: Currency<USD> = 12.0
+  param refund_processing_cost: Currency<USD> = 5.0
+  
+  // Customer service
+  param cs_headcount: Count<Item> = 4
+  param cost_per_cs_agent: Currency<USD> = 4500.0
+  param avg_support_tickets_per_order: Fraction = 0.35
+  
+  // Platform and technology
+  param ecommerce_platform_fee: Currency<USD> = 1200.0 // Shopify, etc.
+  param app_subscriptions: Currency<USD> = 450.0
+  param payment_gateway_pct: Fraction = 0.029
+  param payment_gateway_fixed: Currency<USD> = 0.30
+  
+  // Calculate order distribution
+  var domestic_orders: Count<Item> = monthly_orders * domestic_suppliers_pct
+  var international_orders: Count<Item> = monthly_orders * international_suppliers_pct
+  
+  // Revenue
+  var gross_sales: Currency<USD> = monthly_orders * avg_order_value
+  var payment_processing: Currency<USD> = (gross_sales * payment_gateway_pct) + 
+                                      (monthly_orders * payment_gateway_fixed)
+  var net_revenue: Currency<USD> = gross_sales - payment_processing
+  
+  // Cost of goods sold
+  var product_costs: Currency<USD> = gross_sales * wholesale_cost_pct
+  var domestic_dropship_fees: Currency<USD> = domestic_orders * domestic_dropship_fee
+  var international_dropship_fees: Currency<USD> = international_orders * international_dropship_fee
+  var total_dropship_fees: Currency<USD> = domestic_dropship_fees + international_dropship_fees
+  var cogs: Currency<USD> = product_costs + total_dropship_fees
+  
+  // Returns handling
+  var domestic_returns: Count<Item> = domestic_orders * return_rate_domestic
+  var international_returns: Count<Item> = international_orders * return_rate_international
+  var total_returns: Count<Item> = domestic_returns + international_returns
+  var return_shipping_costs: Currency<USD> = total_returns * return_shipping_cost_avg
+  var return_processing_costs: Currency<USD> = total_returns * refund_processing_cost
+  var total_return_costs: Currency<USD> = return_shipping_costs + return_processing_costs
+  
+  var gross_profit: Currency<USD> = net_revenue - cogs - total_return_costs
+  var gross_margin: Fraction = gross_profit / net_revenue
+  
+  // Operating expenses
+  var customer_service_cost: Currency<USD> = cs_headcount * cost_per_cs_agent
+  var platform_costs: Currency<USD> = ecommerce_platform_fee + app_subscriptions
+  var total_opex: Currency<USD> = paid_ad_spend + customer_service_cost + platform_costs
+  
+  var net_income: Currency<USD> = gross_profit - total_opex
+  var operating_margin: Fraction = net_income / net_revenue
+  
+  // Marketing efficiency
+  var cac: Currency<USD> = paid_ad_spend / monthly_orders
+  var blended_margin_per_order: Currency<USD> = gross_profit / monthly_orders
+  var orders_to_breakeven: Fraction = cac / blended_margin_per_order
+  var overall_return_rate: Fraction = total_returns / monthly_orders
+  
+  constraint sustainable_margins: gross_margin > 0.25
+  constraint efficient_acquisition: cac < 15.0
+  constraint manageable_returns: overall_return_rate < 0.15
+}

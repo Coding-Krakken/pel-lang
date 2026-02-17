@@ -1,0 +1,46 @@
+model EcommerceSubscriptionBoxes {
+  // Subscription box e-commerce model with churn, cubes, and repeat order dynamics
+  
+  param monthly_subscription_price: Fraction =45 USD / month
+  param initial_subscribers: Count<Item> =5000 subscribers
+  param monthly_new_subscribers: Count<Item> =800 subscribers
+  param monthly_churn_rate: Fraction =0.07
+  
+  param cogs_per_box: Count<Item> =18 USD
+  param packaging_cost: Count<Item> =4 USD
+  param shipping_cost: Count<Item> =6 USD
+  param handling_cost: Count<Item> =2 USD
+  
+  param onboarding_cost: Count<Item> =35 USD
+  param customer_acquisition_cost: Count<Item> =25 USD
+  
+  param annual_retention_rate: Fraction =(1 - monthly_churn_rate) ^ 12 month
+  
+  param ltv_months: Fraction =1 / monthly_churn_rate
+  
+  // Monthly subscriber projection (steady state approximation)
+  var steady_state_subscribers_gained: Fraction =monthly_new_subscribers * ltv_months
+  var effective_subscribers: Fraction =initial_subscribers + steady_state_subscribers_gained
+  
+  // Revenue
+  var monthly_mrr: Fraction =effective_subscribers * monthly_subscription_price
+  var annual_mrr: Fraction =monthly_mrr * 12 month
+  
+  // COGS
+  var total_cogs_per_box: Fraction =cogs_per_box + packaging_cost + shipping_cost + handling_cost
+  var monthly_cogs: Fraction =effective_subscribers * total_cogs_per_box
+  var annual_cogs: Fraction =monthly_cogs * 12 month
+  
+  // Acquisition costs
+  var monthly_acquisition_cost: Fraction =monthly_new_subscribers * (onboarding_cost + customer_acquisition_cost)
+  var annual_acquisition_cost: Fraction =monthly_acquisition_cost * 12 month
+  
+  var unit_economics: Fraction =monthly_subscription_price - total_cogs_per_box
+  var cac_payback_months: Fraction =(onboarding_cost + customer_acquisition_cost) / unit_economics
+  
+  var contribution_margin: Fraction =annual_mrr - annual_cogs - annual_acquisition_cost
+  
+  constraint monthly_churn_rate < 0.15
+  constraint cac_payback_months < 6 month
+  constraint contribution_margin > 0 USD
+}

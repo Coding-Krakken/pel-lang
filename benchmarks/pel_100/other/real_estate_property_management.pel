@@ -1,0 +1,97 @@
+// Real Estate - Property Management Company
+// Models residential property management firm with fee-based revenue
+
+model RealEstatePropertyManagement {
+  param total_units_managed: Count<Item> = 1850
+  param avg_monthly_rent: Currency<USD> = 1650.0
+  param management_fee_pct: Fraction = 0.085 // % of collected rent
+  
+  // Property portfolio mix
+  param single_family_pct: Fraction = 0.35
+  param multifamily_small_pct: Fraction = 0.45 // 2-10 units
+  param multifamily_large_pct: Fraction = 0.20 // 10+ units
+  
+  // Vacancy and collections
+  param vacancy_rate: Fraction = 0.06
+  param rent_collection_rate: Fraction = 0.96 // some late/non-payment
+  
+  // Leasing fees (one-time)
+  param lease_placement_fee: Currency<USD> = 1250.0 // one month rent
+  param avg_tenant_turnover_annual: Fraction = 0.35
+  param monthly_turnovers: Count<Item> = 54 // (1850 * 0.35) / 12
+  
+  // Maintenance coordination
+  param maintenance_markup_pct: Fraction = 0.15 // markup on contractor work
+  param avg_maintenance_per_unit_month: Currency<USD> = 85.0
+  param emergency_calls_pct: Fraction = 0.12
+  param emergency_coordination_fee: Currency<USD> = 75.0
+  
+  // Property inspections
+  param annual_inspections_per_unit: Count<Item> = 2
+  param inspection_fee: Currency<USD> = 95.0
+  
+  // Staffing
+  param property_managers: Count<Item> = 8 // ~230 units each
+  param cost_per_pm: Currency<USD> = 7500.0
+  param leasing_agents: Count<Item> = 5
+  param cost_per_leasing_agent: Currency<USD> = 5500.0
+  param maintenance_coordinators: Count<Item> = 4
+  param cost_per_coordinator: Currency<USD> = 6000.0
+  param admin_staff: Count<Item> = 3
+  param cost_per_admin: Currency<USD> = 4800.0
+  
+  // Technology and operations
+  param property_management_software: Currency<USD> = 3500.0
+  param office_lease: Currency<USD> = 8000.0
+  param vehicles_mileage: Currency<USD> = 2500.0
+  param insurance: Currency<USD> = 4500.0
+  param marketing_leasing: Currency<USD> = 6500.0
+  
+  // Calculate rent collected
+  var occupied_units: Count<Item> = total_units_managed * (1.0 - vacancy_rate)
+  var potential_rent: Currency<USD> = occupied_units * avg_monthly_rent
+  var collected_rent: Currency<USD> = potential_rent * rent_collection_rate
+  
+  // Management fees (primary revenue)
+  var management_fee_revenue: Currency<USD> = collected_rent * management_fee_pct
+  
+  // Leasing fees
+  var leasing_fee_revenue: Currency<USD> = monthly_turnovers * lease_placement_fee
+  
+  // Maintenance coordination revenue
+  var total_maintenance_volume: Currency<USD> = total_units_managed * avg_maintenance_per_unit_month
+  var maintenance_markup_revenue: Currency<USD> = total_maintenance_volume * maintenance_markup_pct
+  var emergency_calls: Count<Item> = total_units_managed * emergency_calls_pct
+  var emergency_fee_revenue: Currency<USD> = emergency_calls * emergency_coordination_fee
+  
+  // Inspection fees
+  var monthly_inspections: Count<Item> = (total_units_managed * annual_inspections_per_unit) / 12
+  var inspection_revenue: Currency<USD> = monthly_inspections * inspection_fee
+  
+  var total_revenue: Currency<USD> = management_fee_revenue + leasing_fee_revenue +maintenance_markup_revenue + emergency_fee_revenue + inspection_revenue
+  
+  // Staffing costs
+  var pm_costs: Currency<USD> = property_managers * cost_per_pm
+  var leasing_costs: Currency<USD> = leasing_agents * cost_per_leasing_agent
+  var coordinator_costs: Currency<USD> = maintenance_coordinators * cost_per_coordinator
+  var admin_costs: Currency<USD> = admin_staff * cost_per_admin
+  var total_staff_costs: Currency<USD> = pm_costs + leasing_costs + coordinator_costs + admin_costs
+  
+  // Operating expenses
+  var total_opex: Currency<USD> = property_management_software + office_lease + vehicles_mileage +insurance + marketing_leasing
+  
+  var total_costs: Currency<USD> = total_staff_costs + total_opex
+  var net_income: Currency<USD> = total_revenue - total_costs
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Property management metrics
+  var revenue_per_unit: Currency<USD> = total_revenue / total_units_managed
+  var units_per_pm: Count<Item> = total_units_managed / property_managers
+  var management_fee_pct_total: Fraction = management_fee_revenue / total_revenue
+  var ancillary_revenue_pct: Fraction = (leasing_fee_revenue + maintenance_markup_revenue +emergency_fee_revenue + inspection_revenue) / total_revenue
+  var staff_cost_pct: Fraction = total_staff_costs / total_revenue
+  
+  constraint healthy_margins: operating_margin > 0.25
+  constraint efficient_operations: units_per_pm > 200
+  constraint diversified_revenue: ancillary_revenue_pct > 0.30
+}

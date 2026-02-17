@@ -5,7 +5,7 @@ model hardware_plus_subscription {
   param units_sold_monthly: Count<Unit> = 500
   param hardware_price: Currency<USD> = $350
   param monthly_subscribers: Count<Subscriber> = 2_000
-  param subscription_price: Currency<USD> per Month = $14/1mo
+  param subscription_price: Currency<USD> = $14/1mo
   param cogs_per_unit: Currency<USD> = $120
 
   var hardware_revenue: Currency<USD> = units_sold_monthly * hardware_price

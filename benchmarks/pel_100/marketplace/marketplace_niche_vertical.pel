@@ -1,0 +1,41 @@
+model MarketplaceNicheVertical {
+  // Niche vertical marketplace for specialized goods (e.g., artisanal goods, collectibles)
+  // Focus on high-touch curation and supply quality
+  
+  param seller_count: Count<Item> =1200 sellers
+  param buyer_count: Count<Item> =18000 buyers
+  param active_listings: Count<Item> =35000 listings
+  
+  param monthly_transactions: Count<Item> =8000 transactions
+  param avg_transaction_value: Count<Item> =120 USD
+  param platform_take_rate: Fraction =0.18
+  
+  param seller_onboarding_cost: Count<Item> =500 USD
+  param buyer_retention_rate: Fraction =0.70 / month
+  
+  param monthly_gmv: Fraction =monthly_transactions * avg_transaction_value
+  param monthly_commission_revenue: Fraction =monthly_gmv * platform_take_rate
+  
+  param seller_education_stipend: Fraction =15000 USD / month
+  param curation_team_cost: Fraction =250000 USD / month
+  param buyer_support_cost: Fraction =180000 USD / month
+  param infrastructure_cost: Fraction =120000 USD / month
+  
+  param merchant_churn_monthly: Fraction =0.05
+  param buyer_churn_monthly: Fraction =0.15
+  
+  param seller_reacquisition_rate: Fraction =0.25
+  param new_seller_acquisition_monthly: Fraction =seller_count * seller_reacquisition_rate
+  
+  var gross_platform_revenue: Fraction =monthly_commission_revenue
+  
+  var acquisition_cost: Fraction =new_seller_acquisition_monthly * seller_onboarding_cost
+  var total_opex: Fraction =seller_education_stipend + curation_team_cost + buyer_support_cost + infrastructure_cost
+  
+  var monthly_contribution: Fraction =gross_platform_revenue - acquisition_cost - total_opex
+  var gmv_growth_opportunity: Fraction =monthly_gmv * (1 - buyer_retention_rate) * buyer_churn_monthly
+  
+  constraint active_listings > 0
+  constraint seller_count > 0 sellers
+  constraint monthly_contribution > 0 USD
+}

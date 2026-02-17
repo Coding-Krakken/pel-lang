@@ -5,7 +5,7 @@ model saas_plg_activation {
   param signups: Count<User> = 80_000
   param activation_rate: Fraction = 0.25
   param engagement_to_paid: Fraction = 0.05
-  param arpu: Currency<USD> per Month = $29/1mo
+  param arpu: Currency<USD> = $29/1mo
 
   var activated: Count<User> = signups * activation_rate
   var converting: Count<User> = activated * engagement_to_paid

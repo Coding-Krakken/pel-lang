@@ -1,0 +1,46 @@
+model ServicesCreativeAgencyProjectModel {
+  // Creative agency retainer + project model with capacity constraints
+  
+  param agency_professionals: Count<Item> =35 professionals
+  param utilizable_hours_per_person: Fraction =1700 hours / year
+  param target_utilization_rate: Fraction =0.80
+  
+  param retainer_clients: Count<Item> =28 clients
+  param avg_monthly_retainer: Fraction =8000 USD / month
+  
+  param project_clients: Count<Item> =45 clients
+  param avg_project_size: Count<Item> =35000 USD
+  var annual_project_volume: Fraction =project_clients * avg_project_size
+  
+  param billable_rate: Fraction =200 USD / hour
+  param retainer_margin: Fraction =0.35
+  param project_margin: Fraction =0.40
+  
+  param creative_production_cost_rate: Fraction =0.50
+  param subcontracting_cost_rate: Fraction =0.10
+  
+  var total_available_hours: Fraction =agency_professionals * utilizable_hours_per_person * target_utilization_rate
+  var billable_hours_value: Fraction =total_available_hours * billable_rate
+  
+  // Revenue streams
+  var retainer_revenue: Fraction =retainer_clients * avg_monthly_retainer * 12 month
+  var retainer_gross_profit: Fraction =retainer_revenue * retainer_margin
+  
+  var project_revenue: Fraction =annual_project_volume
+  var project_gross_profit: Fraction =project_revenue * project_margin
+  
+  var total_revenue: Fraction =retainer_revenue + project_revenue
+  var total_gross_profit: Fraction =retainer_gross_profit + project_gross_profit
+  
+  // Operating costs (simplified)
+  var creative_production_cost: Fraction =total_revenue * creative_production_cost_rate
+  var subcontracting_cost: Fraction =total_revenue * subcontracting_cost_rate
+  var opex: Fraction =1500000 USD / year
+  
+  var ebitda: Fraction =total_gross_profit - creative_production_cost - subcontracting_cost - opex
+  var ebitda_margin: Fraction =ebitda / total_revenue
+  
+  constraint total_utilization_hours = retainer_revenue / billable_rate + project_revenue / billable_rate
+  constraint retainer_clients > 0 clients
+  constraint ebitda > 0 USD
+}

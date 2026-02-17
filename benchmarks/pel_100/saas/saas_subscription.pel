@@ -10,7 +10,7 @@ model saas_subscription_bench {
   }
   
   // ARPU (Average Revenue Per User)
-  param arpu: Currency<USD> per Month = $99/1mo {
+  param arpu: Currency<USD> = $99/1mo {
     source: "pricing_page",
     method: "observed",
     confidence: 0.95
@@ -45,19 +45,16 @@ model saas_subscription_bench {
   }
   
   // Time series variables
-  var customers: TimeSeries<Count<Customer>>
-  customers[0] = initial_customers
+  var customers: TimeSeries<Count<Customer>>customers[0] = initial_customers
   customers[t+1] = customers[t] * (1 + monthly_growth_rate)
   
-  var mrr: TimeSeries<Currency<USD>>
-  mrr[t] = customers[t] * arpu
+  var mrr: TimeSeries<Currency<USD>>mrr[t] = customers[t] * arpu
   
   var ltv: Currency<USD> = arpu / churn_rate
   
   var ltv_to_cac: Fraction = ltv / cac
   
-  var profit: TimeSeries<Currency<USD>>
-  profit[t] = mrr[t] - monthly_opex
+  var profit: TimeSeries<Currency<USD>>profit[t] = mrr[t] - monthly_opex
   
   // Constraints
   constraint profitable_by_month_12: profit[12] > $0 {

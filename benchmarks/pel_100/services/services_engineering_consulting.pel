@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Engineering Consulting Services
+// Mix of project-based and retainer revenue
+
+model services_engineering_consulting_bench {
+  param billable_consultants: Count<Consultant> = 24
+  param billable_rate: Currency<USD> = $275/1hr
+  param utilization_rate: Fraction = 0.68
+  param avg_hours_per_month: Count<Hour> = 160
+  param retainer_clients: Count<Client> = 8
+  param retainer_monthly_fee: Currency<USD> = $25_000/1mo
+
+  var project_revenue: Currency<USD> = billable_consultants * billable_rate * (avg_hours_per_month * utilization_rate)
+  var retainer_revenue: Currency<USD> = retainer_clients * retainer_monthly_fee
+  var total_revenue: Currency<USD> = project_revenue + retainer_revenue
+
+  constraint high_utilization: utilization_rate >= 0.65 {
+    severity: warning,
+    message: "Utilization below 65% target"
+  }
+}

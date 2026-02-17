@@ -1,0 +1,50 @@
+model ServicesConsultingFirmBilling {
+  // Professional services firm model with project delivery and utilization economics
+  
+  param consultant_headcount: Count<Item> =75 consultants
+  param partner_headcount: Count<Item> =12 partners
+  param staff_headcount: Count<Item> =45 staff
+  
+  param consultant_billing_rate: Fraction =250 USD / hour
+  param partner_billing_rate: Fraction =500 USD / hour
+  param staff_billing_rate: Fraction =120 USD / hour
+  
+  param billable_hours_per_year: Fraction =1600 hours / year
+  param consultant_utilization: Fraction =0.75
+  param partner_utilization: Fraction =0.70
+  param staff_utilization: Fraction =0.80
+  
+  param consultant_cost: Fraction =120000 USD / year
+  param partner_cost: Fraction =350000 USD / year
+  param staff_cost: Fraction =60000 USD / year
+  
+  param operating_expenses: Fraction =5000000 USD / year
+  
+  // Revenue calculations
+  var consultant_hours: Fraction =consultant_headcount * billable_hours_per_year * consultant_utilization
+  var consultant_revenue: Fraction =consultant_hours * consultant_billing_rate
+  
+  var partner_hours: Fraction =partner_headcount * billable_hours_per_year * partner_utilization
+  var partner_revenue: Fraction =partner_hours * partner_billing_rate
+  
+  var staff_hours: Fraction =staff_headcount * billable_hours_per_year * staff_utilization
+  var staff_revenue: Fraction =staff_hours * staff_billing_rate
+  
+  var total_revenue: Fraction =consultant_revenue + partner_revenue + staff_revenue
+  
+  // Cost of revenue
+  var total_consultant_cost: Fraction =consultant_headcount * consultant_cost
+  var total_partner_cost: Fraction =partner_headcount * partner_cost
+  var total_staff_cost: Fraction =staff_headcount * staff_cost
+  var total_payroll_cost: Fraction =total_consultant_cost + total_partner_cost + total_staff_cost
+  
+  var gross_profit: Fraction =total_revenue - total_payroll_cost
+  var operating_income: Fraction =gross_profit - operating_expenses
+  
+  var gross_margin: Fraction =gross_profit / total_revenue
+  var operating_margin: Fraction =operating_income / total_revenue
+  
+  constraint consultant_utilization > 0.60
+  constraint operating_margin > 0.10
+  constraint total_revenue > 0 USD
+}

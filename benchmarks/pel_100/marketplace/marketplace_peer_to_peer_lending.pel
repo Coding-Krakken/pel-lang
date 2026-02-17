@@ -1,0 +1,51 @@
+model MarketplacePeerToPeerLending {
+  // P2P lending platform model with loan origination and default risk
+  
+  param loan_origination_volume_monthly: Fraction =50000000 USD / month
+  param platform_origination_fee: Fraction =0.025
+  param servicing_fee_annual: Fraction =0.01
+  
+  param avg_loan_rate: Fraction =0.12
+  param platform_blended_yield: Fraction =0.03
+  
+  param loss_reserve_rate: Fraction =0.04
+  param expected_default_rate: Fraction =0.06
+  
+  param borrower_acquisition_cost: Fraction =40 USD / borrower
+  param monthly_new_borrowers: Count<Item> =6000 borrowers
+  
+  param investor_acquisition_cost: Fraction =150 USD / investor
+  param investor_base: Count<Item> =45000 investors
+  param annual_investor_churn: Fraction =0.15
+  
+  param platform_technology_cost: Fraction =1200000 USD / month
+  param compliance_and_legal_cost: Fraction =400000 USD / month
+  param customer_support_cost: Fraction =500000 USD / month
+  
+  var monthly_origination_fee: Fraction =loan_origination_volume_monthly * platform_origination_fee
+  
+  var loan_portfolio_value: Fraction =loan_origination_volume_monthly * 12 month
+  var servicing_fee_revenue: Fraction =loan_portfolio_value * servicing_fee_annual
+  
+  var platform_yield: Fraction =loan_portfolio_value * platform_blended_yield
+  
+  var default_loss: Fraction =loan_portfolio_value * expected_default_rate
+  var loss_reserve: Fraction =loan_portfolio_value * loss_reserve_rate
+  
+  // Acquisition costs
+  var borrower_acquisition_cost_monthly: Fraction =monthly_new_borrowers * borrower_acquisition_cost
+  var investor_replacements: Fraction =investor_base * annual_investor_churn / 12 month
+  var investor_acquisition_cost_monthly: Fraction =investor_replacements * investor_acquisition_cost
+  
+  var total_acquisition_cost: Fraction =borrower_acquisition_cost_monthly + investor_acquisition_cost_monthly
+  var total_opex: Fraction =platform_technology_cost + compliance_and_legal_cost + customer_support_cost
+  
+  var gross_revenue: Fraction =monthly_origination_fee
+  var net_revenue: Fraction =gross_revenue + platform_yield - default_loss - loss_reserve
+  
+  var monthly_ebitda: Fraction =net_revenue - total_acquisition_cost - total_opex
+  
+  constraint loan_origination_volume_monthly > 0 USD
+  constraint expected_default_rate > 0.04
+  constraint monthly_ebitda > 0 USD
+}

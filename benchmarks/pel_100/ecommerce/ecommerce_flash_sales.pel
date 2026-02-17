@@ -1,0 +1,43 @@
+model EcommerceFlashSales {
+  // Flash sales and promotional pricing model with inventory turnover impact
+  
+  param regular_monthly_revenue: Fraction =500000 USD / month
+  param regular_margin_pct: Fraction =0.35
+  
+  param flash_sales_frequency: Fraction =4 / month
+  param flash_sale_duration: Count<Item> =24 hours
+  param flash_sale_discount: Fraction =0.30
+  
+  param flash_sale_revenue_lift: Count<Item> =2.5
+  param inventory_cleared_rate: Fraction =0.60
+  param aged_inventory_write_off: Fraction =0.10
+  
+  param flash_sale_promotional_cost: Fraction =5000 USD / sale
+  param platform_promotion_cost: Fraction =2000 USD / sale
+  
+  param regular_inventory_holding_cost: Fraction =50000 USD / month
+  param aged_inventory_carrying_cost_rate: Fraction =0.03 / month
+  
+  // Regular revenue
+  var regular_margin_dollars: Fraction =regular_monthly_revenue * regular_margin_pct
+  
+  // Flash sale revenue and costs
+  var single_flash_sale_revenue: Fraction =(regular_monthly_revenue / flash_sales_frequency) * flash_sale_revenue_lift * (1 - flash_sale_discount)
+  var monthly_flash_sales_revenue: Fraction =single_flash_sale_revenue * flash_sales_frequency
+  
+  var single_flash_sale_margin: Fraction =single_flash_sale_revenue - (single_flash_sale_revenue * 0.60) // assume lower margin on discounted items
+  var monthly_flash_sales_gross_margin: Fraction =single_flash_sale_margin * flash_sales_frequency
+  
+  var promotional_costs: Fraction =flash_sale_promotional_cost * flash_sales_frequency + platform_promotion_cost * flash_sales_frequency
+  
+  // Inventory benefit
+  var aged_inventory_cost_reduction: Fraction =regular_inventory_holding_cost * inventory_cleared_rate * aged_inventory_carrying_cost_rate
+  var aged_inventory_loss: Fraction =regular_monthly_revenue * aged_inventory_write_off
+  
+  var net_inventory_benefit: Fraction =aged_inventory_cost_reduction - aged_inventory_loss
+  
+  var total_monthly_contribution: Fraction =regular_margin_dollars + monthly_flash_sales_gross_margin - promotional_costs + net_inventory_benefit
+  
+  constraint single_flash_sale_revenue > 0 USD
+  constraint total_monthly_contribution > 0 USD
+}

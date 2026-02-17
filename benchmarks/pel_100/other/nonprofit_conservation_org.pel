@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Nonprofit Conservation Organization
+// Membership dues plus grant funding
+
+model nonprofit_conservation_bench {
+  param total_members: Count<Member> = 48_000
+  param avg_annual_dues: Currency<USD> = $70/1yr
+  param monthly_grants: Currency<USD> = $185_000
+  param major_donors_monthly: Currency<USD> = $42_000
+  param program_expenses: Currency<USD> = $145_000
+  param admin_overhead: Currency<USD> = $35_000
+
+  var membership_revenue_monthly: Currency<USD> = (total_members * avg_annual_dues) / 12
+  var total_revenue: Currency<USD> = membership_revenue_monthly + monthly_grants + major_donors_monthly
+  var total_expenses: Currency<USD> = program_expenses + admin_overhead
+  var net_surplus: Currency<USD> = total_revenue - total_expenses
+  var program_expense_ratio: Fraction = program_expenses / total_expenses
+
+  constraint program_spending: program_expense_ratio >= 0.75 {
+    severity: warning,
+    message: "Program expenses should be at least 75% of total"
+  }
+}

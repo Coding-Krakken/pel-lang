@@ -1,0 +1,42 @@
+model SaaSDevToolsUsageBased {
+  // Usage-based SaaS model for developer tools with API call consumption
+  
+  param active_accounts = 800 accounts
+  param avg_monthly_api_calls = 10000000 api_calls / month / account
+  param total_api_calls = active_accounts * avg_monthly_api_calls
+  
+  param free_tier_accounts = 200 accounts
+  param free_tier_api_allowance = 1000000 api_calls / month
+  
+  param paid_account_count = 600 accounts
+  param base_monthly_fee = 100 USD / month
+  param price_per_million_calls = 50 USD / million_calls
+  
+  param account_churn_rate = 0.03 / month
+  param upgrade_rate = 0.08 / month
+  
+  param api_infrastructure_cost = 0.008 USD / million_calls
+  param support_cost = 25000 USD / month
+  param platform_opex = 150000 USD / month
+  param sales_and_marketing = 200000 USD / month
+  
+  // Paid account calculations
+  var paid_api_calls = (active_accounts - free_tier_accounts) * (avg_monthly_api_calls)
+  var excess_calls = paid_api_calls - (paid_account_count * free_tier_api_allowance)
+  var usage_revenue = excess_calls / 1000000 * price_per_million_calls
+  
+  var base_subscription_revenue = paid_account_count * base_monthly_fee
+  var monthly_subscription_revenue = base_subscription_revenue + usage_revenue
+  
+  // Infrastructure costs
+  var api_infrastructure_cost_total = (total_api_calls - (free_tier_accounts * free_tier_api_allowance)) / 1000000 * api_infrastructure_cost
+  
+  var total_monthly_costs = api_infrastructure_cost_total + support_cost + platform_opex + sales_and_marketing
+  
+  var monthly_gross_profit = monthly_subscription_revenue - total_monthly_costs
+  var annual_arr = monthly_subscription_revenue * 12 month
+  
+  constraint paid_account_count > 0 accounts
+  constraint monthly_subscription_revenue > 0 USD
+  constraint monthly_gross_profit > 0 USD
+}

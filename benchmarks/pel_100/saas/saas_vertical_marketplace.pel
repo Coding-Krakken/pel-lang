@@ -1,0 +1,38 @@
+model SaaSVerticalMarketplace {
+  // Vertical SaaS for specialized industry (e.g. legal/accounting/insurance)
+  // Focuses on premium pricing and compliance/feature complexity
+  
+  param vertical_industry: Fraction ="Legal Tech"
+  param addressable_firms: Count<Item> =10000 firms
+  param market_penetration: Fraction =0.15
+  param current_customers: Fraction =addressable_firms * market_penetration
+  
+  param monthly_subscription: Fraction =500 USD / month
+  param setup_fee: Count<Item> =3000 USD
+  param implementation_days: Count<Item> =10 days
+  param pro_services_per_day: Fraction =300 USD / day
+  
+  param annual_feature_seats: Count<Item> =5 seats
+  param seat_overage_rate: Fraction =0.15 / year
+  param seat_overage_price: Fraction =150 USD / month
+  
+  param compliance_training_adoption: Fraction =0.80
+  param training_price: Count<Item> =2000 USD
+  
+  param annual_churn: Fraction =0.08 / year
+  
+  // Recurring revenue
+  var base_mrr: Fraction =monthly_subscription * current_customers
+  var seat_overage_mrr: Fraction =(current_customers * seat_overage_rate * seat_overage_price) / 12 month
+  var recurring_revenue: Fraction =(base_mrr + seat_overage_mrr) * (1 - annual_churn)
+  
+  // One-time revenue
+  var implementation_revenue: Fraction =setup_fee * current_customers + (current_customers * pro_services_per_day * implementation_days)
+  var training_revenue: Fraction =current_customers * compliance_training_adoption * training_price
+  
+  var total_annual_revenue: Fraction =(recurring_revenue * 12 month) + implementation_revenue + training_revenue
+  
+  constraint current_customers > 0 firms
+  constraint total_annual_revenue > 0 USD
+  constraint annual_churn < 0.15
+}

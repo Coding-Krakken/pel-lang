@@ -4,7 +4,7 @@
 model ecommerce_wholesale_b2b {
   param monthly_orders: Count<Order> = 500
   param avg_order_value: Currency<USD> = $4_500
-  param net_terms_days: Duration<Day> = 60d
+  param net_terms_days: Duration = 60d
   param cogs_pct: Fraction = 0.55
 
   var monthly_revenue: Currency<USD> = monthly_orders * avg_order_value

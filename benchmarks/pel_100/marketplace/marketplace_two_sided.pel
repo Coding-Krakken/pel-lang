@@ -61,23 +61,17 @@ model marketplace_two_sided_bench {
   }
   
   // Calculations
-  var monthly_transactions: Count<Transaction> = 
-    monthly_buyers * buyer_conversion_rate
+  var monthly_transactions: Count<Transaction> =monthly_buyers * buyer_conversion_rate
   
-  var gmv: Currency<USD> = 
-    monthly_transactions * avg_transaction_value
+  var gmv: Currency<USD> =monthly_transactions * avg_transaction_value
   
-  var platform_revenue: Currency<USD> = 
-    gmv * take_rate
+  var platform_revenue: Currency<USD> =gmv * take_rate
   
-  var monthly_profit: Currency<USD> = 
-    platform_revenue - monthly_opex
+  var monthly_profit: Currency<USD> =platform_revenue - monthly_opex
   
-  var liquidity_ratio: Fraction = 
-    monthly_buyers / active_sellers
+  var liquidity_ratio: Fraction =monthly_buyers / active_sellers
   
-  var revenue_per_seller: Currency<USD> = 
-    platform_revenue / active_sellers
+  var revenue_per_seller: Currency<USD> =platform_revenue / active_sellers
   
   // Constraints
   constraint profitable: monthly_profit > $0 {

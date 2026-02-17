@@ -1,0 +1,85 @@
+// Professional Services - Accounting Firm
+// Models accounting firm with tax season dynamics and service mix
+
+model ServicesAccountingFirm {
+  param month_type: Count<Item> = 1 // 1=peak tax season, 0=off-season
+  
+  // Staff composition
+  param partners: Count<Item> = 4
+  param senior_accountants: Count<Item> = 8
+  param staff_accountants: Count<Item> = 14
+  param tax_season_temps: Count<Item> = 6 // only during tax season
+  param admin_support: Count<Item> = 3
+  
+  // Compensation (monthly)
+  param partner_draw: Currency<USD> = 28000.0
+  param senior_accountant_salary: Currency<USD> = 9500.0
+  param staff_accountant_salary: Currency<USD> = 6000.0
+  param temp_cost: Currency<USD> = 4500.0 // only during tax months
+  param admin_salary: Currency<USD> = 4000.0
+  
+  // Service revenue mix (varies by season)
+  // Tax season (Jan-Apr)
+  param tax_prep_revenue_peak: Currency<USD> = 145000.0
+  param audit_revenue_peak: Currency<USD> = 65000.0
+  param advisory_revenue_peak: Currency<USD> = 35000.0
+  param bookkeeping_revenue_peak: Currency<USD> = 42000.0
+  
+  // Off-season (May-Dec)
+  param tax_prep_revenue_offseason: Currency<USD> = 25000.0
+  param audit_revenue_offseason: Currency<USD> = 75000.0
+  param advisory_revenue_offseason: Currency<USD> = 48000.0
+  param bookkeeping_revenue_offseason: Currency<USD> = 38000.0
+  
+  // Operating expenses
+  param office_lease: Currency<USD> = 14000.0
+  param software_subscriptions: Currency<USD> = 5500.0 // tax software, accounting tools
+  param professional_liability_insurance: Currency<USD> = 4000.0
+  param continuing_education: Currency<USD> = 2500.0
+  param marketing_bd: Currency<USD> = 6000.0
+  
+  // Calculate seasonal revenue
+  var tax_prep_revenue: Currency<USD> = (month_type * tax_prep_revenue_peak) + 
+                                   ((1 - month_type) * tax_prep_revenue_offseason)
+  var audit_revenue: Currency<USD> = (month_type * audit_revenue_peak) + 
+                                ((1 - month_type) * audit_revenue_offseason)
+  var advisory_revenue: Currency<USD> = (month_type * advisory_revenue_peak) + 
+                                   ((1 - month_type) * advisory_revenue_offseason)
+  var bookkeeping_revenue: Currency<USD> = (month_type * bookkeeping_revenue_peak) + 
+                                      ((1 - month_type) * bookkeeping_revenue_offseason)
+  
+  var total_revenue: Currency<USD> = tax_prep_revenue + audit_revenue + advisory_revenue + bookkeeping_revenue
+  
+  // Staff costs (seasonal temps only in peak)
+  var partner_costs: Currency<USD> = partners * partner_draw
+  var senior_costs: Currency<USD> = senior_accountants * senior_accountant_salary
+  var staff_costs: Currency<USD> = staff_accountants * staff_accountant_salary
+  var temp_costs: Currency<USD> = tax_season_temps * temp_cost * month_type
+  var admin_costs: Currency<USD> = admin_support * admin_salary
+  var total_staff_costs: Currency<USD> = partner_costs + senior_costs + staff_costs + temp_costs + admin_costs
+  
+  // Operating expenses
+  var total_opex: Currency<USD> = office_lease + software_subscriptions + professional_liability_insurance +continuing_education + marketing_bd
+  
+  var total_costs: Currency<USD> = total_staff_costs + total_opex
+  var net_income: Currency<USD> = total_revenue - total_costs
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Key metrics
+  var total_accountants: Count<Item> = partners + senior_accountants + staff_accountants
+  var revenue_per_accountant: Currency<USD> = total_revenue / total_accountants
+  var tax_revenue_pct: Fraction = tax_prep_revenue / total_revenue
+  var recurring_revenue: Currency<USD> = bookkeeping_revenue + advisory_revenue
+  var recurring_pct: Fraction = recurring_revenue / total_revenue
+  var profit_per_partner: Currency<USD> = net_income / partners
+  var compensation_ratio: Fraction = total_staff_costs / total_revenue
+  
+  // Tax season intensity
+  var peak_revenue: Currency<USD> = tax_prep_revenue_peak + audit_revenue_peak +advisory_revenue_peak + bookkeeping_revenue_peak
+  var offseason_revenue: Currency<USD> = tax_prep_revenue_offseason + audit_revenue_offseason +advisory_revenue_offseason + bookkeeping_revenue_offseason
+  var seasonality_ratio: Fraction = peak_revenue / offseason_revenue
+  
+  constraint profitable_practice: operating_margin > 0.20
+  constraint diversified_services: recurring_pct > 0.30
+  constraint healthy_leverage: (senior_accountants + staff_accountants) / partners > 4.0
+}

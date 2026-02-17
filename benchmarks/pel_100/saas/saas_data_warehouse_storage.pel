@@ -1,0 +1,76 @@
+// SaaS Data Warehouse with Storage-Based Pricing
+// Models cloud data warehouse with storage + compute pricing
+
+model SaaSDataWarehouseStorage {
+  param total_customers: Count<Item> = 180
+  param avg_storage_tb: Fraction = 5.5 // average TB per customer
+  param storage_price_per_tb: Currency<USD> = 23.0
+  param avg_compute_hours: Count<Item> = 120 // warehouse runtime hours/month
+  param compute_price_per_hour: Currency<USD> = 3.50
+  
+  // Customer segmentation
+  param small_customers_pct: Fraction = 0.60 // < 2TB
+  param medium_customers_pct: Fraction = 0.30 // 2-10TB
+  param large_customers_pct: Fraction = 0.10 // > 10TB
+  param small_avg_storage: Fraction = 1.2
+  param medium_avg_storage: Fraction = 6.0
+  param large_avg_storage: Fraction = 25.0
+  
+  // Growth dynamics
+  param customer_growth: Fraction = 0.10
+  param storage_growth_rate: Fraction = 0.15 // data grows faster than customers
+  
+  // Cloud infrastructure costs
+  param cloud_storage_cost_per_tb: Currency<USD> = 8.0 // S3-like pricing
+  param compute_cost_per_hour: Currency<USD> = 1.20 // EC2-like pricing
+  param data_transfer_cost: Currency<USD> = 4500.0 // egress charges
+  
+  // Operating expenses
+  param engineering_headcount: Count<Item> = 20
+  param cost_per_engineer: Currency<USD> = 16000.0
+  param sales_headcount: Count<Item> = 6
+  param cost_per_sales: Currency<USD> = 12000.0
+  param marketing_budget: Currency<USD> = 30000.0
+  param support_costs: Currency<USD> = 18000.0
+  
+  // Calculate customer distribution
+  var small_customers: Count<Item> = total_customers * small_customers_pct
+  var medium_customers: Count<Item> = total_customers * medium_customers_pct
+  var large_customers: Count<Item> = total_customers * large_customers_pct
+  
+  // Total storage and compute
+  var total_storage_tb: Fraction = (small_customers * small_avg_storage) +
+                                    (medium_customers * medium_avg_storage) +
+                                    (large_customers * large_avg_storage)
+  var total_compute_hours: Count<Item> = total_customers * avg_compute_hours
+  
+  // Revenue
+  var storage_revenue: Currency<USD> = total_storage_tb * storage_price_per_tb
+  var compute_revenue: Currency<USD> = total_compute_hours * compute_price_per_hour
+  var total_revenue: Currency<USD> = storage_revenue + compute_revenue
+  
+  // Cost of goods sold
+  var cloud_storage_expense: Currency<USD> = total_storage_tb * cloud_storage_cost_per_tb
+  var cloud_compute_expense: Currency<USD> = total_compute_hours * compute_cost_per_hour
+  var cogs: Currency<USD> = cloud_storage_expense + cloud_compute_expense + data_transfer_cost
+  var gross_profit: Currency<USD> = total_revenue - cogs
+  var gross_margin: Fraction = gross_profit / total_revenue
+  
+  // Operating expenses
+  var engineering_cost: Currency<USD> = engineering_headcount * cost_per_engineer
+  var sales_cost: Currency<USD> = sales_headcount * cost_per_sales
+  var total_opex: Currency<USD> = engineering_cost + sales_cost + marketing_budget + support_costs
+  
+  var net_income: Currency<USD> = gross_profit - total_opex
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Unit economics
+  var arr_per_customer: Currency<USD> = (total_revenue * 12.0) / total_customers
+  var storage_gross_margin: Fraction = (storage_revenue - cloud_storage_expense) / storage_revenue
+  var compute_gross_margin: Fraction = (compute_revenue - cloud_compute_expense) / compute_revenue
+  var revenue_mix_storage: Fraction = storage_revenue / total_revenue
+  
+  constraint healthy_gross_margin: gross_margin > 0.60
+  constraint profitable_operations: operating_margin > 0.10
+  constraint strong_arr: arr_per_customer > 15000.0
+}

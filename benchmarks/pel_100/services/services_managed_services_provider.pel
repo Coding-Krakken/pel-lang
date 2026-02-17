@@ -1,0 +1,45 @@
+model ServicesManagedServicesProvider {
+  // MSP model with recurring contracts, ticket-based SLA, and break-fix component
+  
+  param managed_customers: Count<Item> =320 customers
+  param avg_monthly_msa_value: Fraction =2500 USD / month
+  param customer_arr: Fraction =avg_monthly_msa_value * 12 month
+  
+  param msa_margin: Fraction =0.40
+  
+  param avg_tickets_per_customer: Fraction =8 tickets / month
+  param avg_resolution_time: Fraction =2 hours / ticket
+  param billable_engineer_rate: Fraction =180 USD / hour
+  
+  param break_fix_utilization_rate: Fraction =0.25
+  param break_fix_revenue_per_customer: Fraction =avg_monthly_msa_value * break_fix_utilization_rate
+  
+  param employee_headcount: Count<Item> =15 engineers
+  param fully_loaded_engineer_cost: Fraction =150000 USD / year
+  
+  param software_licenses_cost: Fraction =100000 USD / year
+  param tools_and_monitoring: Fraction =80000 USD / year
+  param overhead_allocation: Fraction =300000 USD / year
+  
+  param annual_churn: Fraction =0.08 / year
+  
+  // MSA revenue
+  var total_msa_revenue: Fraction =managed_customers * customer_arr * (1 - annual_churn)
+  var msa_gross_profit: Fraction =total_msa_revenue * msa_margin
+  
+  // Break-fix revenue
+  var total_break_fix_revenue: Fraction =managed_customers * break_fix_revenue_per_customer * 12 month * (1 - annual_churn)
+  var break_fix_margin: Fraction =0.50
+  var break_fix_gross_profit: Fraction =total_break_fix_revenue * break_fix_margin
+  
+  // Operating costs
+  var total_labor_cost: Fraction =employee_headcount * fully_loaded_engineer_cost
+  var other_opex: Fraction =software_licenses_cost + tools_and_monitoring + overhead_allocation
+  
+  var gross_profit: Fraction =msa_gross_profit + break_fix_gross_profit
+  var ebitda: Fraction =gross_profit - total_labor_cost - other_opex
+  
+  constraint managed_customers > 0 customers
+  constraint ebitda > 0 USD
+  constraint customer_arr > 0 USD
+}
