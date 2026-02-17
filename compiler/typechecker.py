@@ -7,6 +7,10 @@
 
 """PEL Type Checker - Complete bidirectional type checking with economic dimensional analysis
 Implements type system from spec/pel_type_system.md
+
+Semantic Contracts: The type checker integrates semantic contracts to provide
+guidance on valid type conversions beyond dimensional correctness. Contracts
+document the business logic and domain assumptions that justify conversions.
 """
 
 import re
@@ -21,6 +25,7 @@ from compiler.errors import (
     type_mismatch,
     undefined_variable,
 )
+from compiler.semantic_contracts import SemanticContracts, ConversionReason
 
 
 @dataclass
@@ -916,3 +921,87 @@ class TypeChecker:
     def get_warnings(self) -> list[str]:
         """Get list of warnings."""
         return self.warnings
+
+    # ========================================================================
+    # Semantic Contract Integration
+    # ========================================================================
+
+    def find_applicable_contracts(
+        self, source_type: PELType, target_type: PELType
+    ) -> list:
+        """
+        Find all semantic contracts that could justify a type conversion.
+        
+        Returns a list of applicable contracts with reasoning.
+        """
+        source_str = str(source_type)
+        target_str = str(target_type)
+        
+        applicable = SemanticContracts.find_conversions(source_str, target_str)
+        
+        return applicable
+
+    def document_conversion_justification(
+        self, source_type: PELType, target_type: PELType
+    ) -> str:
+        """
+        Generate a human-readable explanation of why a type conversion is valid,
+        using semantic contracts to justify the conversion.
+        
+        This helps users understand the domain logic behind type coercions and
+        guides them toward explicitly documenting their conversion intent.
+        """
+        contracts = self.find_applicable_contracts(source_type, target_type)
+        
+        if not contracts:
+            # No contracts found; explain the pragmatic coercion
+            return (
+                f"No semantic contract found for {source_type} → {target_type}. "
+                f"This conversion is currently allowed due to pragmatic type compatibility rules. "
+                f"Consider documenting your intent with a semantic contract."
+            )
+        
+        explanation = f"Valid conversion from {source_type} to {target_type}:\n"
+        for idx, contract in enumerate(contracts, 1):
+            explanation += f"\n{idx}. {contract.name}\n"
+            explanation += f"   Reason: {contract.reason.value}\n"
+            if contract.description:
+                explanation += f"   {contract.description}\n"
+            if contract.examples:
+                explanation += f"   Examples:\n"
+                for example in contract.examples[:2]:  # Show first 2 examples
+                    explanation += f"     - {example}\n"
+        
+        return explanation
+
+    def validate_conversion_with_contract(
+        self, source_type: PELType, target_type: PELType, context: dict = None
+    ) -> tuple[bool, str | None]:
+        """
+        Validate that a type conversion is justified by semantic contracts.
+        
+        Args:
+            source_type: The source PEL type
+            target_type: The target PEL type
+            context: Additional context for constraint validation
+            
+        Returns:
+            (is_valid, error_message)
+        """
+        if context is None:
+            context = {}
+            
+        contracts = self.find_applicable_contracts(source_type, target_type)
+        
+        if not contracts:
+            return False, f"No semantic contract found to justify {source_type} → {target_type}"
+        
+        # Try to validate with each applicable contract
+        for contract in contracts:
+            is_valid, error = contract.validate_conversion(context)
+            if is_valid:
+                return True, None
+        
+        # No contract satisfied the constraints
+        return False, f"Conversion from {source_type} to {target_type} failed contract validation"
+
