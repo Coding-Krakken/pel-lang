@@ -121,6 +121,13 @@ class IfThenElse(Expression):
 
 
 @dataclass
+class PerDurationExpression(Expression):
+    """Expression for per-duration operations (e.g., $500 / 1mo)."""
+    left: Expression
+    duration: str
+
+
+@dataclass
 class Distribution(Expression):
     """Distribution expression (e.g., ~Normal(μ=0, σ=1))."""
     dist_type: str  # Changed from 'distribution_type' to match parser

@@ -187,10 +187,18 @@ class IRGenerator:
             }
 
         elif isinstance(expr, Distribution):
+            # Ensure parameters are fully resolved
+            resolved_params = {}
+            for k, v in expr.params.items():
+                if isinstance(v, Expression):
+                    resolved_params[k] = self.generate_expression(v)
+                else:
+                    resolved_params[k] = v
+
             return {
                 "expr_type": "Distribution",
                 "dist_type": expr.dist_type,
-                "params": {k: self.generate_expression(v) for k, v in expr.params.items()}
+                "params": resolved_params
             }
 
         elif isinstance(expr, ArrayLiteral):
@@ -218,6 +226,13 @@ class IRGenerator:
                 "expr_type": "MemberAccess",
                 "expression": self.generate_expression(expr.expression),
                 "member": expr.member
+            }
+
+        elif isinstance(expr, PerDurationExpression):
+            return {
+                "expr_type": "PerDurationExpression",
+                "left": self.generate_expression(expr.left),
+                "duration": expr.duration
             }
 
         else:

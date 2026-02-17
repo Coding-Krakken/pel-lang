@@ -15,6 +15,10 @@ import json
 import sys
 from pathlib import Path
 
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(project_root))
+
 from compiler.errors import CompilerError
 from compiler.ir_generator import IRGenerator
 from compiler.lexer import Lexer

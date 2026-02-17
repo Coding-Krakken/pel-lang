@@ -77,7 +77,7 @@ class PELRuntime:
                 state[node["name"]] = value
 
         # Determine time horizon
-        T = self.config.time_horizon or model.get("time_horizon", 12)
+        T = self.config.time_horizon or model.get("time_horizon") or 12
 
         # Time loop
         timeseries_results: dict[str, list[Any]] = {node["name"]: [] for node in model["nodes"] if node["node_type"] == "var"}
@@ -169,6 +169,7 @@ class PELRuntime:
         """Evaluate IR expression (stub)."""
         expr_type = expr.get("expr_type")
 
+
         if expr_type == "Literal":
             return expr["literal_value"]
 
@@ -197,31 +198,52 @@ class PELRuntime:
                 return left > right
 
         elif expr_type == "Distribution":
-            # Sample distribution
-            dist = expr["distribution"]
-            dist_type = dist["distribution_type"]
-            params = dist["parameters"]
+            # The distribution info is directly in expr
+            dist_type = expr["dist_type"]
+            params = expr["params"]
 
+            # Resolve all parameters
+            resolved_params = {}
+            for param_name, param_expr in params.items():
+                resolved_params[param_name] = self.evaluate_expression(param_expr, state, deterministic)
+
+            # Sample from distribution based on mode
             if deterministic:
-                # Sample at mean/median
+                # For deterministic mode, return the mean/median
                 if dist_type == "Normal":
-                    return params.get("mu", 0)
+                    return resolved_params.get("μ", 0)
+                elif dist_type == "Beta":
+                    # Mean of Beta(α, β) = α / (α + β)
+                    alpha = resolved_params.get("α", 1)
+                    beta = resolved_params.get("β", 1)
+                    return alpha / (alpha + beta)
                 elif dist_type == "LogNormal":
-                    return params.get("mu", 1)  # Simplified
-                elif dist_type == "Uniform":
-                    low = params.get("low", 0)
-                    high = params.get("high", 1)
-                    return (low + high) / 2
+                    return resolved_params.get("μ", 0)
+                else:
+                    return 0
             else:
-                # Sample from distribution
+                # For stochastic mode, sample from distribution
                 if dist_type == "Normal":
-                    mu = params.get("mu", 0)
-                    sigma = params.get("sigma", 1)
+                    mu = resolved_params.get("μ", 0)
+                    sigma = resolved_params.get("σ", 1)
                     return self.rng.gauss(mu, sigma)
-                elif dist_type == "Uniform":
-                    low = params.get("low", 0)
-                    high = params.get("high", 1)
-                    return self.rng.uniform(low, high)
+                elif dist_type == "Beta":
+                    alpha = resolved_params.get("α", 1)
+                    beta = resolved_params.get("β", 1)
+                    return self.rng.betavariate(alpha, beta)
+                elif dist_type == "LogNormal":
+                    mu = resolved_params.get("μ", 0)
+                    sigma = resolved_params.get("σ", 1)
+                    return self.rng.lognormvariate(mu, sigma)
+                else:
+                    return 0
+
+        elif expr_type == "PerDurationExpression":
+            # Evaluate PerDurationExpression: returns value per duration unit
+            # For now, evaluate the left expression and return it directly
+            # Duration conversion would be handled by the type system
+            left_value = self.evaluate_expression(expr["left"], state, deterministic)
+            return left_value
 
         return 0  # Default
 

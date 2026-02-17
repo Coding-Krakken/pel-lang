@@ -365,6 +365,13 @@ class Parser:
                     break
 
                 operator = self.parse_binary_operator()
+
+                # Special case: Handle `/` followed by a duration literal
+                if operator == "/" and self.match(TokenType.DURATION):
+                    duration = self.advance().value
+                    left = PerDurationExpression(left=left, duration=duration)
+                    continue
+
                 right = self.parse_expression(precedence + 1)
                 left = BinaryOp(operator=operator, left=left, right=right)
 

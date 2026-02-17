@@ -604,10 +604,18 @@ class TypeChecker:
         """Infer type of distribution expression."""
         # In PEL surface syntax, distributions act as values of their inner type.
         # Example: param x: Rate per Month = ~Normal(mu=..., sigma=...)
-        inner_type = PELType.fraction()
-        for _param_name, param_value in expr.params.items():
-            inner_type = self.infer_expression(param_value)
-            break
+        resolved_params = {}
+        for param_name, param_value in expr.params.items():
+            resolved_params[param_name] = self.infer_expression(param_value)
+
+        # Assume the distribution's type matches its declared inner type
+        inner_type = PELType.fraction()  # Default to dimensionless
+        if resolved_params:
+            # Use the first resolved parameter's type as a hint (if applicable)
+            first_param_type = next(iter(resolved_params.values()), None)
+            if first_param_type:
+                inner_type = first_param_type
+
         return inner_type
 
     def infer_array_literal(self, expr: ArrayLiteral) -> PELType:
@@ -725,12 +733,23 @@ class TypeChecker:
 
     def dimensions_compatible(self, d1: Dimension, d2: Dimension) -> bool:
         """Check if two dimensions are compatible for operations like addition."""
+
         if d1 == d2:
             return True
 
         # Allow generic Duration to be compatible with unit-specific Duration.
         if set(d1.units.keys()) == {"time"} and set(d2.units.keys()) == {"time"}:
             return d1.units.get("time") == "generic" or d2.units.get("time") == "generic"
+
+        # Special case: Rate per TimeUnit compatibility
+        if "rate" in d1.units and "rate" in d2.units:
+            return d1.units["rate"] == d2.units["rate"]
+
+        # Allow Rate to be compared with dimensionless values
+        if "rate" in d1.units and not d2.units:
+            return True
+        if "rate" in d2.units and not d1.units:
+            return True
 
         return False
 
