@@ -1,44 +1,44 @@
 model InsuranceClaimsReserve {
   // Insurance P&L model with claims reserve and loss development
   
-  param annual_premium_volume = 500000000 USD
-  param avg_loss_ratio = 0.65
-  param loss_adjustment_expense_ratio = 0.10
-  param operating_expense_ratio = 0.25
+  param annual_premium_volume: Currency<USD> = $500000000
+  param avg_loss_ratio: Fraction = 0.65
+  param loss_adjustment_expense_ratio: Fraction = 0.10
+  param operating_expense_ratio: Fraction = 0.25
   
-  param loss_reserve_opening = 250000000 USD
-  param expected_loss_development = 0.04
+  param loss_reserve_opening: Currency<USD> = $250000000
+  param expected_loss_development: Fraction = 0.04
   
-  param reinsurance_ceded_premium = annual_premium_volume * 0.15
-  param reinsurance_cost_rate = 0.90  // Cost of reinsurance as % of ceded premium
-  var reinsurance_recovery_rate = 0.70
+  param reinsurance_ceded_premium: Currency<USD> = annual_premium_volume * 0.15
+  param reinsurance_cost_rate: Fraction = 0.90 // Cost of reinsurance as % of ceded premium
+  var reinsurance_recovery_rate: Fraction = 0.70
   
   // Premium income
-  var direct_premium = annual_premium_volume
-  var ceded_premium = reinsurance_ceded_premium
-  var net_premium = direct_premium - ceded_premium
+  var direct_premium: Currency<USD> = annual_premium_volume
+  var ceded_premium: Currency<USD> = reinsurance_ceded_premium
+  var net_premium: Currency<USD> = direct_premium - ceded_premium
   
   // Losses
-  var incurred_losses = net_premium * avg_loss_ratio
-  var loss_adjustment_expenses = incurred_losses * loss_adjustment_expense_ratio
-  var operating_expenses = net_premium * operating_expense_ratio
+  var incurred_losses: Currency<USD> = net_premium * avg_loss_ratio
+  var loss_adjustment_expenses: Currency<USD> = incurred_losses * loss_adjustment_expense_ratio
+  var operating_expenses: Currency<USD> = net_premium * operating_expense_ratio
   
   // Loss reserves
-  var loss_reserve_ending = loss_reserve_opening + incurred_losses - expected_loss_development
-  var reserve_release = expected_loss_development
+  var loss_reserve_ending: Currency<USD> = loss_reserve_opening + incurred_losses - (loss_reserve_opening * expected_loss_development)
+  var reserve_release: Currency<USD> = loss_reserve_opening * expected_loss_development
   
   // Reinsurance
-  var reinsurance_cost = reinsurance_ceded_premium * reinsurance_cost_rate
-  var reinsurance_recoveries = reinsurance_recovery_rate * incurred_losses
+  var reinsurance_cost: Currency<USD> = reinsurance_ceded_premium * reinsurance_cost_rate
+  var reinsurance_recoveries: Currency<USD> = reinsurance_recovery_rate * incurred_losses
   
   // Investment income (on reserves)
-  param investment_yield = 0.04
-  var investment_income = loss_reserve_opening * investment_yield
+  param investment_yield: Fraction = 0.04
+  var investment_income: Currency<USD> = loss_reserve_opening * investment_yield
   
   // Underwriting profit
-  var underwriting_income = net_premium - incurred_losses - loss_adjustment_expenses - operating_expenses
-  var total_income = underwriting_income + investment_income + reinsurance_recoveries
+  var underwriting_income: Currency<USD> = net_premium - incurred_losses - loss_adjustment_expenses - operating_expenses
+  var total_income: Currency<USD> = underwriting_income + investment_income + reinsurance_recoveries
   
-  constraint net_premium > 0 USD
-  constraint avg_loss_ratio < 1.0
+  constraint net_premium_constraint: net_premium > $0 { severity: warning }
+  constraint avg_loss_ratio_constraint: avg_loss_ratio < 1.0 { severity: warning }
 }

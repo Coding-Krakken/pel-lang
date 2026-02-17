@@ -14,9 +14,12 @@ def _parse_model(source: str):
 
 
 @pytest.mark.unit
-def test_param_without_provenance_block_is_parse_error() -> None:
-    with pytest.raises(ParseError):
-        _parse_model("model M { param x: Fraction = 0.1 }")
+def test_param_without_provenance_block_is_valid() -> None:
+    """Provenance blocks are now optional at parse time (validated later)."""
+    model = _parse_model("model M { param x: Fraction = 0.1 }")
+    assert model is not None
+    assert len(model.params) == 1
+    assert model.params[0].provenance is not None  # Default provenance added
 
 
 @pytest.mark.unit

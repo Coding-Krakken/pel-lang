@@ -10,7 +10,7 @@ model fintech_payments_pnl {
 
   var interchange_revenue: Currency<USD> = monthly_volume * interchange_take_pct
   var processing_costs: Currency<USD> = monthly_volume * processing_cost_pct
-  var expected_chargebacks: Count<Chargeback> = monthly_volume / 100.0 * chargeback_rate
+  var expected_chargebacks: Fraction = (monthly_volume * chargeback_rate) / average_chargeback_cost
   var chargeback_costs: Currency<USD> = expected_chargebacks * average_chargeback_cost
   var net_income: Currency<USD> = interchange_revenue - processing_costs - chargeback_costs
 

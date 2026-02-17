@@ -3,8 +3,8 @@
 
 model EcommerceGroceryDelivery {
   param monthly_orders: Count<Item> = 3500
-  param avg_basket_size: Currency<USD> = 85.0
-  param delivery_fee: Currency<USD> = 7.99
+  param avg_basket_size: Currency<USD> = $85.0
+  param delivery_fee: Currency<USD> = $7.99
   param delivery_fee_waiver_rate: Fraction = 0.30 // promotional waivers
   
   // Product mix and margins
@@ -21,20 +21,20 @@ model EcommerceGroceryDelivery {
   
   // Fulfillment costs
   param warehouse_pickers_headcount: Count<Item> = 18
-  param cost_per_picker: Currency<USD> = 4200.0
+  param cost_per_picker: Currency<USD> = $4200.0
   param pick_time_minutes_per_order: Count<Item> = 22
   param driver_count: Count<Item> = 25
-  param cost_per_driver: Currency<USD> = 4800.0
-  param avg_delivery_cost_fuel: Currency<USD> = 5.50
-  param vehicle_maintenance: Currency<USD> = 8000.0
+  param cost_per_driver: Currency<USD> = $4800.0
+  param avg_delivery_cost_fuel: Currency<USD> = $5.50
+  param vehicle_maintenance: Currency<USD> = $8000.0
   
   // Cold chain infrastructure
-  param refrigerated_warehouse_cost: Currency<USD> = 15000.0
-  param insulated_bags_depreciation: Currency<USD> = 1200.0
+  param refrigerated_warehouse_cost: Currency<USD> = $15000.0
+  param insulated_bags_depreciation: Currency<USD> = $1200.0
   
   // Technology and operations
-  param platform_development: Currency<USD> = 12000.0
-  param customer_acquisition_cost_per_order: Currency<USD> = 8.50
+  param platform_development: Currency<USD> = $12000.0
+  param customer_acquisition_cost_per_order: Currency<USD> = $8.50
   param payment_processing_pct: Fraction = 0.025
   
   // Calculate revenue components
@@ -83,7 +83,7 @@ model EcommerceGroceryDelivery {
   var fulfillment_cost_per_order: Currency<USD> = fulfillment_costs / monthly_orders
   var delivery_fee_subsidy: Currency<USD> = (monthly_orders * delivery_fee * delivery_fee_waiver_rate) / monthly_orders
   
-  constraint positive_contribution: contribution_per_order > 8.0
-  constraint manageable_spoilage: total_spoilage < (fresh_revenue * 0.05)
-  constraint delivery_economics: fulfillment_cost_per_order < 15.0
+  constraint positive_contribution: contribution_per_order > $8 { severity: warning }
+  constraint manageable_spoilage: total_spoilage < (fresh_revenue * 0.05) { severity: warning }
+  constraint delivery_economics: fulfillment_cost_per_order < $15 { severity: warning }
 }

@@ -1,11 +1,11 @@
 model MarketplaceGigEconomyCommissions {
   // Gig economy platform commission model with matching efficiency and take rate
   
-  param monthly_active_workers: Count<Item> =8000 workers
-  param monthly_active_customers: Count<Item> =12000 customers
+  param monthly_active_workers: Count<Item> =8000
+  param monthly_active_customers: Count<Item> =12000
   
-  param avg_gigs_per_worker: Fraction =15 gigs / month
-  param avg_gig_value: Count<Item> =85 USD
+  param avg_gigs_per_worker: Fraction = 15
+  param avg_gig_value: Currency<USD> = $85
   param platform_take_rate: Fraction =0.25
   
   param worker_churn_monthly: Fraction =0.08
@@ -14,39 +14,39 @@ model MarketplaceGigEconomyCommissions {
   param matching_efficiency: Fraction =0.92
   param cancellation_rate: Fraction =0.05
   
-  param worker_acquisition_cost: Count<Item> =150 USD
-  param customer_acquisition_cost: Count<Item> =80 USD
-  param monthly_marketing_spend: Count<Item> =500000 USD
+  param worker_acquisition_cost: Currency<USD> = $150
+  param customer_acquisition_cost: Currency<USD> = $80
+  param monthly_marketing_spend: Currency<USD> = $500000
   
-  param infrastructure_cost: Fraction =800000 USD / month
-  param customer_support_cost: Fraction =400000 USD / month
-  param payment_processing_fee: Fraction =0.03
+  param infrastructure_cost: Currency<USD> = $800000/1mo
+  param customer_support_cost: Currency<USD> = $400000/1mo
+  param payment_processing_fee: Fraction = 0.03
   
   // Gross merchandise value
-  var monthly_gig_volume: Fraction =monthly_active_workers * avg_gigs_per_worker * matching_efficiency * (1 - cancellation_rate)
-  var monthly_gmv: Fraction =monthly_gig_volume * avg_gig_value
+  var monthly_gig_volume: Count<Item> = monthly_active_workers * avg_gigs_per_worker * matching_efficiency * (1 - cancellation_rate)
+  var monthly_gmv: Currency<USD> = monthly_gig_volume * avg_gig_value
   
   // Commission revenue
-  var commission_revenue: Fraction =monthly_gmv * platform_take_rate
-  var annual_commission_revenue: Fraction =commission_revenue * 12 month
+  var commission_revenue: Currency<USD> = monthly_gmv * platform_take_rate
+  var annual_commission_revenue: Currency<USD> = commission_revenue * 12
   
   // Net revenue (after payment processing)
-  var payment_processing_cost: Fraction =monthly_gmv * payment_processing_fee
-  var net_revenue: Fraction =commission_revenue - payment_processing_cost
+  var payment_processing_cost: Currency<USD> = monthly_gmv * payment_processing_fee
+  var net_revenue: Currency<USD> = commission_revenue - payment_processing_cost
   
   // Operating costs
-  var infrastructure_and_support: Fraction =infrastructure_cost + customer_support_cost
+  var infrastructure_and_support: Currency<USD> = infrastructure_cost + customer_support_cost
   
   // Acquisition costs
-  var monthly_new_workers: Fraction =monthly_active_workers * worker_churn_monthly
-  var monthly_new_customers: Fraction =monthly_active_customers * customer_churn_monthly
-  var acquisition_cost: Fraction =(monthly_new_workers * worker_acquisition_cost) + (monthly_new_customers * customer_acquisition_cost)
+  var monthly_new_workers: Count<Item> = monthly_active_workers * worker_churn_monthly
+  var monthly_new_customers: Count<Item> = monthly_active_customers * customer_churn_monthly
+  var acquisition_cost: Currency<USD> = (monthly_new_workers * worker_acquisition_cost) + (monthly_new_customers * customer_acquisition_cost)
   
-  var monthly_opex: Fraction =infrastructure_and_support + monthly_marketing_spend + acquisition_cost
+  var monthly_opex: Currency<USD> = infrastructure_and_support + monthly_marketing_spend + acquisition_cost
   
-  var monthly_contribution: Fraction =net_revenue - monthly_opex
+  var monthly_contribution: Currency<USD> = net_revenue - monthly_opex
   
-  constraint monthly_gmv > 0 USD
-  constraint matching_efficiency > 0.80
-  constraint monthly_contribution > 0 USD
+  constraint monthly_gmv_constraint: monthly_gmv > $0 { severity: warning }
+  constraint matching_efficiency_constraint: matching_efficiency > 0.80 { severity: warning }
+  constraint monthly_contribution_constraint: monthly_contribution > $0 { severity: warning }
 }

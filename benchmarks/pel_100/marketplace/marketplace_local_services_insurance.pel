@@ -1,39 +1,39 @@
 model MarketplaceLocalServicesInsurance {
   // Local services marketplace with insurance/liability model coverage
   
-  param service_providers: Count<Item> =3500 providers
-  param service_requests_monthly: Count<Item> =24000 requests
-  param avg_service_value: Count<Item> =280 USD
+  param service_providers: Count<Provider> = 3500
+  param service_requests_monthly: Count<Request> = 24000
+  param avg_service_value: Currency<USD> = $280
   param platform_commission_rate: Fraction =0.15
   
   param liability_insurance_rate: Fraction =0.04
   param insurance_claims_rate: Fraction =0.008
-  param avg_claim_value: Count<Item> =3500 USD
+  param avg_claim_value: Currency<USD> = $3500
   
-  param background_check_cost: Fraction =45 USD / provider
-  param annual_provider_recertification: Fraction =35 USD / provider
-  param insurance_processing_cost_per_claim: Count<Item> =250 USD
+  param background_check_cost: Currency<USD> = $45
+  param annual_provider_recertification: Currency<USD> = $35
+  param insurance_processing_cost_per_claim: Currency<USD> = $250
   
-  param monthly_gmv: Fraction =service_requests_monthly * avg_service_value
-  var monthly_commission_revenue: Fraction =monthly_gmv * platform_commission_rate
+  param monthly_gmv: Currency<USD> = service_requests_monthly * avg_service_value
+  var monthly_commission_revenue: Currency<USD> = monthly_gmv * platform_commission_rate
   
-  var insurance_premium_cost: Fraction =monthly_gmv * liability_insurance_rate
-  var expected_claims_cost: Fraction =monthly_gmv * insurance_claims_rate
-  var claims_processing_cost: Fraction =(monthly_gmv * insurance_claims_rate / avg_claim_value) * insurance_processing_cost_per_claim
+  var insurance_premium_cost: Currency<USD> = monthly_gmv * liability_insurance_rate
+  var expected_claims_cost: Currency<USD> = monthly_gmv * insurance_claims_rate
+  var claims_processing_cost: Currency<USD> = (monthly_gmv * insurance_claims_rate / avg_claim_value) * insurance_processing_cost_per_claim
   
-  param platform_opex: Fraction =800000 USD / month
-  param customer_acquisition_cost_monthly: Fraction =350000 USD / month
+  param platform_opex: Currency<USD> = $800000/1mo
+  param customer_acquisition_cost_monthly: Currency<USD> = $350000/1mo
   
   param annual_provider_churn: Fraction =0.35
-  var monthly_provider_churn: Fraction =service_providers * annual_provider_churn / 12 month
-  var monthly_background_checks: Fraction =monthly_provider_churn * background_check_cost
-  var monthly_recertification: Fraction =service_providers * annual_provider_recertification / 12 month
+  var monthly_provider_churn: Fraction = service_providers * annual_provider_churn / 12
+  var monthly_background_checks: Currency<USD> = monthly_provider_churn * background_check_cost
+  var monthly_recertification: Currency<USD> = service_providers * annual_provider_recertification / 12
   
-  var total_monthly_costs: Fraction =insurance_premium_cost + expected_claims_cost + claims_processing_cost + platform_opex + customer_acquisition_cost_monthly + monthly_background_checks + monthly_recertification
+  var total_monthly_costs: Currency<USD> = insurance_premium_cost + expected_claims_cost + claims_processing_cost + platform_opex + customer_acquisition_cost_monthly + monthly_background_checks + monthly_recertification
   
-  var gross_contribution: Fraction =monthly_commission_revenue - total_monthly_costs
+  var gross_contribution: Currency<USD> = monthly_commission_revenue - total_monthly_costs
   
-  constraint monthly_gmv > 0 USD
-  constraint service_providers > 0 providers
-  constraint gross_contribution > 0 USD
+  constraint monthly_gmv_constraint: monthly_gmv > $0 { severity: warning }
+  constraint service_providers_constraint: service_providers >= service_providers { severity: warning }
+  constraint gross_contribution_constraint: gross_contribution > $0 { severity: warning }
 }

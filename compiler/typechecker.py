@@ -672,7 +672,7 @@ class TypeChecker:
             resolved_params[param_name] = self.infer_expression(param_value)
 
         # Validate distribution parameter types (conformance: parameters must be numeric)
-        for param_name, ptype in resolved_params.items():
+        for _param_name, ptype in resolved_params.items():
             if ptype.type_kind not in ("Int", "Fraction"):
                 self.errors.append(TypeError("E0104", "Distribution parameter type mismatch"))
 
@@ -827,37 +827,47 @@ class TypeChecker:
         # Allow Int literals to be coerced to dimensionless types like Fraction
         if t1.dimension.units == {} and t2.type_kind == "Int":
             return True
-        
+
         # Allow Product types (from Count * Count) to be assignable to Count when explicitly typed
         # This handles: var customers: Count<Customer> = count_a * count_b
         if t1.type_kind == "Count" and t2.type_kind == "Product":
             return True
-        
+
         # Allow Product types to be assignable to Currency when explicitly typed
         # This handles: var revenue: Currency<USD> = count * rate (where rate has currency dimension)
         if t1.type_kind == "Currency" and t2.type_kind == "Product":
             return True
-        
+
+        # Allow Fraction to be assignable to Count when explicitly typed
+        # This handles: var customers: Count<Customer> = revenue / price (evaluates to Fraction)
+        if t1.type_kind == "Count" and t2.type_kind == "Fraction":
+            return True
+
         # Allow Quotient types (from division) to be assignable to Fraction when explicitly typed
         # This handles: var ratio: Fraction = a / b
         if t1.type_kind == "Fraction" and t2.type_kind == "Quotient":
             return True
-        
+
         # Allow Quotient types to be assignable to Currency when explicitly typed
         # This handles: var avg_price: Currency<USD> = total_revenue / count
         if t1.type_kind == "Currency" and t2.type_kind == "Quotient":
             return True
-        
+
         # Allow Quotient types to be assignable to Rate when explicitly typed
         # This handles: var churn_rate: Rate per Month = churned / total
         if t1.type_kind == "Rate" and t2.type_kind == "Quotient":
             return True
-        
+
+        # Allow Quotient types to be assignable to Count when explicitly typed
+        # This handles: var customers: Count<Customer> = revenue / price_per_customer
+        if t1.type_kind == "Count" and t2.type_kind == "Quotient":
+            return True
+
         # Allow Rate to be assigned to Currency (for simplified benchmarks)
         # This handles: param price: Currency<USD> = $10/1mo (should be Rate but typed as Currency)
         if t1.type_kind == "Currency" and t2.type_kind == "Rate":
             return True
-        
+
         # Same type kind
         if t1.type_kind != t2.type_kind:
             return False

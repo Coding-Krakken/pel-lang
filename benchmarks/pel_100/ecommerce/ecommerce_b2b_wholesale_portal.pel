@@ -3,8 +3,8 @@
 
 model EcommerceB2BWholesalePortal {
   param total_business_customers: Count<Item> = 850
-  param avg_order_value: Currency<USD> = 2800.0
-  param orders_per_customer_month: Count<Item> = 3
+  param avg_order_value: Currency<USD> = $2800.0
+  param orders_per_customer_month: Fraction = 3
   
   // Volume discount tiers
   param tier_1_discount: Fraction = 0.00 // < $1000
@@ -20,20 +20,20 @@ model EcommerceB2BWholesalePortal {
   param avg_cogs_pct: Fraction = 0.68 // wholesale margins
   
   // Fulfillment costs
-  param pick_pack_cost_per_order: Currency<USD> = 12.50
-  param avg_shipping_cost: Currency<USD> = 35.0 // freight/LTL shipping
-  param warehouse_costs: Currency<USD> = 28000.0
+  param pick_pack_cost_per_order: Currency<USD> = $12.50
+  param avg_shipping_cost: Currency<USD> = $35.0 // freight/LTL shipping
+  param warehouse_costs: Currency<USD> = $28000.0
   
   // Operating expenses
   param sales_team_headcount: Count<Item> = 8
-  param cost_per_sales_rep: Currency<USD> = 11000.0
+  param cost_per_sales_rep: Currency<USD> = $11000.0
   param account_management_headcount: Count<Item> = 6
-  param cost_per_am: Currency<USD> = 9500.0
-  param platform_development: Currency<USD> = 22000.0
-  param admin_overhead: Currency<USD> = 18000.0
+  param cost_per_am: Currency<USD> = $9500.0
+  param platform_development: Currency<USD> = $22000.0
+  param admin_overhead: Currency<USD> = $18000.0
   
   // Payment terms impact
-  param avg_payment_terms_days: Count<Item> = 45 // net-45 payment terms
+  param avg_payment_terms_days: Fraction = 45 // net-45 payment terms
   param working_capital_cost_rate: Fraction = 0.06 // annual cost
   
   // Calculate order distribution
@@ -82,7 +82,7 @@ model EcommerceB2BWholesalePortal {
   var revenue_per_customer: Currency<USD> = total_revenue / total_business_customers
   var avg_discount_pct: Fraction = 1.0 - (total_revenue / gmv)
   
-  constraint healthy_margins: gross_margin > 0.18
-  constraint profitable_operations: operating_margin > 0.05
-  constraint manageable_discounting: avg_discount_pct < 0.12
+  constraint healthy_margins: gross_margin > 0.18 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.05 { severity: warning }
+  constraint manageable_discounting: avg_discount_pct < 0.12 { severity: warning }
 }

@@ -133,7 +133,7 @@ class Parser:
         type_ann = self.parse_type()
         self.expect(TokenType.ASSIGN)
         value = self.parse_expression()
-        
+
         # Provenance block is optional; use defaults if missing
         if self.match(TokenType.LBRACE):
             provenance = self.parse_provenance_block()
@@ -143,7 +143,7 @@ class Parser:
                 'method': 'assumption',
                 'confidence': 1.0
             }
-        
+
         return ParamDecl(name=name, type_annotation=type_ann, value=value, provenance=provenance)
 
     def parse_var(self) -> VarDecl:

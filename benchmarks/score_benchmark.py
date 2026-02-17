@@ -28,31 +28,52 @@ class BenchmarkScorer:
         self.results = []
     
     def count_loc(self, pel_file: Path) -> int:
-        """Count non-blank, non-comment lines."""
+        """Count non-blank, non-comment lines of code.
+        
+        Handles:
+        - Single-line comments: //
+        - Multi-line comments: /* */
+        - Inline comments: code // comment
+        - Mixed scenarios: /* comment */ code
+        """
         lines = pel_file.read_text().split('\n')
         loc = 0
         in_comment = False
         
         for line in lines:
-            stripped = line.strip()
+            code_part = ""
+            i = 0
+            line_len = len(line)
             
-            # Skip blank lines
-            if not stripped:
-                continue
+            while i < line_len:
+                # Currently in a multi-line comment
+                if in_comment:
+                    if i + 1 < line_len and line[i:i+2] == '*/':
+                        in_comment = False
+                        i += 2
+                        continue
+                    i += 1
+                    continue
+                
+                # Not in comment - check for comment starts
+                if i + 1 < line_len:
+                    two_chars = line[i:i+2]
+                    # Start of multi-line comment
+                    if two_chars == '/*':
+                        in_comment = True
+                        i += 2
+                        continue
+                    # Start of single-line comment (rest of line is comment)
+                    if two_chars == '//':
+                        break
+                
+                # Regular code character
+                code_part += line[i]
+                i += 1
             
-            # Handle multi-line comments
-            if '/*' in stripped:
-                in_comment = True
-            if in_comment:
-                if '*/' in stripped:
-                    in_comment = False
-                continue
-            
-            # Skip single-line comments
-            if stripped.startswith('//'):
-                continue
-            
-            loc += 1
+            # Count line if it has code (not just whitespace)
+            if code_part.strip():
+                loc += 1
         
         return loc
     

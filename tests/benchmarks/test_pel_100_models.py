@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from compiler.lexer import Lexer
 from compiler.parser import Parser

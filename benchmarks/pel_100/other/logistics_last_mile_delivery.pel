@@ -3,9 +3,9 @@
 
 model LogisticsLastMileDelivery {
   param monthly_deliveries: Count<Item> = 45000
-  param avg_delivery_fee: Currency<USD> = 6.50
-  param base_delivery_rate: Currency<USD> = 5.00
-  param peak_hour_surcharge: Currency<USD> = 2.50
+  param avg_delivery_fee: Currency<USD> = $6.50
+  param base_delivery_rate: Currency<USD> = $5.00
+  param peak_hour_surcharge: Currency<USD> = $2.50
   param peak_deliveries_pct: Fraction = 0.30
   
   // Customer segments
@@ -18,40 +18,40 @@ model LogisticsLastMileDelivery {
   
   // Delivery success metrics
   param successful_first_attempt: Fraction = 0.92
-  param redelivery_cost: Currency<USD> = 4.50
+  param redelivery_cost: Currency<USD> = $4.50
   
   // Driver model (1099 contractors)
   param active_drivers: Count<Item> = 280
-  param driver_payout_per_delivery: Currency<USD> = 4.25
-  param driver_peak_bonus: Currency<USD> = 1.50
+  param driver_payout_per_delivery: Currency<USD> = $4.25
+  param driver_peak_bonus: Currency<USD> = $1.50
   param avg_deliveries_per_driver_month: Count<Item> = 160
   
   // Vehicle costs (driver-owned, but incentives provided)
-  param fuel_incentive_per_delivery: Currency<USD> = 0.85
-  param vehicle_wear_allowance: Currency<USD> = 0.35
+  param fuel_incentive_per_delivery: Currency<USD> = $0.85
+  param vehicle_wear_allowance: Currency<USD> = $0.35
   
   // Technology and platform
-  param routing_optimization_cost: Currency<USD> = 8500.0 // AI routing
-  param mobile_app_maintenance: Currency<USD> = 6000.0
-  param gps_tracking_per_driver: Currency<USD> = 12.0
-  param customer_support_platform: Currency<USD> = 3500.0
+  param routing_optimization_cost: Currency<USD> = $8500.0 // AI routing
+  param mobile_app_maintenance: Currency<USD> = $6000.0
+  param gps_tracking_per_driver: Currency<USD> = $12.0
+  param customer_support_platform: Currency<USD> = $3500.0
   
   // Operations team
   param operations_managers: Count<Item> = 6
-  param cost_per_ops_manager: Currency<USD> = 8500.0
+  param cost_per_ops_manager: Currency<USD> = $8500.0
   param driver_onboarding_team: Count<Item> = 4
-  param cost_per_onboarding: Currency<USD> = 6000.0
+  param cost_per_onboarding: Currency<USD> = $6000.0
   param customer_support_agents: Count<Item> = 12
-  param cost_per_support_agent: Currency<USD> = 5200.0
+  param cost_per_support_agent: Currency<USD> = $5200.0
   
   // Insurance and compliance
-  param delivery_insurance_per_delivery: Currency<USD> = 0.45
+  param delivery_insurance_per_delivery: Currency<USD> = $0.45
   param driver_background_checks_monthly: Count<Item> = 35 // new drivers
-  param background_check_cost: Currency<USD> = 28.0
+  param background_check_cost: Currency<USD> = $28.0
   
   // Marketing and partnerships
-  param partner_acquisition_costs: Currency<USD> = 15000.0
-  param consumer_marketing: Currency<USD> = 22000.0
+  param partner_acquisition_costs: Currency<USD> = $15000.0
+  param consumer_marketing: Currency<USD> = $22000.0
   
   // Calculate revenue
   var base_deliveries: Count<Item> = monthly_deliveries * (1.0 - peak_deliveries_pct)
@@ -106,10 +106,10 @@ model LogisticsLastMileDelivery {
   var cogs_per_delivery: Currency<USD> = cogs / monthly_deliveries
   var contribution_margin_per_delivery: Currency<USD> = revenue_per_delivery - cogs_per_delivery
   var driver_earnings_per_delivery: Currency<USD> = total_driver_payouts / monthly_deliveries
-  var deliveries_per_driver: Count<Item> = monthly_deliveries / active_drivers
+  var deliveries_per_driver: Fraction = monthly_deliveries / active_drivers
   var first_attempt_success_rate: Fraction = successful_first_attempt
   
-  constraint positive_contribution: contribution_margin_per_delivery > 1.50
-  constraint acceptable_failure_rate: successful_first_attempt > 0.88
-  constraint efficient_operations: deliveries_per_driver > 140
+  constraint positive_contribution: contribution_margin_per_delivery > $1.50 { severity: warning }
+  constraint acceptable_failure_rate: successful_first_attempt > 0.88 { severity: warning }
+  constraint efficient_operations: deliveries_per_driver > 140 { severity: warning }
 }

@@ -2,14 +2,14 @@
 // Models online tutoring marketplace connecting students with tutors
 
 model MarketplaceOnlineTutoring {
-  param monthly_sessions: Count<Item> = 4200
+  param monthly_sessions: Int = 4200
   param avg_session_duration_hours: Fraction = 1.5
-  param avg_hourly_rate: Currency<USD> = 45.0
+  param avg_hourly_rate: Currency<USD> = $45.0
   param platform_commission_pct: Fraction = 0.28
   
   // Student and tutor dynamics
-  param total_active_students: Count<Item> = 2800
-  param total_active_tutors: Count<Item> = 750
+  param total_active_students: Int = 2800
+  param total_active_tutors: Int = 750
   param sessions_per_student_month: Fraction = 1.50
   param sessions_per_tutor_month: Fraction = 5.60
   
@@ -22,35 +22,35 @@ model MarketplaceOnlineTutoring {
   param other_rate_multiplier: Fraction = 0.85
   
   // Tutor acquisition and quality
-  param tutor_screening_cost: Currency<USD> = 35.0
-  param new_tutors_monthly: Count<Item> = 45
+  param tutor_screening_cost: Currency<USD> = $35.0
+  param new_tutors_monthly: Int = 45
   param background_check_pct: Fraction = 1.0 // all tutors
-  param background_check_cost: Currency<USD> = 25.0
+  param background_check_cost: Currency<USD> = $25.0
   param tutor_churn_rate: Fraction = 0.08
   
   // Student acquisition
-  param student_acquisition_cost: Currency<USD> = 42.0
-  param new_students_monthly: Count<Item> = 280
+  param student_acquisition_cost: Currency<USD> = $42.0
+  param new_students_monthly: Int = 280
   param student_churn_rate: Fraction = 0.12
   
   // Session guarantees and refunds
   param satisfaction_guarantee_claims: Fraction = 0.04
-  param refund_per_claim: Currency<USD> = 67.50 // avg session value
+  param refund_per_claim: Currency<USD> = $67.50 // avg session value
   
   // Technology and platform
-  param video_conferencing_cost_per_hour: Currency<USD> = 0.35
-  param recording_storage_costs: Currency<USD> = 2500.0
+  param video_conferencing_cost_per_hour: Currency<USD> = $0.35
+  param recording_storage_costs: Currency<USD> = $2500.0
   param payment_processing_pct: Fraction = 0.029
   
   // Operations
-  param engineering_team: Count<Item> = 12
-  param cost_per_engineer: Currency<USD> = 12500.0
-  param customer_support_team: Count<Item> = 8
-  param cost_per_support: Currency<USD> = 5500.0
-  param tutor_success_team: Count<Item> = 5
-  param cost_per_ts: Currency<USD> = 6500.0
-  param marketing_spend: Currency<USD> = 45000.0
-  param admin_overhead: Currency<USD> = 12000.0
+  param engineering_team: Int = 12
+  param cost_per_engineer: Currency<USD> = $12500.0
+  param customer_support_team: Int = 8
+  param cost_per_support: Currency<USD> = $5500.0
+  param tutor_success_team: Int = 5
+  param cost_per_ts: Currency<USD> = $6500.0
+  param marketing_spend: Currency<USD> = $45000.0
+  param admin_overhead: Currency<USD> = $12000.0
   
   // Calculate session value and GMV
   var total_session_hours: Fraction = monthly_sessions * avg_session_duration_hours
@@ -72,7 +72,7 @@ model MarketplaceOnlineTutoring {
   var student_acquisition_costs: Currency<USD> = new_students_monthly * student_acquisition_cost
   
   // Satisfaction guarantees
-  var guarantee_claims: Count<Item> = monthly_sessions * satisfaction_guarantee_claims
+  var guarantee_claims: Fraction = monthly_sessions * satisfaction_guarantee_claims
   var refund_costs: Currency<USD> = guarantee_claims * refund_per_claim
   
   var cogs: Currency<USD> = payment_processing + video_costs + recording_storage_costs + refund_costs
@@ -98,7 +98,7 @@ model MarketplaceOnlineTutoring {
   var tutor_earnings_per_session: Currency<USD> = (gross_merchandise_value / monthly_sessions) * (1.0 - platform_commission_pct)
   var blended_cac: Currency<USD> = (student_acquisition_costs + tutor_screening_costs) / (new_students_monthly + new_tutors_monthly)
   
-  constraint healthy_take_rate: take_rate > 0.25
-  constraint balanced_marketplace: student_tutor_ratio > 3.0
-  constraint profitable_operations: operating_margin > 0.10
+  constraint healthy_take_rate: take_rate > 0.25 { severity: warning }
+  constraint balanced_marketplace: student_tutor_ratio > 3.0 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.10 { severity: warning }
 }

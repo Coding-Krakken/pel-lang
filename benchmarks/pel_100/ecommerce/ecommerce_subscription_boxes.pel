@@ -1,46 +1,46 @@
 model EcommerceSubscriptionBoxes {
   // Subscription box e-commerce model with churn, cubes, and repeat order dynamics
   
-  param monthly_subscription_price: Fraction =45 USD / month
-  param initial_subscribers: Count<Item> =5000 subscribers
-  param monthly_new_subscribers: Count<Item> =800 subscribers
+  param monthly_subscription_price: Currency<USD> = $45/1mo
+  param initial_subscribers: Count<Item> =5000
+  param monthly_new_subscribers: Count<Item> =800
   param monthly_churn_rate: Fraction =0.07
   
-  param cogs_per_box: Count<Item> =18 USD
-  param packaging_cost: Count<Item> =4 USD
-  param shipping_cost: Count<Item> =6 USD
-  param handling_cost: Count<Item> =2 USD
+  param cogs_per_box: Currency<USD> = $18
+  param packaging_cost: Currency<USD> = $4
+  param shipping_cost: Currency<USD> = $6
+  param handling_cost: Currency<USD> = $2
   
-  param onboarding_cost: Count<Item> =35 USD
-  param customer_acquisition_cost: Count<Item> =25 USD
+  param onboarding_cost: Currency<USD> = $35
+  param customer_acquisition_cost: Currency<USD> = $25
   
-  param annual_retention_rate: Fraction =(1 - monthly_churn_rate) ^ 12 month
+  param annual_retention_rate: Fraction = 1 - (monthly_churn_rate * 12)
   
-  param ltv_months: Fraction =1 / monthly_churn_rate
+  param ltv_months: Fraction = 1 / monthly_churn_rate
   
   // Monthly subscriber projection (steady state approximation)
-  var steady_state_subscribers_gained: Fraction =monthly_new_subscribers * ltv_months
-  var effective_subscribers: Fraction =initial_subscribers + steady_state_subscribers_gained
+  var steady_state_subscribers_gained: Count<Item> = monthly_new_subscribers * ltv_months
+  var effective_subscribers: Count<Item> = initial_subscribers + steady_state_subscribers_gained
   
   // Revenue
-  var monthly_mrr: Fraction =effective_subscribers * monthly_subscription_price
-  var annual_mrr: Fraction =monthly_mrr * 12 month
+  var monthly_mrr: Currency<USD> = effective_subscribers * monthly_subscription_price
+  var annual_mrr: Currency<USD> = monthly_mrr * 12
   
   // COGS
-  var total_cogs_per_box: Fraction =cogs_per_box + packaging_cost + shipping_cost + handling_cost
-  var monthly_cogs: Fraction =effective_subscribers * total_cogs_per_box
-  var annual_cogs: Fraction =monthly_cogs * 12 month
+  var total_cogs_per_box: Currency<USD> = cogs_per_box + packaging_cost + shipping_cost + handling_cost
+  var monthly_cogs: Currency<USD> = effective_subscribers * total_cogs_per_box
+  var annual_cogs: Currency<USD> = monthly_cogs * 12
   
   // Acquisition costs
-  var monthly_acquisition_cost: Fraction =monthly_new_subscribers * (onboarding_cost + customer_acquisition_cost)
-  var annual_acquisition_cost: Fraction =monthly_acquisition_cost * 12 month
+  var monthly_acquisition_cost: Currency<USD> = monthly_new_subscribers * (onboarding_cost + customer_acquisition_cost)
+  var annual_acquisition_cost: Currency<USD> = monthly_acquisition_cost * 12
   
-  var unit_economics: Fraction =monthly_subscription_price - total_cogs_per_box
-  var cac_payback_months: Fraction =(onboarding_cost + customer_acquisition_cost) / unit_economics
+  var unit_economics: Currency<USD> = monthly_subscription_price - total_cogs_per_box
+  var cac_payback_months: Fraction = (onboarding_cost + customer_acquisition_cost) / unit_economics
   
-  var contribution_margin: Fraction =annual_mrr - annual_cogs - annual_acquisition_cost
+  var contribution_margin: Currency<USD> = annual_mrr - annual_cogs - annual_acquisition_cost
   
-  constraint monthly_churn_rate < 0.15
-  constraint cac_payback_months < 6 month
-  constraint contribution_margin > 0 USD
+  constraint monthly_churn_rate_constraint: monthly_churn_rate < 0.15 { severity: warning }
+  constraint cac_payback_months_constraint: cac_payback_months < 6 { severity: warning }
+  constraint contribution_margin_constraint: contribution_margin > $0 { severity: warning }
 }

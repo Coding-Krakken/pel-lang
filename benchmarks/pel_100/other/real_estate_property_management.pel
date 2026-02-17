@@ -3,12 +3,12 @@
 
 model RealEstatePropertyManagement {
   param total_units_managed: Count<Item> = 1850
-  param avg_monthly_rent: Currency<USD> = 1650.0
+  param avg_monthly_rent: Currency<USD> = $1650.0
   param management_fee_pct: Fraction = 0.085 // % of collected rent
   
   // Property portfolio mix
   param single_family_pct: Fraction = 0.35
-  param multifamily_small_pct: Fraction = 0.45 // 2-10 units
+  param multifamily_small_pct: Fraction = 0.45 // 2-10
   param multifamily_large_pct: Fraction = 0.20 // 10+ units
   
   // Vacancy and collections
@@ -16,36 +16,36 @@ model RealEstatePropertyManagement {
   param rent_collection_rate: Fraction = 0.96 // some late/non-payment
   
   // Leasing fees (one-time)
-  param lease_placement_fee: Currency<USD> = 1250.0 // one month rent
+  param lease_placement_fee: Currency<USD> = $1250.0 // one month rent
   param avg_tenant_turnover_annual: Fraction = 0.35
   param monthly_turnovers: Count<Item> = 54 // (1850 * 0.35) / 12
   
   // Maintenance coordination
   param maintenance_markup_pct: Fraction = 0.15 // markup on contractor work
-  param avg_maintenance_per_unit_month: Currency<USD> = 85.0
+  param avg_maintenance_per_unit_month: Currency<USD> = $85.0
   param emergency_calls_pct: Fraction = 0.12
-  param emergency_coordination_fee: Currency<USD> = 75.0
+  param emergency_coordination_fee: Currency<USD> = $75.0
   
   // Property inspections
   param annual_inspections_per_unit: Count<Item> = 2
-  param inspection_fee: Currency<USD> = 95.0
+  param inspection_fee: Currency<USD> = $95.0
   
   // Staffing
-  param property_managers: Count<Item> = 8 // ~230 units each
-  param cost_per_pm: Currency<USD> = 7500.0
+  param property_managers: Count<Item> = 8 // ~230 each
+  param cost_per_pm: Currency<USD> = $7500.0
   param leasing_agents: Count<Item> = 5
-  param cost_per_leasing_agent: Currency<USD> = 5500.0
+  param cost_per_leasing_agent: Currency<USD> = $5500.0
   param maintenance_coordinators: Count<Item> = 4
-  param cost_per_coordinator: Currency<USD> = 6000.0
+  param cost_per_coordinator: Currency<USD> = $6000.0
   param admin_staff: Count<Item> = 3
-  param cost_per_admin: Currency<USD> = 4800.0
+  param cost_per_admin: Currency<USD> = $4800.0
   
   // Technology and operations
-  param property_management_software: Currency<USD> = 3500.0
-  param office_lease: Currency<USD> = 8000.0
-  param vehicles_mileage: Currency<USD> = 2500.0
-  param insurance: Currency<USD> = 4500.0
-  param marketing_leasing: Currency<USD> = 6500.0
+  param property_management_software: Currency<USD> = $3500.0
+  param office_lease: Currency<USD> = $8000.0
+  param vehicles_mileage: Currency<USD> = $2500.0
+  param insurance: Currency<USD> = $4500.0
+  param marketing_leasing: Currency<USD> = $6500.0
   
   // Calculate rent collected
   var occupied_units: Count<Item> = total_units_managed * (1.0 - vacancy_rate)
@@ -65,7 +65,7 @@ model RealEstatePropertyManagement {
   var emergency_fee_revenue: Currency<USD> = emergency_calls * emergency_coordination_fee
   
   // Inspection fees
-  var monthly_inspections: Count<Item> = (total_units_managed * annual_inspections_per_unit) / 12
+  var monthly_inspections: Fraction = (total_units_managed * annual_inspections_per_unit) / 12
   var inspection_revenue: Currency<USD> = monthly_inspections * inspection_fee
   
   var total_revenue: Currency<USD> = management_fee_revenue + leasing_fee_revenue +maintenance_markup_revenue + emergency_fee_revenue + inspection_revenue
@@ -86,12 +86,12 @@ model RealEstatePropertyManagement {
   
   // Property management metrics
   var revenue_per_unit: Currency<USD> = total_revenue / total_units_managed
-  var units_per_pm: Count<Item> = total_units_managed / property_managers
+  var units_per_pm: Fraction = total_units_managed / property_managers
   var management_fee_pct_total: Fraction = management_fee_revenue / total_revenue
   var ancillary_revenue_pct: Fraction = (leasing_fee_revenue + maintenance_markup_revenue +emergency_fee_revenue + inspection_revenue) / total_revenue
   var staff_cost_pct: Fraction = total_staff_costs / total_revenue
   
-  constraint healthy_margins: operating_margin > 0.25
-  constraint efficient_operations: units_per_pm > 200
-  constraint diversified_revenue: ancillary_revenue_pct > 0.30
+  constraint healthy_margins: operating_margin > 0.25 { severity: warning }
+  constraint efficient_operations: units_per_pm > 200 { severity: warning }
+  constraint diversified_revenue: ancillary_revenue_pct > 0.30 { severity: warning }
 }
