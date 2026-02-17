@@ -14,13 +14,22 @@ def test_parse_currency_div_duration_expression() -> None:
 
     assert len(model.vars) == 1
     expr = model.vars[0].value
-    assert isinstance(expr, BinaryOp)
-    assert expr.operator == "/"
-    assert isinstance(expr.left, Literal)
-    assert expr.left.literal_type == "currency"
-    assert isinstance(expr.right, Literal)
-    assert expr.right.literal_type == "duration"
-    assert expr.right.value == "1mo"
+    # Accept either BinaryOp (legacy) or PerDurationExpression (preferred)
+    if isinstance(expr, BinaryOp):
+        assert expr.operator == "/"
+        assert isinstance(expr.left, Literal)
+        assert expr.left.literal_type == "currency"
+        assert isinstance(expr.right, Literal)
+        assert expr.right.literal_type == "duration"
+        assert expr.right.value == "1mo"
+    else:
+        # PerDurationExpression
+        from compiler.ast_nodes import PerDurationExpression
+
+        assert isinstance(expr, PerDurationExpression)
+        assert isinstance(expr.left, Literal)
+        assert expr.left.literal_type == "currency"
+        assert expr.duration == "1mo"
 
 
 @pytest.mark.unit

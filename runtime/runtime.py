@@ -198,45 +198,68 @@ class PELRuntime:
                 return left > right
 
         elif expr_type == "Distribution":
-            # The distribution info is directly in expr
-            dist_type = expr["dist_type"]
-            params = expr["params"]
+            # Support both legacy IR shape and current IR shape.
+            # Legacy: expr["distribution"] = {"distribution_type": ..., "parameters": {...}}
+            # Current: expr["dist_type"] and expr["params"]
+            if "distribution" in expr:
+                dist = expr["distribution"]
+                dist_type = dist.get("distribution_type")
+                params = dist.get("parameters", {})
+            else:
+                dist_type = expr.get("dist_type")
+                params = expr.get("params", {})
 
-            # Resolve all parameters
+            # Resolve parameters: they may be raw values or expression nodes
             resolved_params = {}
             for param_name, param_expr in params.items():
-                resolved_params[param_name] = self.evaluate_expression(param_expr, state, deterministic)
+                if isinstance(param_expr, dict) and "expr_type" in param_expr:
+                    resolved_params[param_name] = self.evaluate_expression(param_expr, state, deterministic)
+                else:
+                    resolved_params[param_name] = param_expr
 
-            # Sample from distribution based on mode
+            # Normalize common parameter names (allow μ/mu, σ/sigma)
+            if "mu" in resolved_params and "μ" not in resolved_params:
+                resolved_params["μ"] = resolved_params["mu"]
+            if "sigma" in resolved_params and "σ" not in resolved_params:
+                resolved_params["σ"] = resolved_params["sigma"]
+
+            # Deterministic: return mean/median
             if deterministic:
-                # For deterministic mode, return the mean/median
-                if dist_type == "Normal":
-                    return resolved_params.get("μ", 0)
-                elif dist_type == "Beta":
-                    # Mean of Beta(α, β) = α / (α + β)
-                    alpha = resolved_params.get("α", 1)
-                    beta = resolved_params.get("β", 1)
+                if dist_type in ("Normal", "normal"):
+                    return resolved_params.get("μ", resolved_params.get("mu", 0))
+                if dist_type in ("Beta", "beta"):
+                    alpha = resolved_params.get("α", resolved_params.get("alpha", 1))
+                    beta = resolved_params.get("β", resolved_params.get("beta", 1))
                     return alpha / (alpha + beta)
-                elif dist_type == "LogNormal":
-                    return resolved_params.get("μ", 0)
-                else:
-                    return 0
-            else:
-                # For stochastic mode, sample from distribution
-                if dist_type == "Normal":
-                    mu = resolved_params.get("μ", 0)
-                    sigma = resolved_params.get("σ", 1)
-                    return self.rng.gauss(mu, sigma)
-                elif dist_type == "Beta":
-                    alpha = resolved_params.get("α", 1)
-                    beta = resolved_params.get("β", 1)
-                    return self.rng.betavariate(alpha, beta)
-                elif dist_type == "LogNormal":
-                    mu = resolved_params.get("μ", 0)
-                    sigma = resolved_params.get("σ", 1)
-                    return self.rng.lognormvariate(mu, sigma)
-                else:
-                    return 0
+                if dist_type in ("LogNormal", "lognormal"):
+                    return resolved_params.get("μ", resolved_params.get("mu", 0))
+                if dist_type in ("Uniform", "uniform"):
+                    low = resolved_params.get("low", resolved_params.get("a", 0))
+                    high = resolved_params.get("high", resolved_params.get("b", low))
+                    return (low + high) / 2.0
+                # Triangular etc. could be added here
+                # Fallback
+                return 0
+
+            # Stochastic sampling
+            if dist_type in ("Normal", "normal"):
+                mu = resolved_params.get("μ", resolved_params.get("mu", 0))
+                sigma = resolved_params.get("σ", resolved_params.get("sigma", 1))
+                return self.rng.gauss(mu, sigma)
+            if dist_type in ("Beta", "beta"):
+                alpha = resolved_params.get("α", resolved_params.get("alpha", 1))
+                beta = resolved_params.get("β", resolved_params.get("beta", 1))
+                return self.rng.betavariate(alpha, beta)
+            if dist_type in ("LogNormal", "lognormal"):
+                mu = resolved_params.get("μ", resolved_params.get("mu", 0))
+                sigma = resolved_params.get("σ", resolved_params.get("sigma", 1))
+                return self.rng.lognormvariate(mu, sigma)
+            if dist_type in ("Uniform", "uniform"):
+                low = resolved_params.get("low", resolved_params.get("a", 0))
+                high = resolved_params.get("high", resolved_params.get("b", low))
+                return self.rng.uniform(low, high)
+
+            return 0
 
         elif expr_type == "PerDurationExpression":
             # Evaluate PerDurationExpression: returns value per duration unit
