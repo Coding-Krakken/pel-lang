@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: E-commerce Subscription Box
+// Recurring box purchases, churn, AOV dynamics
+
+model ecommerce_subscription_box {
+  param subscribers: Count<Subscriber> = 12_000
+  param monthly_churn: Rate per Month = 0.08/1mo
+  param monthly_aov: Currency<USD> = $39
+  param marketing_spend: Currency<USD> = $10_000
+
+  var retained: Count<Subscriber> = subscribers * (1 - monthly_churn)
+  var monthly_revenue: Currency<USD> = retained * monthly_aov
+  var cac: Currency<USD> = marketing_spend / (subscribers * 0.05)
+
+  constraint healthy_churn: monthly_churn < 0.15 {
+    severity: warning,
+    message: "Churn above acceptable level"
+  }
+}

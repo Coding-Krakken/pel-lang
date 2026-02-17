@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: Gig-Economy Marketplace
+// Short-duration tasks, surge pricing, supply elasticity
+
+model marketplace_gig_economy {
+  param daily_tasks: Count<Task> = 10_000
+  param avg_task_value: Currency<USD> = $25
+  param take_rate: Fraction = 0.20
+  param active_workers: Count<Worker> = 40_000
+
+  var monthly_gmv: Currency<USD> = daily_tasks * avg_task_value * 30
+  var platform_revenue: Currency<USD> = monthly_gmv * take_rate
+  var revenue_per_worker: Currency<USD> = monthly_gmv / active_workers
+
+  constraint liquidity_ratio: Fraction = (daily_tasks * 7) / active_workers {
+    severity: warning,
+    message: "Weekly tasks per worker too low"
+  }
+}

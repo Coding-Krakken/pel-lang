@@ -72,14 +72,22 @@ cat benchmarks/PEL_100_RESULTS.md
 
 ## Current Status
 
-**Implemented:** 4/100 models (4%)
+**Implemented:** 12/100 models (12%)
 
 - ✅ saas/saas_subscription.pel
+- ✅ saas/saas_tiered_pricing.pel
+- ✅ saas/saas_freemium_conversion.pel
 - ✅ ecommerce/ecommerce_b2c.pel
+- ✅ ecommerce/subscription_box.pel
+- ✅ ecommerce/marketplace_dropshipping.pel
 - ✅ services/services_consulting.pel
+- ✅ services/agency_retainers.pel
+- ✅ services/freelance_platform.pel
 - ✅ marketplace/marketplace_two_sided.pel
+- ✅ marketplace/gig_economy.pel
+- ✅ other/advertising_media.pel
 
-**Next batch (Q2 2026):** 16 more models across all categories
+**Next batch (Q2 2026):** 8–16 more models across all categories
 
 ## Success Criteria
 

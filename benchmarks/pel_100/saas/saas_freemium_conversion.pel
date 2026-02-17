@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: SaaS Freemium Conversion
+// Tracks freemium base, conversion to paid tiers, and upgrade flow
+
+model saas_freemium_conversion {
+  param freemium_users: Count<User> = 50_000
+  param trial_to_paid_rate: Fraction = 0.02
+  param paid_upgrade_rate: Fraction = 0.10
+  param arpu_paid: Currency<USD> per Month = $49/1mo
+
+  var paid_users: Count<User> = freemium_users * trial_to_paid_rate
+  var upgraded_users: Count<User> = paid_users * paid_upgrade_rate
+  var monthly_revenue: Currency<USD> = (paid_users + upgraded_users) * arpu_paid
+
+  constraint revenue_positive: monthly_revenue > $0 {
+    severity: warning,
+    message: "Revenue should be positive"
+  }
+}
