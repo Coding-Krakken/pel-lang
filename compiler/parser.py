@@ -96,6 +96,8 @@ class Parser:
                 model.policies.append(item)
             elif isinstance(item, Statement):
                 model.statements.append(item)
+            # Allow optional semicolon terminator after declarations (conformance YAMLs use `;`)
+            self.consume_if(TokenType.SEMICOLON)
             # TODO: record_decl, enum_decl, simulate_decl
 
         self.expect(TokenType.RBRACE)
@@ -400,8 +402,19 @@ class Parser:
         """Parse primary expression (literals, identifiers, function calls, etc.)."""
         # Literals
         if self.match(TokenType.NUMBER):
-            value = self.advance().value
-            return Literal(value=float(value), literal_type="number")
+            token = self.advance()
+            sval = token.value
+            sval_clean = sval.replace('_', '')
+            # Integer literals (no decimal point) -> keep as integer
+            if '.' not in sval_clean:
+                try:
+                    ival = int(sval_clean)
+                    return Literal(value=ival, literal_type="integer")
+                except Exception:
+                    # fallback to float
+                    return Literal(value=float(sval_clean), literal_type="number")
+            # Decimal / float literal
+            return Literal(value=float(sval_clean), literal_type="number")
 
         elif self.match(TokenType.CURRENCY):
             value = self.advance().value

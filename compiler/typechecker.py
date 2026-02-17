@@ -329,6 +329,23 @@ class TypeChecker:
             if var.value is not None:
                 if not isinstance(var.value, Distribution):
                     value_type = self.infer_expression(var.value)
+
+                    # Compile-time check: indexing into a previously-declared literal array
+                    # Example: var nums = [1,2,3]; var x = nums[10]; -> Index out of bounds
+                    if isinstance(var.value, Indexing) and isinstance(var.value.index, Literal) and var.value.index.literal_type == "integer":
+                        base = var.value.expression
+                        if isinstance(base, Variable):
+                            # find prior declaration for base
+                            for prev in model.vars:
+                                if prev.name == base.name and isinstance(prev.value, ArrayLiteral):
+                                    try:
+                                        idx_val = int(var.value.index.value)
+                                        if idx_val < 0 or idx_val >= len(prev.value.elements):
+                                            self.errors.append(TypeError("E0302", "Index out of bounds"))
+                                    except Exception:
+                                        pass
+                                    break
+
                     if not self.types_compatible(var_type, value_type):
                         self.errors.append(type_mismatch(str(var_type), str(value_type)))
 
@@ -337,6 +354,31 @@ class TypeChecker:
             condition_type = self.infer_expression(constraint.condition)
             if condition_type.type_kind != "Boolean":
                 self.errors.append(type_mismatch("Boolean", str(condition_type)))
+
+        # Phase 3.5: Type check top-level statements (assignments, etc.)
+        for stmt in model.statements:
+            # Assignment: ensure target and value types are compatible
+            if isinstance(stmt, Assignment):
+                target_type = self.infer_expression(stmt.target)
+                value_type = self.infer_expression(stmt.value)
+                if not self.types_compatible(target_type, value_type):
+                    self.errors.append(type_mismatch(str(target_type), str(value_type)))
+            # For/If statements at top-level: ensure their contained expressions are type-checked
+            elif isinstance(stmt, IfStmt):
+                # Type-check condition and bodies
+                cond_type = self.infer_expression(stmt.condition)
+                if cond_type.type_kind != "Boolean":
+                    self.errors.append(type_mismatch("Boolean", str(cond_type)))
+                for s in (stmt.then_body or []) + (stmt.else_body or []):
+                    if isinstance(s, Assignment):
+                        tt = self.infer_expression(s.target)
+                        vt = self.infer_expression(s.value)
+                        if not self.types_compatible(tt, vt):
+                            self.errors.append(type_mismatch(str(tt), str(vt)))
+            elif isinstance(stmt, ForStmt):
+                # Basic validation of loop bounds
+                _ = self.infer_expression(stmt.start)
+                _ = self.infer_expression(stmt.end)
 
         # Phase 4: Type check policies
         for policy in model.policies:
@@ -410,8 +452,12 @@ class TypeChecker:
 
     def infer_literal(self, lit: Literal) -> PELType:
         """Infer type from literal."""
+        # Integer literals should infer `Int` (conformance expects Int vs Float distinction)
+        if lit.literal_type == "integer":
+            return PELType(type_kind="Int", params={}, dimension=Dimension.dimensionless())
+
         if lit.literal_type == "number":
-            return PELType.fraction()  # Plain number is dimensionless
+            return PELType.fraction()  # Plain (float) number is dimensionless
 
         elif lit.literal_type == "currency":
             # Parse currency code from literal (e.g., "$100" -> USD)
@@ -486,6 +532,15 @@ class TypeChecker:
 
         # Division: dimensional division
         elif operator == '/':
+            # Static check: division by literal zero should be reported as an error
+            if isinstance(expr.right, Literal) and expr.right.literal_type in ("number", "integer"):
+                try:
+                    if float(expr.right.value) == 0.0:
+                        self.errors.append(TypeError("E0105", "Division by zero"))
+                        return left_type
+                except Exception:
+                    pass
+
             # Dimensionless per Duration => Rate per time unit (e.g., 0.30/1mo)
             if not left_type.dimension.units and right_type.type_kind == "Duration":
                 time_unit = right_type.dimension.units.get("time", "generic")
@@ -611,6 +666,11 @@ class TypeChecker:
         for param_name, param_value in expr.params.items():
             resolved_params[param_name] = self.infer_expression(param_value)
 
+        # Validate distribution parameter types (conformance: parameters must be numeric)
+        for param_name, ptype in resolved_params.items():
+            if ptype.type_kind not in ("Int", "Fraction"):
+                self.errors.append(TypeError("E0104", "Distribution parameter type mismatch"))
+
         # Assume the distribution's type matches its declared inner type
         inner_type = PELType.fraction()  # Default to dimensionless
         if resolved_params:
@@ -646,7 +706,9 @@ class TypeChecker:
     def infer_array_literal(self, expr: ArrayLiteral) -> PELType:
         """Infer type of array literal."""
         if not expr.elements:
-            # Empty array
+            # Empty array: cannot infer element type without annotation
+            self.errors.append(TypeError("E0103", "Cannot infer type of empty array"))
+            # Fallback to array of fraction to continue checking
             return PELType(type_kind="Array", params={"element_type": PELType.fraction()}, dimension=Dimension.dimensionless())
 
         # Infer element type from first element
@@ -667,14 +729,24 @@ class TypeChecker:
     def infer_indexing(self, expr: Indexing) -> PELType:
         """Infer type of indexing expression."""
         array_type = self.infer_expression(expr.expression)
-        _ = self.infer_expression(expr.index)
+        index_type = self.infer_expression(expr.index)
 
-        # For TimeSeries[t], return inner type
+        # For TimeSeries[t], index must be Int and return inner type
         if array_type.type_kind == "TimeSeries":
+            if index_type.type_kind != "Int":
+                self.errors.append(TypeError("E0102", "Index must be Int"))
             return array_type.params.get("inner", PELType.fraction())
 
         # For Array[i], return element type
         elif array_type.type_kind == "Array":
+            # If indexing a literal array with a literal integer, check bounds at compile time
+            if isinstance(expr.expression, ArrayLiteral) and isinstance(expr.index, Literal) and expr.index.literal_type == "integer":
+                try:
+                    idx_val = int(expr.index.value)
+                    if idx_val < 0 or idx_val >= len(expr.expression.elements):
+                        self.errors.append(TypeError("E0302", "Index out of bounds"))
+                except Exception:
+                    pass
             return array_type.params.get("element_type", PELType.fraction())
 
         else:
