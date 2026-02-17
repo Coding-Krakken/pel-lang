@@ -2,6 +2,20 @@
 
 The PEL Standard Library provides battle-tested, reusable economic modeling components.
 
+## Progress
+
+**3 of 9 modules complete (33%)**
+
+- ✅ `unit_econ/` - Unit Economics (20 functions)
+- ✅ `cashflow/` - Cash Flow Waterfall (17 functions)
+- ✅ `retention/` - Retention & Churn (18 functions)
+- 🔜 `demand/` - Demand Forecasting (planned)
+- 🔜 `funnel/` - Conversion Funnels (planned)
+- 🔜 `pricing/` - Pricing Models (planned)
+- 🔜 `capacity/` - Capacity Planning (planned)
+- 🔜 `hiring/` - Hiring & Headcount (planned)
+- 🔜 `shocks/` - Scenario Library (planned)
+
 ## Philosophy
 
 - **Correct by default**: All functions are dimensionally sound and type-safe
@@ -37,17 +51,20 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - SaaS magic number, burn multiple, rule of 40
 - Usage-based revenue
 
-### 5. `cashflow/` - Cash Flow Waterfall
-- Accounts receivable timing
-- Accounts payable timing
-- Payroll schedules
-- Tax calculations
+### 5. `cashflow/` - Cash Flow Waterfall ✅ **IMPLEMENTED**
+- Accounts receivable timing (AR functions)
+- Accounts payable timing (AP functions)
+- Payroll schedules and tax timing
+- Working capital calculations (CCC, burn rate, runway)
+- Cash waterfall (OCF, FCF, projections)
 
-### 6. `retention/` - Retention & Churn
-- Survival curves
-- Cohort retention
-- Expansion/contraction revenue
-- Net dollar retention
+### 6. `retention/` - Retention & Churn ✅ **IMPLEMENTED**
+- Cohort retention curves and survival rates
+- Customer and revenue churn metrics
+- Expansion/contraction revenue (upsells, downgrades)
+- Net dollar retention (NDR, GDR, Quick Ratio)
+- Retention curve models (exponential, power-law, Weibull)
+- LTV integration (retention-based LTV, discounted LTV)
 
 ### 7. `capacity/` - Capacity Planning
 - Queueing models

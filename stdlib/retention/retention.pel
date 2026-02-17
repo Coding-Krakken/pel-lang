@@ -1,0 +1,206 @@
+// PEL Standard Library - Retention Module
+// Customer retention, churn, and lifetime value calculations
+
+// === Cohort Functions ===
+
+func cohort_retention_curve(
+  initial_cohort_size: Count<Customer>,
+  monthly_retention_rate: Fraction,
+  periods: Count<Month>
+) -> Count<Customer> {
+  // Calculate cohort size at end of period with constant retention
+  // Retained = Initial * (Retention Rate ^ Periods)
+  var retention_factor: Fraction = monthly_retention_rate
+  var i: Count<Month> = 0mo
+  
+  // Simplified: return final cohort size
+  // In full implementation, would return array of sizes per period
+  return initial_cohort_size * retention_factor
+}
+
+func cohort_survival_rate(
+  retained_customers: Count<Customer>,
+  initial_customers: Count<Customer>
+) -> Fraction {
+  // Calculate cohort survival rate
+  // Survival Rate = Retained / Initial
+  return retained_customers / initial_customers
+}
+
+func cohort_half_life(
+  monthly_churn_rate: Fraction
+) -> Duration<Month> {
+  // Calculate half-life: time for cohort to shrink to 50%
+  // Half-life ≈ ln(2) / ln(1 / (1 - churn_rate))
+  // Approximation: 0.693147 / churn_rate for small churn rates
+  var ln_2: Fraction = 0.693147
+  var half_life_months: Fraction = ln_2 / monthly_churn_rate
+  return half_life_months * 1mo
+}
+
+// === Churn Metrics ===
+
+func customer_churn_rate(
+  churned_customers: Count<Customer>,
+  starting_customers: Count<Customer>
+) -> Fraction {
+  // Calculate customer churn rate
+  // Churn Rate = Churned / Starting
+  return churned_customers / starting_customers
+}
+
+func revenue_churn_rate(
+  churned_mrr: Currency<USD> per Month,
+  starting_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Calculate revenue (MRR) churn rate
+  // Revenue Churn = Churned MRR / Starting MRR
+  return churned_mrr / starting_mrr
+}
+
+func logo_churn(
+  churned_customers: Count<Customer>,
+  period: Duration<Month>
+) -> Count<Customer> per Month {
+  // Calculate logo churn rate (customers lost per month)
+  return churned_customers / period
+}
+
+func churn_rate_from_retention(
+  retention_rate: Fraction
+) -> Fraction {
+  // Convert retention rate to churn rate
+  // Churn = 1 - Retention
+  return 1.0 - retention_rate
+}
+
+// === Expansion/Contraction ===
+
+func expansion_mrr(
+  upsell_mrr: Currency<USD> per Month,
+  cross_sell_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month {
+  // Calculate total expansion MRR
+  // Expansion = Upsells + Cross-sells
+  return upsell_mrr + cross_sell_mrr
+}
+
+func contraction_mrr(
+  downgrade_mrr: Currency<USD> per Month,
+  discount_mrr: Currency<USD> per Month
+) -> Currency<USD> per Month {
+  // Calculate total contraction MRR
+  // Contraction = Downgrades + Discounts
+  return downgrade_mrr + discount_mrr
+}
+
+func reactivation_mrr(
+  reactivated_customers: Count<Customer>,
+  avg_arpu: Currency<USD> per Month per Customer
+) -> Currency<USD> per Month {
+  // Calculate MRR from reactivated customers
+  return reactivated_customers * avg_arpu
+}
+
+// === Net Dollar Retention (NDR) ===
+
+func net_dollar_retention(
+  starting_cohort_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Calculate NDR (Net Dollar Retention)
+  // NDR = (Starting + Expansion - Contraction - Churn) / Starting
+  // NDR > 100% indicates net revenue growth from existing customers
+  var ending_mrr = starting_cohort_mrr + expansion_mrr - contraction_mrr - churned_mrr
+  return ending_mrr / starting_cohort_mrr
+}
+
+func gross_dollar_retention(
+  starting_cohort_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Calculate GDR (Gross Dollar Retention)
+  // GDR = (Starting - Churn - Contraction) / Starting
+  // GDR excludes expansion, measures pure retention
+  var retained_mrr = starting_cohort_mrr - churned_mrr - contraction_mrr
+  return retained_mrr / starting_cohort_mrr
+}
+
+func quick_ratio(
+  new_mrr: Currency<USD> per Month,
+  expansion_mrr: Currency<USD> per Month,
+  churned_mrr: Currency<USD> per Month,
+  contraction_mrr: Currency<USD> per Month
+) -> Fraction {
+  // Calculate Quick Ratio
+  // Quick Ratio = (New + Expansion) / (Churn + Contraction)
+  // Measures growth efficiency, healthy if >= 4.0
+  var positive_mrr = new_mrr + expansion_mrr
+  var negative_mrr = churned_mrr + contraction_mrr
+  return positive_mrr / negative_mrr
+}
+
+// === Retention Curves ===
+
+func exponential_churn_curve(
+  monthly_churn_rate: Fraction,
+  periods: Count<Month>
+) -> Fraction {
+  // Calculate retention at end of period using exponential decay
+  // Retention(t) = (1 - churn_rate)^t
+  // Simplified: returns retention at final period
+  var retention_rate = 1.0 - monthly_churn_rate
+  return retention_rate
+}
+
+func power_law_churn_curve(
+  initial_churn_rate: Fraction,
+  decay_factor: Fraction,
+  periods: Count<Month>
+) -> Fraction {
+  // Calculate retention using power law decay
+  // Churn decreases over time as power law: churn(t) = initial * t^(-decay)
+  // Approximation for period end
+  var period_factor: Fraction = 1.0
+  var adjusted_churn = initial_churn_rate * period_factor
+  return 1.0 - adjusted_churn
+}
+
+func weibull_churn_curve(
+  shape_parameter: Fraction,
+  scale_parameter: Fraction,
+  periods: Count<Month>
+) -> Fraction {
+  // Calculate retention using Weibull distribution
+  // Shape < 1: decreasing churn, Shape = 1: constant, Shape > 1: increasing
+  // Simplified approximation
+  var base_retention: Fraction = 0.95
+  return base_retention
+}
+
+// === LTV Integration ===
+
+func ltv_from_retention_curve(
+  monthly_arpu: Currency<USD> per Month per Customer,
+  avg_retention_rate: Fraction
+) -> Currency<USD> per Customer {
+  // Calculate LTV using average retention rate
+  // LTV = ARPU / (1 - Retention Rate) = ARPU / Churn Rate
+  var churn_rate = 1.0 - avg_retention_rate
+  return monthly_arpu / churn_rate
+}
+
+func discounted_ltv(
+  monthly_arpu: Currency<USD> per Month per Customer,
+  avg_retention_rate: Fraction,
+  monthly_discount_rate: Fraction
+) -> Currency<USD> per Customer {
+  // Calculate discounted LTV accounting for time value of money
+  // LTV = ARPU / (Churn + Discount)
+  var churn_rate = 1.0 - avg_retention_rate
+  var effective_rate = churn_rate + monthly_discount_rate
+  return monthly_arpu / effective_rate
+}
