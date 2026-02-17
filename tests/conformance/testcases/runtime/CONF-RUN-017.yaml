@@ -1,0 +1,9 @@
+id: CONF-RUN-017
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Power operator
+input: "model test {\n  var x = 2 ^ 8;\n}\n"
+expected:
+  type: success
+  values:
+    x: 256

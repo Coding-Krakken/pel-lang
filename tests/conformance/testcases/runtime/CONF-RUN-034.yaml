@@ -1,0 +1,10 @@
+id: CONF-RUN-034
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Monte Carlo simulation
+input: "model test {\n  param x = ~Normal(μ=0, σ=1);\n  param y = ~Normal(μ=0, σ=1);\n\
+  \  var sum = x + y;\n}\n"
+expected:
+  type: success
+  values:
+    runs: 1000

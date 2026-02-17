@@ -1,0 +1,8 @@
+id: CONF-PROV-014
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: TimeSeries provenance
+input: "model test {\n  param initial: Currency<USD> = $1000 { source: \"bank\" }\n\
+  \  var revenue: TimeSeries<Currency<USD>>;\n  revenue[0] = initial;\n}\n"
+expected:
+  type: success

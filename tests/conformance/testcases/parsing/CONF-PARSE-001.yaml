@@ -1,0 +1,17 @@
+id: CONF-PARSE-001
+category: parsing
+spec_ref: spec/pel_language_spec.md#model-declaration
+description: Simple empty model
+input: 'model empty_model {}
+
+  '
+expected:
+  type: success
+  ast:
+    type: Model
+    name: empty_model
+    params: []
+    vars: []
+    funcs: []
+    constraints: []
+    policies: []

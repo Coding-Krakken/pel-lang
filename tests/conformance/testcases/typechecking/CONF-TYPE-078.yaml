@@ -1,0 +1,10 @@
+id: CONF-TYPE-078
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Return type mismatch
+input: "model test {\n  func get_revenue() -> Currency<USD> {\n    return 1000;\n\
+  \  }\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Return type mismatch

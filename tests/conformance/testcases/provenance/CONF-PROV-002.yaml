@@ -1,0 +1,13 @@
+id: CONF-PROV-002
+category: provenance
+spec_ref: spec/pel_language_spec.md#provenance
+description: Provenance with freshness
+input: "model test {\n  param revenue: Currency<USD> = $50000 {\n    source: \"stripe_export_2025_12\"\
+  ,\n    method: \"observed\",\n    confidence: 0.95,\n    freshness: \"P1M\"\n  }\n\
+  }\n"
+expected:
+  type: success
+  provenance:
+    revenue:
+      source: stripe_export_2025_12
+      freshness: P1M

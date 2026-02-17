@@ -1,0 +1,9 @@
+id: CONF-TYPE-032
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Inequality comparison
+input: "model test {\n  var result = 5 != 3;\n}\n"
+expected:
+  type: success
+  types:
+    result: Bool

@@ -1,0 +1,9 @@
+id: CONF-PARSE-054
+category: parsing
+spec_ref: spec/pel_language_spec.md#syntax
+description: For loop
+input: "model test {\n  for t in 0..12 {\n    revenue[t] = $1000;\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model

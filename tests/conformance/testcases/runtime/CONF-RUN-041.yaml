@@ -1,0 +1,9 @@
+id: CONF-RUN-041
+category: runtime
+spec_ref: spec/pel_language_spec.md#error-handling
+description: Error - division by zero
+input: "model test {\n  var x = 10 / 0;\n}\n"
+expected:
+  type: error
+  error_type: RuntimeError
+  error_message: Division by zero

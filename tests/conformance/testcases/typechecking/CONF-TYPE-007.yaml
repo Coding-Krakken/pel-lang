@@ -1,0 +1,9 @@
+id: CONF-TYPE-007
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Boolean literal type
+input: "model test {\n  var x = true;\n}\n"
+expected:
+  type: success
+  types:
+    x: Bool

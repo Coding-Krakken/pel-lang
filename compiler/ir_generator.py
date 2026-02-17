@@ -224,7 +224,7 @@ class IRGenerator:
             # Fallback for unknown expression types
             return {"expr_type": "Unknown"}
 
-    def generate_provenance(self, prov: Provenance) -> dict[str, Any]:
+    def generate_provenance(self, prov: Provenance | dict[str, Any]) -> dict[str, Any]:
         """Generate IR provenance block."""
         # Parser currently produces provenance as a plain dict.
         if isinstance(prov, dict):

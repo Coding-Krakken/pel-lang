@@ -1,0 +1,14 @@
+id: CONF-PARSE-043
+category: parsing
+spec_ref: spec/pel_language_spec.md#policies
+description: Simple policy
+input: "model test {\n  policy price_increase {\n    when: t == 12,\n    then: {\n\
+  \      price = price * 1.05;\n    }\n  }\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test
+    policies:
+    - type: Policy
+      name: price_increase

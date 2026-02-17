@@ -1,0 +1,10 @@
+id: CONF-RUN-037
+category: runtime
+spec_ref: spec/pel_language_spec.md#runtime-semantics
+description: Fraction to percentage
+input: "model test {\n  var fraction = 0.05;\n  var percentage = fraction * 100;\n\
+  }\n"
+expected:
+  type: success
+  values:
+    percentage: 5.0

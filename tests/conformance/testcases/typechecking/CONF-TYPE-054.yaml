@@ -1,0 +1,10 @@
+id: CONF-TYPE-054
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Function wrong arg type
+input: "model test {\n  func double(x: Int) -> Int { return x * 2; }\n  var result\
+  \ = double(3.14);\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Type mismatch in argument

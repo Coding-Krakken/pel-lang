@@ -1,0 +1,9 @@
+id: CONF-TYPE-077
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Policy condition must be bool
+input: "model test {\n  policy test {\n    when: 42,\n    then: { }\n  }\n}\n"
+expected:
+  type: error
+  error_type: TypeError
+  error_message: Policy condition must be Bool

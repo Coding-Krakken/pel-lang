@@ -1,0 +1,34 @@
+id: CONF-LEX-025
+category: lexical
+spec_ref: spec/pel_language_spec.md#distribution-syntax
+description: Distribution syntax - tilde operator
+input: 'param x: Rate = ~Normal(μ=0.05, σ=0.01);
+
+  '
+expected:
+  type: success
+  tokens:
+  - type: PARAM
+  - type: IDENTIFIER
+    value: x
+  - type: COLON
+  - type: RATE_TYPE
+  - type: ASSIGN
+  - type: TILDE
+  - type: IDENTIFIER
+    value: Normal
+  - type: LPAREN
+  - type: IDENTIFIER
+    value: μ
+  - type: ASSIGN
+  - type: NUMBER
+    value: '0.05'
+  - type: COMMA
+  - type: IDENTIFIER
+    value: σ
+  - type: ASSIGN
+  - type: NUMBER
+    value: '0.01'
+  - type: RPAREN
+  - type: SEMICOLON
+  - type: EOF

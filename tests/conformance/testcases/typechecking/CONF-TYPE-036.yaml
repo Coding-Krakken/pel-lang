@@ -1,0 +1,9 @@
+id: CONF-TYPE-036
+category: typechecking
+spec_ref: spec/pel_language_spec.md#comparison-operators
+description: Greater than or equal
+input: "model test {\n  var result = 10 >= 10;\n}\n"
+expected:
+  type: success
+  types:
+    result: Bool

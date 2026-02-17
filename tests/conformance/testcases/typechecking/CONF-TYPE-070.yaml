@@ -1,0 +1,9 @@
+id: CONF-TYPE-070
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Fraction type
+input: "model test {\n  var tax_rate: Fraction = 0.21;\n}\n"
+expected:
+  type: success
+  types:
+    tax_rate: Fraction

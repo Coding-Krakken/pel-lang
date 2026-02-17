@@ -1,0 +1,10 @@
+id: CONF-PARSE-039
+category: parsing
+spec_ref: spec/pel_language_spec.md#expressions
+description: Dot access
+input: "model test {\n  var value = obj.field;\n}\n"
+expected:
+  type: success
+  ast:
+    type: Model
+    name: test

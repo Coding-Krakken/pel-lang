@@ -1,0 +1,8 @@
+id: CONF-TYPE-075
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-system
+description: Constraint type checking
+input: "model test {\n  param revenue: Currency<USD> = $1000;\n  constraint positive:\
+  \ revenue >= $0;\n}\n"
+expected:
+  type: success

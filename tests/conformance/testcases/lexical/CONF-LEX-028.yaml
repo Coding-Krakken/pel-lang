@@ -1,0 +1,11 @@
+id: CONF-LEX-028
+category: lexical
+spec_ref: spec/pel_language_spec.md#identifiers
+description: Error - invalid character
+input: 'param x = @invalid;
+
+  '
+expected:
+  type: error
+  error_type: LexicalError
+  error_message: Unexpected character

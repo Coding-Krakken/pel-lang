@@ -1,0 +1,9 @@
+id: CONF-TYPE-029
+category: typechecking
+spec_ref: spec/pel_language_spec.md#type-inference
+description: Mixed int and float
+input: "model test {\n  var result = 10 + 5.5;\n}\n"
+expected:
+  type: success
+  types:
+    result: Float
