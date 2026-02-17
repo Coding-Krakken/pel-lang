@@ -49,7 +49,7 @@ class BenchmarkScorer:
                 continue
             
             # Skip single-line comments
-            if stripped.start_with('//'):
+            if stripped.startswith('//'):
                 continue
             
             loc += 1
