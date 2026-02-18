@@ -1,28 +1,16 @@
-# PEL Formatter & Linter
+# PEL Formatter
 
-This module provides code quality tools for PEL:
-- **Formatter** (`pelformat`) - Automatic code formatting
-- **Linter** (`pellint`) - Static analysis and best practices
+This module provides automatic code formatting for PEL source files.
 
 ## Status
-🚧 **In Development** - See PR-21 for implementation roadmap
+✅ **Available** - Formatting is implemented with token-aware spacing and indentation.
 
 ## Formatter Features
-- ✅ Consistent indentation (4 spaces)
-- ✅ Line wrapping (100 character limit)
-- ✅ Operator spacing
-- ✅ Block alignment (models, rates, parameters)
-- ✅ Comment formatting
-- ✅ Import sorting
-
-## Linter Rules
-- ✅ **PEL001**: Unused parameter
-- ✅ **PEL002**: Unreferenced rate
-- ✅ **PEL003**: Invalid semantic contract
-- ✅ **PEL004**: Type mismatch
-- ✅ **PEL005**: Circular dependency
-- ✅ **PEL006**: Missing documentation
-- ✅ **PEL007**: Anti-pattern detected
+- Consistent indentation (default: 4 spaces)
+- Operator spacing and comma normalization
+- Brace-based block indentation
+- Comment preservation (line comments)
+- Configurable line length and indent size
 
 ## Installation
 ```bash
@@ -33,28 +21,24 @@ pip install -e ".[dev]"
 
 ### Format Code
 ```bash
-# Format file in-place
 pel format mymodel.pel
-
-# Check formatting (dry-run)
 pel format --check mymodel.pel
-
-# Format entire directory
+pel format --diff mymodel.pel
 pel format src/
+
+# Convenience entrypoint
+pelformat mymodel.pel
 ```
 
-### Lint Code
-```bash
-# Lint file
-pel lint mymodel.pel
+## Configuration
+Create a `.pelformat.toml` file in your repo:
 
-# Lint with JSON output (for CI)
-pel lint --json mymodel.pel
-
-# Lint entire directory
-pel lint src/
+```toml
+[format]
+line_length = 100
+indent_size = 4
 ```
 
-## Editor Integration
-- **VS Code**: Formatter runs on save (requires LSP extension)
-- **pre-commit**: Add to `.pre-commit-config.yaml`
+## Notes
+- Formatting is whitespace-only and does not alter semantics.
+- Line wrapping is best-effort; very long expressions may remain unchanged.

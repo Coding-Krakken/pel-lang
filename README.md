@@ -283,6 +283,15 @@ Output includes:
 - Sensitivity ranking (which parameters matter most)
 - Model hash and reproducibility artifacts
 
+### Code Quality
+
+```bash
+pel format hello_economics.pel --check
+pel lint hello_economics.pel
+```
+
+See the style guide at [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md).
+
 ---
 
 ## Design Philosophy
