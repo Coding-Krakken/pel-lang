@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: Services Agency (Retainers)
+// Recurring retainers, utilization and margin per account
+
+model services_agency_retainers {
+  param clients_on_retainer: Count<Client> = 20
+  param avg_monthly_fee: Currency<USD> = $8_000
+  param delivery_cost_pct: Fraction = 0.40
+  param overhead_monthly: Currency<USD> = $15_000
+
+  var monthly_revenue: Currency<USD> = clients_on_retainer * avg_monthly_fee
+  var cost_of_delivery: Currency<USD> = monthly_revenue * delivery_cost_pct
+  var ebitda: Currency<USD> = monthly_revenue - cost_of_delivery - overhead_monthly
+
+  constraint sustainable: ebitda > $0 {
+    severity: warning,
+    message: "EBITDA must be positive for sustainable agency"
+  }
+}

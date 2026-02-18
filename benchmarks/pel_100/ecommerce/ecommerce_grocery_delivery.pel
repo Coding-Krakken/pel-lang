@@ -1,0 +1,89 @@
+// E-Commerce Online Grocery Delivery
+// Models grocery delivery service with perishables and tight delivery windows
+
+model EcommerceGroceryDelivery {
+  param monthly_orders: Count<Item> = 3500
+  param avg_basket_size: Currency<USD> = $85.0
+  param delivery_fee: Currency<USD> = $7.99
+  param delivery_fee_waiver_rate: Fraction = 0.30 // promotional waivers
+  
+  // Product mix and margins
+  param fresh_produce_pct: Fraction = 0.25 // low margin, high waste
+  param packaged_goods_pct: Fraction = 0.50 // moderate margin
+  param premium_items_pct: Fraction = 0.25 // higher margin
+  param fresh_margin_pct: Fraction = 0.15
+  param packaged_margin_pct: Fraction = 0.22
+  param premium_margin_pct: Fraction = 0.35
+  
+  // Spoilage and shrinkage
+  param fresh_spoilage_rate: Fraction = 0.08
+  param packaged_spoilage_rate: Fraction = 0.02
+  
+  // Fulfillment costs
+  param warehouse_pickers_headcount: Count<Item> = 18
+  param cost_per_picker: Currency<USD> = $4200.0
+  param pick_time_minutes_per_order: Count<Item> = 22
+  param driver_count: Count<Item> = 25
+  param cost_per_driver: Currency<USD> = $4800.0
+  param avg_delivery_cost_fuel: Currency<USD> = $5.50
+  param vehicle_maintenance: Currency<USD> = $8000.0
+  
+  // Cold chain infrastructure
+  param refrigerated_warehouse_cost: Currency<USD> = $15000.0
+  param insulated_bags_depreciation: Currency<USD> = $1200.0
+  
+  // Technology and operations
+  param platform_development: Currency<USD> = $12000.0
+  param customer_acquisition_cost_per_order: Currency<USD> = $8.50
+  param payment_processing_pct: Fraction = 0.025
+  
+  // Calculate revenue components
+  var product_revenue: Currency<USD> = monthly_orders * avg_basket_size
+  var delivery_fees_collected: Currency<USD> = monthly_orders * delivery_fee * (1.0 - delivery_fee_waiver_rate)
+  var gross_revenue: Currency<USD> = product_revenue + delivery_fees_collected
+  var payment_processing: Currency<USD> = gross_revenue * payment_processing_pct
+  var net_revenue: Currency<USD> = gross_revenue - payment_processing
+  
+  // Product COGS by category
+  var fresh_revenue: Currency<USD> = product_revenue * fresh_produce_pct
+  var packaged_revenue: Currency<USD> = product_revenue * packaged_goods_pct
+  var premium_revenue: Currency<USD> = product_revenue * premium_items_pct
+  
+  var fresh_cogs: Currency<USD> = fresh_revenue * (1.0 - fresh_margin_pct)
+  var packaged_cogs: Currency<USD> = packaged_revenue * (1.0 - packaged_margin_pct)
+  var premium_cogs: Currency<USD> = premium_revenue * (1.0 - premium_margin_pct)
+  var product_cogs: Currency<USD> = fresh_cogs + packaged_cogs + premium_cogs
+  
+  // Spoilage costs
+  var fresh_spoilage_cost: Currency<USD> = fresh_cogs * fresh_spoilage_rate
+  var packaged_spoilage_cost: Currency<USD> = packaged_cogs * packaged_spoilage_rate
+  var total_spoilage: Currency<USD> = fresh_spoilage_cost + packaged_spoilage_cost
+  
+  var total_cogs: Currency<USD> = product_cogs + total_spoilage
+  var product_gross_margin: Fraction = (product_revenue - total_cogs) / product_revenue
+  
+  // Fulfillment costs
+  var picker_costs: Currency<USD> = warehouse_pickers_headcount * cost_per_picker
+  var driver_costs: Currency<USD> = driver_count * cost_per_driver
+  var delivery_fuel_costs: Currency<USD> = monthly_orders * avg_delivery_cost_fuel
+  var fulfillment_costs: Currency<USD> = picker_costs + driver_costs + delivery_fuel_costs +vehicle_maintenance + refrigerated_warehouse_cost +insulated_bags_depreciation
+  
+  var gross_profit: Currency<USD> = net_revenue - total_cogs - fulfillment_costs
+  var gross_margin: Fraction = gross_profit / net_revenue
+  
+  // Operating expenses
+  var marketing_costs: Currency<USD> = monthly_orders * customer_acquisition_cost_per_order
+  var total_opex: Currency<USD> = marketing_costs + platform_development
+  
+  var net_income: Currency<USD> = gross_profit - total_opex
+  var operating_margin: Fraction = net_income / net_revenue
+  
+  // Unit economics
+  var contribution_per_order: Currency<USD> = gross_profit / monthly_orders
+  var fulfillment_cost_per_order: Currency<USD> = fulfillment_costs / monthly_orders
+  var delivery_fee_subsidy: Currency<USD> = (monthly_orders * delivery_fee * delivery_fee_waiver_rate) / monthly_orders
+  
+  constraint positive_contribution: contribution_per_order > $8 { severity: warning }
+  constraint manageable_spoilage: total_spoilage < (fresh_revenue * 0.05) { severity: warning }
+  constraint delivery_economics: fulfillment_cost_per_order < $15 { severity: warning }
+}

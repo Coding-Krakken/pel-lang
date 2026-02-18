@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: Marketing Agency Services
+// Retainer fees plus media buying commissions
+
+model services_marketing_agency_bench {
+  param retainer_clients: Count<Client> = 18
+  param avg_retainer_fee: Currency<USD> = $8500/1mo
+  param media_spend_managed: Currency<USD> = $850_000
+  param media_commission_rate: Fraction = 0.15
+  param team_costs: Currency<USD> = $120_000
+
+  var retainer_revenue: Currency<USD> = retainer_clients * avg_retainer_fee
+  var media_commissions: Currency<USD> = media_spend_managed * media_commission_rate
+  var total_revenue: Currency<USD> = retainer_revenue + media_commissions
+  var gross_profit: Currency<USD> = total_revenue - team_costs
+  var margin: Fraction = gross_profit / total_revenue
+
+  constraint healthy_margin: margin > 0.35 {
+    severity: warning,
+    message: "Gross margin below 35% for agency model"
+  }
+}

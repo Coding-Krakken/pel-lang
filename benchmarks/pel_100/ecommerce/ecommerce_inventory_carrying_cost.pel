@@ -1,0 +1,42 @@
+model EcommerceInventoryCarryingCost {
+  // High-SKU e-commerce model with inventory carrying cost complexity
+  // Models warehouse, working capital, and obsolescence risk
+  
+  param annual_cogs: Currency<USD> = $5000000
+  param annual_revenue: Currency<USD> = $15000000
+  param inventory_turnover_ratio: Fraction = 4.5
+  
+  param avg_inventory_value: Currency<USD> = annual_cogs / inventory_turnover_ratio
+  
+  param warehouse_capacity_cost: Currency<USD> = $500000/1yr
+  param labor_cost: Currency<USD> = $300000/1yr
+  param utilities_cost: Currency<USD> = $100000/1yr
+  param equipment_cost: Currency<USD> = $150000/1yr
+  
+  param working_capital_cost_rate: Fraction =0.10 // Cost of money tied up
+  param insurance_rate: Fraction =0.02
+  param shrinkage_rate: Fraction =0.03
+  param obsolescence_rate: Fraction =0.05
+  
+  // Carrying costs
+  var warehouse_costs: Currency<USD> = warehouse_capacity_cost + labor_cost + utilities_cost + equipment_cost
+  var working_capital_cost: Currency<USD> = avg_inventory_value * working_capital_cost_rate
+  var insurance_cost: Currency<USD> = avg_inventory_value * insurance_rate
+  var shrinkage_cost: Currency<USD> = avg_inventory_value * shrinkage_rate
+  var obsolescence_cost: Currency<USD> = avg_inventory_value * obsolescence_rate
+  
+  var total_carrying_cost: Currency<USD> = warehouse_costs + working_capital_cost + insurance_cost + shrinkage_cost + obsolescence_cost
+  
+  var carrying_cost_per_unit_revenue: Fraction = total_carrying_cost / annual_revenue
+  
+  // Opportunity to reduce via faster turnover
+  var improved_turnover_ratio: Fraction =inventory_turnover_ratio * 1.25
+  var improved_avg_inventory: Currency<USD> = annual_cogs / improved_turnover_ratio
+  
+  var improved_carrying_costs: Currency<USD> = warehouse_costs + (improved_avg_inventory * (working_capital_cost_rate + insurance_rate + shrinkage_rate + obsolescence_rate))
+  var carrying_cost_reduction: Currency<USD> = total_carrying_cost - improved_carrying_costs
+  
+  constraint avg_inventory_value_constraint: avg_inventory_value > $0 { severity: warning }
+  constraint total_carrying_cost_constraint: total_carrying_cost > $0 { severity: warning }
+  constraint carrying_cost_reduction_constraint: carrying_cost_reduction > $0 { severity: warning }
+}

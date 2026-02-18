@@ -1,0 +1,82 @@
+/*
+ * Example: RateNormalization Contract
+ * 
+ * Demonstrates: Quotient<Currency, Duration> → Currency
+ * Use case: Time-normalized revenue (MRR, ARR conversions)
+ * 
+ * Semantic justification:
+ * - Monthly Recurring Revenue (MRR) is annual revenue divided by 12 months
+ * - Even though division creates a rate, MRR is treated as Currency
+ * - The time dimension is part of the metric's definition
+ * - Contract: RateNormalization
+ */
+
+model SaaS_MRR_Metrics {
+    // Annual contract values
+    param annual_contract_value: Currency<USD> = $120000
+    param quarterly_revenue: Currency<USD> = $90000
+    
+    // RateNormalization contract: annual revenue / 12 → MRR (Currency)
+    // This is the canonical MRR calculation for SaaS metrics
+    var monthly_recurring_revenue: Currency<USD> = annual_contract_value / 12
+    
+    // Another time normalization: quarterly → monthly
+    // Division by 3 (months in quarter) normalizes to monthly revenue
+    var monthly_from_quarterly: Currency<USD> = quarterly_revenue / 3
+    
+    // Customer-level time normalization
+    param customer_count: Count<Customer> = 100
+    var mrr_per_customer: Currency<USD> = monthly_recurring_revenue / customer_count
+    
+    // Expansion and contraction MRR
+    param expansion_arr: Currency<USD> = $24000  // Annual expansion
+    param contraction_arr: Currency<USD> = $12000  // Annual contraction
+    
+    var expansion_mrr: Currency<USD> = expansion_arr / 12
+    var contraction_mrr: Currency<USD> = contraction_arr / 12
+    var net_new_mrr: Currency<USD> = expansion_mrr - contraction_mrr
+    
+    // Combined metrics
+    var total_mrr: Currency<USD> = monthly_recurring_revenue + net_new_mrr
+    
+    // Annual run rate (reverse calculation: MRR × 12)
+    var annual_run_rate: Currency<USD> = total_mrr * 12
+    
+    // Churn impact on MRR
+    param churned_customers: Count<Customer> = 5
+    var churned_mrr: Currency<USD> = mrr_per_customer * churned_customers
+    var mrr_after_churn: Currency<USD> = total_mrr - churned_mrr
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. monthly_recurring_revenue = annual_contract_value / 12
+ *    - From: Quotient<Currency, Duration> (conceptually, 12 is time period)
+ *    - To: Currency
+ *    - Contract: RateNormalization
+ *    - Justification: Standard MRR calculation from ARR
+ * 
+ * 2. monthly_from_quarterly = quarterly_revenue / 3
+ *    - From: Quotient<Currency, Duration>
+ *    - To: Currency
+ *    - Contract: RateNormalization
+ *    - Justification: Quarterly → monthly normalization
+ * 
+ * 3. expansion_mrr = expansion_arr / 12
+ *    - From: Quotient<Currency, Duration>
+ *    - To: Currency
+ *    - Contract: RateNormalization
+ *    - Justification: Annual expansion normalized to monthly
+ * 
+ * 4. mrr_per_customer = monthly_recurring_revenue / customer_count
+ *    - From: Quotient<Currency, Count>
+ *    - To: Currency
+ *    - Contract: RevenuePerUnit_to_Price
+ *    - Justification: Average MRR per customer
+ * 
+ * Key insight: RateNormalization is specific to time-based division.
+ * When you divide Currency by a time period count (12 months, 3 months),
+ * you're normalizing to a time unit. The result is still Currency-like
+ * because the time dimension is part of the metric's semantic definition.
+ */

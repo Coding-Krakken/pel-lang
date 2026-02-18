@@ -1,0 +1,28 @@
+// SaaS API Platform with Tiered Usage Pricing
+model saas_api_platform_tiered {
+  param initial_customers: Count<Customer> = 250
+  param monthly_growth_rate: Fraction = 0.08
+  param tier_1_price: Currency<USD> = $29
+  param tier_2_price: Currency<USD> = $99
+  param tier_3_price: Currency<USD> = $499
+  param tier_1_pct: Fraction = 0.50
+  param tier_2_pct: Fraction = 0.30
+  param tier_3_pct: Fraction = 0.15
+  param engineering_headcount: Count<Engineer> = 12
+  param cost_per_engineer: Currency<USD> = $15_000
+
+  var customers_tier_1: Count<Customer> = initial_customers * tier_1_pct
+  var customers_tier_2: Count<Customer> = initial_customers * tier_2_pct
+  var customers_tier_3: Count<Customer> = initial_customers * tier_3_pct
+  var revenue_tier_1: Currency<USD> = customers_tier_1 * tier_1_price
+  var revenue_tier_2: Currency<USD> = customers_tier_2 * tier_2_price
+  var revenue_tier_3: Currency<USD> = customers_tier_3 * tier_3_price
+  var total_revenue: Currency<USD> = revenue_tier_1 + revenue_tier_2 + revenue_tier_3
+  var engineering_cost: Currency<USD> = engineering_headcount * cost_per_engineer
+  var operating_margin: Fraction = (total_revenue - engineering_cost) / total_revenue
+
+  constraint profitable: operating_margin > 0.15 {
+    severity: warning,
+    message: "Operating margin below 15%"
+  }
+}

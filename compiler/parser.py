@@ -15,6 +15,12 @@ from compiler.ast_nodes import *
 from compiler.errors import SourceLocation, syntax_error, unexpected_token
 from compiler.lexer import Token, TokenType
 
+# Valid PEL type names (for validation)
+VALID_TYPE_NAMES = {
+    "Currency", "Rate", "Duration", "Capacity", "Count", "Fraction",
+    "TimeSeries", "Distribution", "Array", "Boolean", "Int"
+}
+
 
 class Parser:
     """Complete recursive descent parser for PEL language."""
@@ -96,6 +102,8 @@ class Parser:
                 model.policies.append(item)
             elif isinstance(item, Statement):
                 model.statements.append(item)
+            # Allow optional semicolon terminator after declarations (conformance YAMLs use `;`)
+            self.consume_if(TokenType.SEMICOLON)
             # TODO: record_decl, enum_decl, simulate_decl
 
         self.expect(TokenType.RBRACE)
@@ -131,7 +139,17 @@ class Parser:
         type_ann = self.parse_type()
         self.expect(TokenType.ASSIGN)
         value = self.parse_expression()
-        provenance = self.parse_provenance_block()
+
+        # Provenance block is optional; use defaults if missing
+        if self.match(TokenType.LBRACE):
+            provenance = self.parse_provenance_block()
+        else:
+            provenance = {
+                'source': 'benchmark',
+                'method': 'assumption',
+                'confidence': 1.0
+            }
+
         return ParamDecl(name=name, type_annotation=type_ann, value=value, provenance=provenance)
 
     def parse_var(self) -> VarDecl:
@@ -346,6 +364,12 @@ class Parser:
         # User-defined types (identifier)
         elif self.match(TokenType.IDENTIFIER):
             type_name = self.advance().value
+            # Validate type name
+            if type_name not in VALID_TYPE_NAMES:
+                raise syntax_error(
+                    f"Invalid type '{type_name}'. Valid types are: {', '.join(sorted(VALID_TYPE_NAMES))}",
+                    self.current_location()
+                )
             return TypeAnnotation(type_kind=type_name)
 
         else:
@@ -400,8 +424,19 @@ class Parser:
         """Parse primary expression (literals, identifiers, function calls, etc.)."""
         # Literals
         if self.match(TokenType.NUMBER):
-            value = self.advance().value
-            return Literal(value=float(value), literal_type="number")
+            token = self.advance()
+            sval = token.value
+            sval_clean = sval.replace('_', '')
+            # Integer literals (no decimal point) -> keep as integer
+            if '.' not in sval_clean:
+                try:
+                    ival = int(sval_clean)
+                    return Literal(value=ival, literal_type="integer")
+                except Exception:
+                    # fallback to float
+                    return Literal(value=float(sval_clean), literal_type="number")
+            # Decimal / float literal
+            return Literal(value=float(sval_clean), literal_type="number")
 
         elif self.match(TokenType.CURRENCY):
             value = self.advance().value

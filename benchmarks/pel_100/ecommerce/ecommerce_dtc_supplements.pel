@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: E-Commerce Direct-to-Consumer Supplements
+// Subscription model with compliance costs
+
+model ecommerce_dtc_supplements_bench {
+  param one_time_customers: Count<Customer> = 12_000
+  param subscription_customers: Count<Customer> = 8500
+  param one_time_aov: Currency<USD> = $68
+  param subscription_monthly_value: Currency<USD> = $45/1mo
+  param cogs_rate: Fraction = 0.30
+  param compliance_testing_monthly: Currency<USD> = $15_000
+
+  var one_time_revenue: Currency<USD> = one_time_customers * one_time_aov
+  var subscription_revenue: Currency<USD> = subscription_customers * subscription_monthly_value
+  var total_revenue: Currency<USD> = one_time_revenue + subscription_revenue
+  var cogs: Currency<USD> = total_revenue * cogs_rate
+  var gross_profit: Currency<USD> = total_revenue - cogs - compliance_testing_monthly
+
+  constraint high_gross_margin: (gross_profit / total_revenue) > 0.60 {
+    severity: warning,
+    message: "Gross margin below 60% target for supplements"
+  }
+}

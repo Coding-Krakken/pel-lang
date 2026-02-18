@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: SaaS Project Management Tool
+// Freemium with seat-based paid tiers
+
+model saas_project_mgmt_bench {
+  param free_users: Count<User> = 85_000
+  param paid_users: Count<User> = 12_000
+  param free_to_paid_conversion: Fraction = 0.14
+  param avg_seats_per_account: Count<Seat> = 8
+  param price_per_seat: Currency<USD> = $12/1mo
+
+  var total_seats: Count<Seat> = paid_users * avg_seats_per_account
+  var monthly_revenue: Currency<USD> = total_seats * price_per_seat
+  var arpu: Currency<USD> = monthly_revenue / paid_users
+
+  constraint conversion_healthy: free_to_paid_conversion >= 0.10 {
+    severity: warning,
+    message: "Conversion rate below 10% target"
+  }
+}

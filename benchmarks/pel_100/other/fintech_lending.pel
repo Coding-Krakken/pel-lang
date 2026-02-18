@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: Fintech — Consumer Lending
+// Loan book, interest income, defaults, and provisioning
+
+model fintech_consumer_lending {
+  param outstanding_loans: Count<Loan> = 10_000
+  param avg_principal: Currency<USD> = $8_000
+  param avg_interest_rate: Rate per Year = 0.12/1yr
+  param default_rate_annual: Fraction = 0.02
+  param loss_given_default: Fraction = 0.40
+
+  var gross_interest: Currency<USD> = outstanding_loans * avg_principal * avg_interest_rate
+  var expected_loss: Currency<USD> = outstanding_loans * avg_principal * default_rate_annual * loss_given_default
+  var net_income: Currency<USD> = gross_interest - expected_loss
+
+  constraint prudent_provision: expected_loss >= $0 {
+    severity: warning,
+    message: "Expected loss must be non-negative"
+  }
+}

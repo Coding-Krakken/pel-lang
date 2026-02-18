@@ -1,0 +1,38 @@
+model SaaSMultiTierPricing {
+  // Multi-tier pricing models ARR calculation for different customer segments
+  // Starter/Growth/Enterprise tiers with different feature sets
+  
+  param starter_monthly_price: Currency<USD> = $29/1mo
+  param growth_monthly_price: Currency<USD> = $99/1mo
+  param enterprise_annual_price: Currency<USD> = $50_000
+  
+  param starter_seats: Count<Seat> = 10
+  param growth_seats: Count<Seat> = 100
+  param enterprise_unlimited: Fraction = 1.0
+  
+  param starter_customers: Count<Customer> = 2500
+  param growth_customers: Count<Customer> = 500
+  param enterprise_customers: Count<Customer> = 50
+  
+  param growth_upgrade_rate: Fraction = 0.15
+  param enterprise_upgrade_rate: Fraction = 0.08
+  param churn_starter: Fraction = 0.05
+  param churn_growth: Fraction = 0.02
+  param churn_enterprise: Fraction = 0.005
+  
+  // ARR calculations
+  var starter_arr: Currency<USD> = starter_monthly_price * starter_seats * starter_customers * 12
+  var growth_arr: Currency<USD> = growth_monthly_price * growth_seats * growth_customers * 12
+  var enterprise_arr: Currency<USD> = enterprise_annual_price * enterprise_customers
+  
+  // Retention adjustments
+  var starter_retention_multiplier: Fraction = (1 - churn_starter)
+  var growth_retention_multiplier: Fraction = (1 - churn_growth)
+  var enterprise_retention_multiplier: Fraction = (1 - churn_enterprise)
+  
+  var adjusted_starter_arr: Currency<USD> = starter_arr * starter_retention_multiplier
+  var adjusted_growth_arr: Currency<USD> = growth_arr * growth_retention_multiplier
+  var adjusted_enterprise_arr: Currency<USD> = enterprise_arr * enterprise_retention_multiplier
+  
+  var total_arr: Currency<USD> = adjusted_starter_arr + adjusted_growth_arr + adjusted_enterprise_arr
+}

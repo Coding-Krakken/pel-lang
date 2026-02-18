@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: Advertising / Media
+// Impressions, CTR, CPC, CPM and revenue share models
+
+model advertising_media_bench {
+  param monthly_impressions: Count<Impression> = 50_000_000
+  param ctr: Fraction = 0.0015
+  param cpc: Currency<USD> = $0.75
+  param revenue_share: Fraction = 0.70
+
+  var clicks: Count<Click> = monthly_impressions * ctr
+  var ad_revenue: Currency<USD> = clicks * cpc * revenue_share
+  var eCPM: Currency<USD> = (ad_revenue / monthly_impressions) * 1000
+
+  constraint positive_revenue: ad_revenue > $0 {
+    severity: warning,
+    message: "Ad revenue must be positive"
+  }
+}

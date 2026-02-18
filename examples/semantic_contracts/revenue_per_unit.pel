@@ -1,0 +1,72 @@
+/*
+ * Example: RevenuePerUnit_to_Price Contract
+ * 
+ * Demonstrates: Quotient<Currency, Count> → Currency
+ * Use case: Unit economics - computing price/cost per customer/unit
+ * 
+ * Semantic justification:
+ * - Revenue divided by customer count yields average revenue per customer
+ * - This is semantically a "price" or "unit value" (Currency type)
+ * - Contract: RevenuePerUnit_to_Price
+ */
+
+model SaaS_Unit_Economics {
+    // Input parameters
+    param annual_revenue: Currency<USD> = $1200000
+    param customer_count: Count<Customer> = 1000
+    param marketing_spend: Currency<USD> = $240000
+    param new_customers: Count<Customer> = 200
+    
+    // RevenuePerUnit_to_Price contract: revenue / customers → price per customer
+    // This conversion is justified because we're computing average revenue per customer
+    var revenue_per_customer: Currency<USD> = annual_revenue / customer_count
+    
+    // Another example of the same contract: cost per acquisition
+    var customer_acquisition_cost: Currency<USD> = marketing_spend / new_customers
+    
+    // Multiple conversions in a single calculation
+    param total_costs: Currency<USD> = $800000
+    var cost_per_customer: Currency<USD> = total_costs / customer_count
+    var profit_per_customer: Currency<USD> = revenue_per_customer - cost_per_customer
+    
+    // Time-based calculations
+    param months_in_year: Count<Month> = 12
+    
+    // Combined contract example: RateNormalization + RevenuePerUnit
+    var monthly_revenue: Currency<USD> = annual_revenue / months_in_year
+    var monthly_revenue_per_customer: Currency<USD> = monthly_revenue / customer_count
+    
+    // Business metrics derived from unit economics
+    var lifetime_value: Currency<USD> = revenue_per_customer  // Simplified LTV
+    var ltv_to_cac_ratio: Fraction = lifetime_value / customer_acquisition_cost
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. revenue_per_customer = annual_revenue / customer_count
+ *    - From: Quotient<Currency, Count>
+ *    - To: Currency
+ *    - Contract: RevenuePerUnit_to_Price
+ *    - Justification: Revenue per unit of customer
+ * 
+ * 2. customer_acquisition_cost = marketing_spend / new_customers
+ *    - From: Quotient<Currency, Count>
+ *    - To: Currency
+ *    - Contract: RevenuePerUnit_to_Price
+ *    - Justification: Cost per acquisition
+ * 
+ * 3. cost_per_customer = total_costs / customer_count
+ *    - From: Quotient<Currency, Count>
+ *    - To: Currency
+ *    - Contract: RevenuePerUnit_to_Price
+ *    - Justification: Cost per unit of customer
+ * 
+ * 4. monthly_revenue = annual_revenue / months_in_year
+ *    - From: Quotient<Currency, Count>
+ *    - To: Currency
+ *    - Contract: RateNormalization
+ *    - Justification: Time-normalized revenue (though using Count instead of Duration)
+ *
+ * All conversions are justified and documented!
+ */

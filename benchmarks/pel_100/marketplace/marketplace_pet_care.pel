@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Pet Care Services Marketplace
+// Local pet sitting, dog walking, grooming bookings
+
+model marketplace_pet_care_bench {
+  param monthly_bookings: Count<Booking> = 18_000
+  param avg_booking_value: Currency<USD> = $45
+  param platform_take_rate: Fraction = 0.20
+  param active_providers: Count<Provider> = 850
+  param insurance_cost_per_booking: Currency<USD> = $2.50
+  param customer_support_costs: Currency<USD> = $22_000
+
+  var gmv: Currency<USD> = monthly_bookings * avg_booking_value
+  var commission_revenue: Currency<USD> = gmv * platform_take_rate
+  var insurance_costs: Currency<USD> = monthly_bookings * insurance_cost_per_booking
+  var net_revenue: Currency<USD> = commission_revenue - insurance_costs - customer_support_costs
+  var bookings_per_provider: Fraction = monthly_bookings / active_providers
+
+  constraint provider_utilization: bookings_per_provider >= 18 {
+    severity: warning,
+    message: "Providers need at least 18 bookings/month for viability"
+  }
+}

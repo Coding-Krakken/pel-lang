@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: SaaS Cohort Churn
+// Cohort retention curve and cohort LTV calculation
+
+model saas_churn_cohort {
+  param cohort_size: Count<User> = 1000
+  param monthly_retention_rate: Fraction = 0.85
+  param arpu: Currency<USD> = $49/1mo
+
+  var cohort_retained: TimeSeries<Count<User>>cohort_retained[0] = cohort_size
+  cohort_retained[t+1] = cohort_retained[t] * monthly_retention_rate
+
+  var cohort_revenue: TimeSeries<Currency<USD>>cohort_revenue[t] = cohort_retained[t] * arpu
+
+  var cohort_ltv: Currency<USD>cohort_ltv = arpu * (1 / (1 - monthly_retention_rate))
+
+  constraint reasonable_retention: monthly_retention_rate > 0.4 {
+    severity: warning,
+    message: "Retention unusually low for cohort"
+  }
+}

@@ -1,0 +1,216 @@
+/*
+ * Example: Mixed Semantic Contracts in Production Model
+ * 
+ * Demonstrates: All 7 semantic contracts working together
+ * Use case: Complete SaaS business model with unit economics
+ * 
+ * This example shows how semantic contracts compose to enable
+ * complex business calculations while maintaining type safety.
+ */
+
+model SaaS_Unit_Economics_Complete {
+    // ===== INPUT PARAMETERS =====
+    
+    // Customer acquisition metrics
+    param monthly_visitors: Count<Visitor> = 10000
+    param visitor_to_trial_conversion: Fraction = 0.15  // 15%
+    param trial_to_paid_conversion: Fraction = 0.20     // 20%
+    
+    // Pricing and revenue
+    param annual_contract_value: Currency<USD> = $12000
+    param setup_fee: Currency<USD> = $1000
+    
+    // Cost structure
+    param sales_team_cost: Currency<USD> = $30000      // Monthly
+    param marketing_cost: Currency<USD> = $50000        // Monthly
+    param cogs_per_customer: Currency<USD> = $100       // Monthly
+    
+    // Retention and churn
+    param monthly_churn_rate: Fraction = 0.05           // 5%
+    
+    // Time periods
+    param months_in_year: Count<Month> = 12
+    param average_lifetime_months: Count<Month> = 36
+    
+    // ===== CONVERSION FUNNEL =====
+    
+    // CONTRACT: FractionToRate
+    // Visitor rate * conversion efficiency → trial signup rate
+    var trial_signups_per_month: Rate<User, Month> = 
+        monthly_visitors * visitor_to_trial_conversion
+    // 10000 visitors/month * 0.15 = 1500 trials/month
+    
+    // CONTRACT: FractionToRate
+    // Trial rate * conversion → customer acquisition rate
+    var customer_acquisition_per_month: Rate<Customer, Month> = 
+        trial_signups_per_month * trial_to_paid_conversion
+    // 1500 trials/month * 0.20 = 300 customers/month
+    
+    // ===== REVENUE CALCULATIONS =====
+    
+    // CONTRACT: RateNormalization
+    // Annual contract value → Monthly Recurring Revenue
+    var monthly_recurring_revenue: Currency<USD> = 
+        annual_contract_value / 12
+    // $12000 / 12 = $1000 MRR per customer
+    
+    // CONTRACT: RevenuePerUnit_to_Price
+    // Total acquisition rate * MRR per customer → monthly new MRR
+    var new_mrr_per_month: Rate<Currency<USD>, Month> = 
+        customer_acquisition_per_month * monthly_recurring_revenue
+    // 300 customers/month * $1000 = $300,000/month
+    
+    // First-month revenue includes setup fees
+    // CONTRACT: RevenuePerUnit_to_Price
+    var setup_revenue_per_month: Rate<Currency<USD>, Month> = 
+        customer_acquisition_per_month * setup_fee
+    // 300 customers/month * $1000 = $300,000/month
+    
+    var total_new_revenue_per_month: Rate<Currency<USD>, Month> = 
+        new_mrr_per_month + setup_revenue_per_month
+    
+    // ===== COST ANALYSIS =====
+    
+    // Total customer acquisition cost
+    var total_acquisition_cost: Currency<USD> = 
+        sales_team_cost + marketing_cost
+    // $30,000 + $50,000 = $80,000/month
+    
+    // CONTRACT: RevenuePerUnit_to_Price
+    // CAC = total cost / customers acquired
+    var customer_acquisition_cost: Currency<USD> = 
+        total_acquisition_cost / customer_acquisition_per_month
+    // $80,000 / 300 = $266.67 per customer
+    
+    // Monthly COGS per customer
+    var total_monthly_cogs: Currency<USD> = cogs_per_customer
+    
+    // ===== LIFETIME VALUE =====
+    
+    // CONTRACT: DurationFromCount
+    // Convert average lifetime to duration for semantic clarity
+    var customer_lifetime: Duration<Month> = average_lifetime_months
+    
+    // CONTRACT: CountFromDuration (implicit in multiplication)
+    // LTV = MRR * lifetime months - (COGS * lifetime months)
+    var gross_ltv: Currency<USD> = 
+        monthly_recurring_revenue * average_lifetime_months
+    // $1000 * 36 = $36,000
+    
+    var lifetime_cogs: Currency<USD> = 
+        total_monthly_cogs * average_lifetime_months
+    // $100 * 36 = $3,600
+    
+    var net_ltv: Currency<USD> = gross_ltv - lifetime_cogs
+    // $36,000 - $3,600 = $32,400
+    
+    // ===== UNIT ECONOMICS =====
+    
+    // CONTRACT: FractionFromRatio
+    // LTV:CAC ratio expressed as fraction
+    var ltv_to_cac_ratio: Fraction = net_ltv / customer_acquisition_cost
+    // $32,400 / $266.67 ≈ 121.5 (12150%)
+    
+    // Payback period calculation
+    var monthly_gross_margin: Currency<USD> = 
+        monthly_recurring_revenue - total_monthly_cogs
+    // $1000 - $100 = $900
+    
+    // CONTRACT: FractionFromRatio
+    // Payback in months (CAC / monthly margin)
+    var payback_period_months: Fraction = 
+        customer_acquisition_cost / monthly_gross_margin
+    // $266.67 / $900 ≈ 0.296 months (~9 days)
+    
+    // ===== RETENTION AND CHURN =====
+    
+    // Monthly retention rate
+    var retention_rate: Fraction = 1.0 - monthly_churn_rate
+    // 1.0 - 0.05 = 0.95 (95%)
+    
+    // Expected customers retained after 12 months
+    // Starting with customer_acquisition_per_month base
+    // CONTRACT: FractionToRate
+    var month_12_retained_rate: Rate<Customer, Month> = 
+        customer_acquisition_per_month * (retention_rate ^ 12)
+    
+    // ===== GROWTH METRICS =====
+    
+    // CONTRACT: TemporalAggregation (conceptual)
+    // Annual customer acquisition
+    var annual_customer_acquisition: Count<Customer> = 
+        customer_acquisition_per_month * months_in_year
+    // 300 * 12 = 3,600 customers/year
+    
+    // Annual new MRR
+    var annual_new_mrr: Currency<USD> = 
+        new_mrr_per_month * months_in_year
+    // $300,000 * 12 = $3,600,000/year
+    
+    // ===== EFFICIENCY METRICS =====
+    
+    // CONTRACT: FractionFromRatio
+    // Sales efficiency: New ARR / sales & marketing cost
+    var sales_efficiency: Fraction = 
+        (new_mrr_per_month * months_in_year) / 
+        (total_acquisition_cost * months_in_year)
+    // $3.6M / $960K ≈ 3.75 (each $1 spent generates $3.75 ARR)
+    
+    // CONTRACT: FractionFromRatio
+    // Magic Number = (New MRR / acquisition cost) for quarter
+    param months_in_quarter: Count<Month> = 3
+    var quarterly_new_mrr: Currency<USD> = 
+        new_mrr_per_month * months_in_quarter
+    var quarterly_acquisition_cost: Currency<USD> = 
+        total_acquisition_cost * months_in_quarter
+    var magic_number: Fraction = 
+        quarterly_new_mrr / quarterly_acquisition_cost
+    // ($300K * 3) / ($80K * 3) = $900K / $240K = 3.75
+}
+
+/*
+ * Contract Analysis Summary:
+ * 
+ * This model demonstrates all 7 semantic contracts:
+ * 
+ * 1. RevenuePerUnit_to_Price (Quotient<Currency, Count> → Currency):
+ *    - customer_acquisition_cost = total_cost / customers
+ *    - new_mrr_per_month = acquisition_rate * mrr_per_customer
+ * 
+ * 2. RateNormalization (Quotient<Currency, Duration> → Currency):
+ *    - monthly_recurring_revenue = annual_contract_value / 12
+ * 
+ * 3. FractionFromRatio (Quotient<Count, Count> → Fraction):
+ *    - ltv_to_cac_ratio = net_ltv / cac
+ *    - payback_period = cac / monthly_margin
+ *    - sales_efficiency = revenue / cost
+ * 
+ * 4. FractionToRate (Product<Fraction, Rate> → Rate):
+ *    - trial_signups = visitors * conversion_rate
+ *    - customers = trials * trial_to_paid_rate
+ * 
+ * 5. DurationFromCount (Count<TimeUnit> → Duration<TimeUnit>):
+ *    - customer_lifetime = average_lifetime_months
+ * 
+ * 6. CountFromDuration (Duration<TimeUnit> → Count<TimeUnit>):
+ *    - Implicit in: ltv = mrr * lifetime_months
+ * 
+ * 7. TemporalAggregation (Sum over time → Total):
+ *    - annual_customer_acquisition = monthly_rate * 12
+ *    - annual_new_mrr = monthly_mrr * 12
+ * 
+ * Key Business Metrics Demonstrated:
+ * - Customer Acquisition Cost (CAC): $266.67
+ * - Lifetime Value (LTV): $32,400
+ * - LTV:CAC Ratio: 121.5x (excellent)
+ * - Payback Period: 0.3 months (~9 days)
+ * - Magic Number: 3.75 (efficient growth)
+ * - Monthly Churn: 5%
+ * - Annual Retention: ~54% (0.95^12)
+ * 
+ * This demonstrates how semantic contracts enable:
+ * 1. Type-safe business calculations
+ * 2. Clear semantic intent in formulas
+ * 3. Composition of complex metrics
+ * 4. Self-documenting model structure
+ */

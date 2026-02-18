@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Marketplace Fees Impact on DTC
+// Compare own-store economics vs 3rd-party marketplace fees
+
+model ecommerce_fees_marketplaces {
+  param monthly_orders_own: Count<Order> = 12_000
+  param monthly_orders_marketplace: Count<Order> = 8_000
+  param aov: Currency<USD> = $65
+  param own_store_margin_pct: Fraction = 0.45
+  param marketplace_fee_pct: Fraction = 0.12
+
+  var own_store_revenue: Currency<USD> = monthly_orders_own * aov * own_store_margin_pct
+  var marketplace_gmv: Currency<USD> = monthly_orders_marketplace * aov
+  var marketplace_revenue: Currency<USD> = marketplace_gmv * marketplace_fee_pct
+  var total_revenue: Currency<USD> = own_store_revenue + marketplace_revenue
+
+  constraint revenue_target: total_revenue > $200_000 {
+    severity: warning,
+    message: "Total revenue below expected target"
+  }
+}

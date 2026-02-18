@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: Property Management Services
+// Rental property management with unit-based fees
+
+model services_property_management_bench {
+  param units_under_management: Count<Unit> = 850
+  param monthly_fee_per_unit: Currency<USD> = $125/1mo
+  param leasing_fee_per_unit_annually: Currency<USD> = $800/1yr
+  param maintenance_coordination_costs: Currency<USD> = $35_000
+  param property_manager_payroll: Currency<USD> = $85_000
+
+  var management_fee_revenue: Currency<USD> = units_under_management * monthly_fee_per_unit
+  var leasing_revenue_monthly: Currency<USD> = (units_under_management * leasing_fee_per_unit_annually) / 12
+  var total_revenue: Currency<USD> = management_fee_revenue + leasing_revenue_monthly
+  var total_costs: Currency<USD> = maintenance_coordination_costs + property_manager_payroll
+  var net_income: Currency<USD> = total_revenue - total_costs
+
+  constraint profitable_scale: net_income > $0 {
+    severity: warning,
+    message: "Property management not profitable at current scale"
+  }
+}

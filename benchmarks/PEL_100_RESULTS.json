@@ -1,0 +1,1002 @@
+[
+  {
+    "category": "saas",
+    "model": "saas_freemium_conversion",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 93.80197525024414,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_usage_based",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 84.48076248168945,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_enterprise_sales",
+    "loc": 9,
+    "compile_success": true,
+    "compile_time_ms": 84.27929878234863,
+    "run_success": true,
+    "run_time_ms": 80.54900169372559,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_churn_cohort",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 83.7864875793457,
+    "run_success": true,
+    "run_time_ms": 82.22317695617676,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_trial_retention",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 82.13973045349121,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_plg_activation",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 83.1754207611084,
+    "run_success": true,
+    "run_time_ms": 98.34575653076172,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_support_costs",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 82.40795135498047,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_multi_tier_pricing",
+    "loc": 26,
+    "compile_success": true,
+    "compile_time_ms": 83.85038375854492,
+    "run_success": true,
+    "run_time_ms": 79.80823516845703,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_enterprise_expansion",
+    "loc": 25,
+    "compile_success": true,
+    "compile_time_ms": 82.47518539428711,
+    "run_success": true,
+    "run_time_ms": 81.27641677856445,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_vertical_marketplace",
+    "loc": 25,
+    "compile_success": true,
+    "compile_time_ms": 87.82744407653809,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_api_platform_tiered",
+    "loc": 25,
+    "compile_success": true,
+    "compile_time_ms": 84.40113067626953,
+    "run_success": true,
+    "run_time_ms": 83.51683616638184,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_collaboration_tool_seats",
+    "loc": 43,
+    "compile_success": true,
+    "compile_time_ms": 86.09223365783691,
+    "run_success": true,
+    "run_time_ms": 110.3813648223877,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_data_warehouse_storage",
+    "loc": 50,
+    "compile_success": true,
+    "compile_time_ms": 132.06791877746582,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_marketing_automation_leads",
+    "loc": 51,
+    "compile_success": true,
+    "compile_time_ms": 87.27526664733887,
+    "run_success": true,
+    "run_time_ms": 92.80920028686523,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_video_streaming_platform",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 95.57747840881348,
+    "run_success": true,
+    "run_time_ms": 81.29596710205078,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_hr_payroll_platform",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 83.06598663330078,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_project_management_tool",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 95.45063972473145,
+    "run_success": true,
+    "run_time_ms": 84.26928520202637,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_cybersecurity_platform",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 104.38323020935059,
+    "run_success": true,
+    "run_time_ms": 84.26570892333984,
+    "status": "success"
+  },
+  {
+    "category": "saas",
+    "model": "saas_subscription",
+    "loc": 46,
+    "compile_success": true,
+    "compile_time_ms": 89.29157257080078,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "saas",
+    "model": "saas_tiered_pricing",
+    "loc": 25,
+    "compile_success": true,
+    "compile_time_ms": 90.27266502380371,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_b2c",
+    "loc": 55,
+    "compile_success": true,
+    "compile_time_ms": 83.32395553588867,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "marketplace_dropshipping",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 82.23795890808105,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_wholesale_b2b",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 84.58542823791504,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_high_aov_luxury",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 83.1594467163086,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_returns_and_refunds",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 82.30972290039062,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_fulfillment_costs",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 89.44416046142578,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_fees_marketplaces",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 86.4715576171875,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_fraud_loss",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 82.0462703704834,
+    "run_success": true,
+    "run_time_ms": 85.36028861999512,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_cross_border_shipping",
+    "loc": 28,
+    "compile_success": true,
+    "compile_time_ms": 91.65644645690918,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_subscription_boxes",
+    "loc": 29,
+    "compile_success": true,
+    "compile_time_ms": 84.98358726501465,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_flash_sales",
+    "loc": 26,
+    "compile_success": true,
+    "compile_time_ms": 87.01729774475098,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_inventory_carrying_cost",
+    "loc": 28,
+    "compile_success": true,
+    "compile_time_ms": 90.72446823120117,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_b2b_wholesale_portal",
+    "loc": 56,
+    "compile_success": true,
+    "compile_time_ms": 99.33948516845703,
+    "run_success": true,
+    "run_time_ms": 83.91928672790527,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_dropshipping_network",
+    "loc": 55,
+    "compile_success": true,
+    "compile_time_ms": 87.83364295959473,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_grocery_delivery",
+    "loc": 59,
+    "compile_success": true,
+    "compile_time_ms": 89.83850479125977,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_luxury_consignment",
+    "loc": 51,
+    "compile_success": true,
+    "compile_time_ms": 86.83300018310547,
+    "run_success": true,
+    "run_time_ms": 82.30733871459961,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_print_on_demand",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 83.19258689880371,
+    "run_success": true,
+    "run_time_ms": 82.67545700073242,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_dtc_supplements",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 84.62882041931152,
+    "run_success": true,
+    "run_time_ms": 83.5881233215332,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "ecommerce_furniture_marketplace",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 82.43989944458008,
+    "run_success": true,
+    "run_time_ms": 83.65535736083984,
+    "status": "success"
+  },
+  {
+    "category": "ecommerce",
+    "model": "subscription_box",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 82.6108455657959,
+    "run_success": true,
+    "run_time_ms": 85.73222160339355,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_consulting",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 94.06685829162598,
+    "run_success": true,
+    "run_time_ms": 82.31091499328613,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "agency_retainers",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 87.56470680236816,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "freelance_platform",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 88.0587100982666,
+    "run_success": true,
+    "run_time_ms": 84.68985557556152,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_training_platform",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 85.7539176940918,
+    "run_success": true,
+    "run_time_ms": 82.86595344543457,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_subcontracting",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 84.69772338867188,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_utilization_ramp",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 83.67538452148438,
+    "run_success": true,
+    "run_time_ms": 86.74430847167969,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_saas_plus_services",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 85.76321601867676,
+    "run_success": true,
+    "run_time_ms": 85.4334831237793,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_retainer_churn",
+    "loc": 12,
+    "compile_success": true,
+    "compile_time_ms": 101.98569297790527,
+    "run_success": true,
+    "run_time_ms": 86.16280555725098,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_staffing_agency",
+    "loc": 26,
+    "compile_success": true,
+    "compile_time_ms": 95.0019359588623,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_managed_services_provider",
+    "loc": 29,
+    "compile_success": true,
+    "compile_time_ms": 83.9848518371582,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_consulting_firm_billing",
+    "loc": 34,
+    "compile_success": true,
+    "compile_time_ms": 87.81886100769043,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_creative_agency_project_model",
+    "loc": 31,
+    "compile_success": true,
+    "compile_time_ms": 85.10804176330566,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_legal_firm_billing",
+    "loc": 57,
+    "compile_success": true,
+    "compile_time_ms": 85.68024635314941,
+    "run_success": true,
+    "run_time_ms": 80.81889152526855,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_architecture_firm",
+    "loc": 57,
+    "compile_success": true,
+    "compile_time_ms": 89.95938301086426,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "services",
+    "model": "services_it_outsourcing",
+    "loc": 50,
+    "compile_success": true,
+    "compile_time_ms": 89.2186164855957,
+    "run_success": true,
+    "run_time_ms": 80.71041107177734,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_accounting_firm",
+    "loc": 54,
+    "compile_success": true,
+    "compile_time_ms": 93.66750717163086,
+    "run_success": true,
+    "run_time_ms": 84.14053916931152,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_engineering_consulting",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 82.14187622070312,
+    "run_success": true,
+    "run_time_ms": 80.73091506958008,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_marketing_agency",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 85.28733253479004,
+    "run_success": true,
+    "run_time_ms": 81.44927024841309,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_executive_coaching",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 87.62907981872559,
+    "run_success": true,
+    "run_time_ms": 84.17344093322754,
+    "status": "success"
+  },
+  {
+    "category": "services",
+    "model": "services_property_management",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 86.85731887817383,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_two_sided",
+    "loc": 62,
+    "compile_success": true,
+    "compile_time_ms": 90.53158760070801,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "gig_economy",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 90.32320976257324,
+    "run_success": true,
+    "run_time_ms": 83.74738693237305,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_rental",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 82.54718780517578,
+    "run_success": true,
+    "run_time_ms": 81.29000663757324,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_supply_growth",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 86.18497848510742,
+    "run_success": true,
+    "run_time_ms": 95.8402156829834,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_surge_pricing",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 84.96332168579102,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_take_rate_elasticity",
+    "loc": 12,
+    "compile_success": true,
+    "compile_time_ms": 82.26966857910156,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_referral_network",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 82.27372169494629,
+    "run_success": true,
+    "run_time_ms": 81.28738403320312,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_gig_economy_commissions",
+    "loc": 32,
+    "compile_success": true,
+    "compile_time_ms": 86.89165115356445,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_niche_vertical",
+    "loc": 28,
+    "compile_success": true,
+    "compile_time_ms": 87.03351020812988,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_local_services_insurance",
+    "loc": 28,
+    "compile_success": true,
+    "compile_time_ms": 89.65039253234863,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_peer_to_peer_lending",
+    "loc": 34,
+    "compile_success": true,
+    "compile_time_ms": 87.42833137512207,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_vacation_rentals",
+    "loc": 55,
+    "compile_success": true,
+    "compile_time_ms": 89.90979194641113,
+    "run_success": true,
+    "run_time_ms": 89.19048309326172,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_b2b_wholesale",
+    "loc": 65,
+    "compile_success": true,
+    "compile_time_ms": 104.31289672851562,
+    "run_success": true,
+    "run_time_ms": 88.1352424621582,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_tickets_resale",
+    "loc": 64,
+    "compile_success": true,
+    "compile_time_ms": 88.39607238769531,
+    "run_success": true,
+    "run_time_ms": 83.18519592285156,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_online_tutoring",
+    "loc": 66,
+    "compile_success": true,
+    "compile_time_ms": 87.31508255004883,
+    "run_success": true,
+    "run_time_ms": 81.86078071594238,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_handyman_services",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 82.96585083007812,
+    "run_success": true,
+    "run_time_ms": 82.22460746765137,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_freelance_creative",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 84.71465110778809,
+    "run_success": true,
+    "run_time_ms": 81.34293556213379,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_boat_rv_rental",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 81.81333541870117,
+    "run_success": true,
+    "run_time_ms": 81.77542686462402,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_events_experiences",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 82.5052261352539,
+    "run_success": true,
+    "run_time_ms": 81.92086219787598,
+    "status": "success"
+  },
+  {
+    "category": "marketplace",
+    "model": "marketplace_pet_care",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 82.03601837158203,
+    "run_success": true,
+    "run_time_ms": 80.58333396911621,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "advertising_media",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 103.38211059570312,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "fintech_lending",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 90.6517505645752,
+    "run_success": true,
+    "run_time_ms": 84.57255363464355,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "hardware_subscription",
+    "loc": 14,
+    "compile_success": true,
+    "compile_time_ms": 88.8214111328125,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "fintech_payments_pnl",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 84.78736877441406,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "manufacturing_bom_cost",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 86.26627922058105,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "real_estate_portfolio",
+    "loc": 15,
+    "compile_success": true,
+    "compile_time_ms": 85.3278636932373,
+    "run_success": true,
+    "run_time_ms": 91.51601791381836,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "franchise_royalty",
+    "loc": 13,
+    "compile_success": true,
+    "compile_time_ms": 86.90595626831055,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "insurance_claims_reserve",
+    "loc": 27,
+    "compile_success": true,
+    "compile_time_ms": 85.00266075134277,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "healthcare_clinic_pnl",
+    "loc": 37,
+    "compile_success": true,
+    "compile_time_ms": 85.82496643066406,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "manufacturing_multi_plant",
+    "loc": 33,
+    "compile_success": true,
+    "compile_time_ms": 85.08563041687012,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "media_subscription_churn",
+    "loc": 29,
+    "compile_success": true,
+    "compile_time_ms": 84.89441871643066,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "saas_dev_tools_usage_based",
+    "loc": 28,
+    "compile_success": true,
+    "compile_time_ms": 83.22715759277344,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "energy_solar_installation",
+    "loc": 67,
+    "compile_success": true,
+    "compile_time_ms": 86.60435676574707,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "real_estate_property_management",
+    "loc": 61,
+    "compile_success": true,
+    "compile_time_ms": 90.22641181945801,
+    "run_success": true,
+    "run_time_ms": 81.65144920349121,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "logistics_last_mile_delivery",
+    "loc": 72,
+    "compile_success": true,
+    "compile_time_ms": 87.9819393157959,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "education_online_bootcamp",
+    "loc": 66,
+    "compile_success": true,
+    "compile_time_ms": 94.59376335144043,
+    "run_success": true,
+    "run_time_ms": 103.60193252563477,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "telecom_mvno",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 102.19645500183105,
+    "run_success": true,
+    "run_time_ms": 87.01753616333008,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "agtech_precision_farming",
+    "loc": 16,
+    "compile_success": true,
+    "compile_time_ms": 82.67831802368164,
+    "run_success": false,
+    "run_time_ms": 0,
+    "status": "failed"
+  },
+  {
+    "category": "other",
+    "model": "nonprofit_conservation_org",
+    "loc": 17,
+    "compile_success": true,
+    "compile_time_ms": 86.17568016052246,
+    "run_success": true,
+    "run_time_ms": 84.73920822143555,
+    "status": "success"
+  },
+  {
+    "category": "other",
+    "model": "publishing_digital_media",
+    "loc": 18,
+    "compile_success": true,
+    "compile_time_ms": 85.82568168640137,
+    "run_success": true,
+    "run_time_ms": 81.9089412689209,
+    "status": "success"
+  }
+]

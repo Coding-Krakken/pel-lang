@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: E-Commerce Furniture Marketplace
+// High AOV with white-glove delivery costs
+
+model ecommerce_furniture_marketplace_bench {
+  param monthly_orders: Count<Order> = 450
+  param avg_order_value: Currency<USD> = $2800
+  param product_cost_rate: Fraction = 0.45
+  param white_glove_delivery_cost: Currency<USD> = $350
+  param showroom_costs: Currency<USD> = $45_000
+
+  var gross_revenue: Currency<USD> = monthly_orders * avg_order_value
+  var product_costs: Currency<USD> = gross_revenue * product_cost_rate
+  var delivery_costs: Currency<USD> = monthly_orders * white_glove_delivery_cost
+  var gross_margin: Currency<USD> = gross_revenue - product_costs - delivery_costs - showroom_costs
+  var margin_pct: Fraction = gross_margin / gross_revenue
+
+  constraint viable_margins: margin_pct > 0.20 {
+    severity: warning,
+    message: "Gross margin below 20% with high fulfillment costs"
+  }
+}

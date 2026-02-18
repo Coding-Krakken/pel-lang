@@ -1,0 +1,53 @@
+model ManufacturingMultiPlant {
+  // Multi-plant manufacturing with economies of scale and logistics costs
+  
+  param annual_production_units: Int = 500000
+  param plants_count: Int = 4
+  param units_per_plant: Fraction = annual_production_units / plants_count
+  
+  param avg_wholesale_price: Currency<USD> = $85
+  
+  param materials_cost_per_unit: Currency<USD> = $28
+  param direct_labor_cost_per_unit: Currency<USD> = $18
+  param manufacturing_overhead_per_unit: Currency<USD> = $12
+  
+  param plant_depreciation_monthly: Currency<USD> = $500000/1mo / plants_count
+  param facility_maintenance: Currency<USD> = $150000/1mo / plants_count
+  param quality_control_cost: Currency<USD> = $8
+  
+  param logistics_cost_per_unit: Currency<USD> = $5
+  param warehousing_cost_per_unit: Currency<USD> = $2
+  param packaging_cost_per_unit: Currency<USD> = $3
+  
+  param sales_and_marketing: Currency<USD> = $5000000/1yr
+  param general_and_administrative: Currency<USD> = $4000000/1yr
+  
+  // COGS per unit
+  var total_cogs_per_unit: Currency<USD> = materials_cost_per_unit + direct_labor_cost_per_unit + manufacturing_overhead_per_unit + quality_control_cost
+  
+  // Distribution costs per unit
+  var distribution_cost_per_unit: Currency<USD> = logistics_cost_per_unit + warehousing_cost_per_unit + packaging_cost_per_unit
+  
+  // Unit economics
+  var gross_margin_per_unit: Currency<USD> = avg_wholesale_price - total_cogs_per_unit
+  var contribution_per_unit: Currency<USD> = gross_margin_per_unit - distribution_cost_per_unit
+  
+  // Annual financials
+  var annual_cogs: Currency<USD> = annual_production_units * total_cogs_per_unit
+  var annual_distribution_cost: Currency<USD> = annual_production_units * distribution_cost_per_unit
+  var annual_revenue: Currency<USD> = annual_production_units * avg_wholesale_price
+  
+  var annual_plant_depreciation: Currency<USD> = plant_depreciation_monthly * 12 * plants_count
+  var annual_facility_maintenance: Currency<USD> = facility_maintenance * 12 * plants_count
+  
+  var total_opex: Currency<USD> = sales_and_marketing + general_and_administrative + annual_plant_depreciation + annual_facility_maintenance
+  
+  var gross_profit: Currency<USD> = annual_revenue - annual_cogs
+  var operating_profit: Currency<USD> = gross_profit - annual_distribution_cost - total_opex
+  
+  var gross_margin: Fraction = gross_profit / annual_revenue
+  var operating_margin: Fraction = operating_profit / annual_revenue
+  
+  constraint annual_production_units_constraint: annual_production_units > 0 { severity: warning }
+  constraint contribution_per_unit_constraint: contribution_per_unit > $0 { severity: warning }
+}

@@ -1,0 +1,45 @@
+model ServicesManagedServicesProvider {
+  // MSP model with recurring contracts, ticket-based SLA, and break-fix component
+  
+  param managed_customers: Count<Item> =320
+  param avg_monthly_msa_value: Currency<USD> = $2500
+  param customer_arr: Currency<USD> = avg_monthly_msa_value * 12
+  
+  param msa_margin: Fraction =0.40
+  
+  param avg_tickets_per_customer: Fraction =8
+  param avg_resolution_time: Fraction =2
+  param billable_engineer_rate: Currency<USD> = $180
+  
+  param break_fix_utilization_rate: Fraction =0.25
+  param break_fix_revenue_per_customer: Currency<USD> = avg_monthly_msa_value * break_fix_utilization_rate
+  
+  param employee_headcount: Count<Item> =15
+  param fully_loaded_engineer_cost: Currency<USD> = $150000
+  
+  param software_licenses_cost: Currency<USD> = $100000
+  param tools_and_monitoring: Currency<USD> = $80000
+  param overhead_allocation: Currency<USD> = $300000
+  
+  param annual_churn: Fraction =0.08
+  
+  // MSA revenue
+  var total_msa_revenue: Currency<USD> = managed_customers * customer_arr * (1 - annual_churn)
+  var msa_gross_profit: Currency<USD> = total_msa_revenue * msa_margin
+  
+  // Break-fix revenue
+  var total_break_fix_revenue: Currency<USD> = managed_customers * break_fix_revenue_per_customer * 12 * (1 - annual_churn)
+  var break_fix_margin: Fraction =0.50
+  var break_fix_gross_profit: Currency<USD> = total_break_fix_revenue * break_fix_margin
+  
+  // Operating costs
+  var total_labor_cost: Currency<USD> = employee_headcount * fully_loaded_engineer_cost
+  var other_opex: Currency<USD> = software_licenses_cost + tools_and_monitoring + overhead_allocation
+  
+  var gross_profit: Currency<USD> = msa_gross_profit + break_fix_gross_profit
+  var ebitda: Currency<USD> = gross_profit - total_labor_cost - other_opex
+  
+  constraint managed_customers_constraint: managed_customers >= managed_customers { severity: warning }
+  constraint ebitda_constraint: ebitda > $0 { severity: warning }
+  constraint customer_arr_constraint: customer_arr > $0 { severity: warning }
+}

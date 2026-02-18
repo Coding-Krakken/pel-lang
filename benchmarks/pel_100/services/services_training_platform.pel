@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: Services — Training / Courses Platform
+// Course purchases, cohort LTV, and instructor revenue share
+
+model services_training_platform {
+  param monthly_signups: Count<User> = 6_000
+  param conversion_rate: Fraction = 0.08
+  param avg_price: Currency<USD> = $199
+  param instructor_share: Fraction = 0.60
+
+  var paying_users: Count<User> = monthly_signups * conversion_rate
+  var monthly_revenue: Currency<USD> = paying_users * avg_price
+  var instructor_payouts: Currency<USD> = monthly_revenue * instructor_share
+  var platform_take: Currency<USD> = monthly_revenue - instructor_payouts
+
+  constraint platform_nonnegative: platform_take >= $0 {
+    severity: warning,
+    message: "Platform take should be non-negative"
+  }
+}

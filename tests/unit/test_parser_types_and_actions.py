@@ -19,7 +19,7 @@ def test_parser_covers_many_type_annotations_and_var_forms() -> None:
         '  var f: Count<Customer>\n'
         '  var g: TimeSeries<Fraction>\n'
         '  var h: Distribution<Currency<USD>>\n'
-        '  var i: CustomType\n'
+        '  var i: Boolean\n'
         '}\n'
     )
 
