@@ -20,6 +20,8 @@ from typing import Any, Optional
 from compiler.ast_nodes import *
 from compiler.errors import (
     CompilerError,
+    ConstraintError,
+    SourceLocation,
     TypeError,
     constraint_violation,
     dimensional_mismatch,
@@ -377,15 +379,12 @@ class TypeChecker:
                     severity = constraint.severity
                     if severity == "fatal":
                         # Record constraint error for fatal constraint violations
-                        location = None
-                        if getattr(constraint, "line", None) is not None and getattr(constraint, "column", None) is not None:
-                            from compiler.ast_nodes import SourceLocation
-                            location = SourceLocation(line=constraint.line, column=constraint.column)
+                        # Note: We don't have filename in constraint object, so location is None
                         self.errors.append(
                             constraint_violation(
                                 constraint.name,
                                 getattr(constraint, 'message', 'Constraint violated'),
-                                location
+                                None
                             )
                         )
             except (AttributeError, KeyError, ValueError, ZeroDivisionError):
@@ -1241,7 +1240,7 @@ class TypeChecker:
                     report.append(f"  - Conversion: `{conv['from_type']}` → `{conv['to_type']}`\n")
                     report.append(f"  - Compatible: {'✓' if conv['is_compatible'] else '✗'}\n")
                     report.append("  - Contracts:\n")
-                    for contract in conv['contracts']:
+                    for contract in conv['contracts']:  # type: ignore[attr-defined]
                         report.append(f"    - {contract.name} ({contract.reason.value})\n")
                     report.append("\n")
 
