@@ -44,12 +44,6 @@ model SimpleGrowth {
   // Calculated: Profit
   var profit: TimeSeries<Currency<USD>>
   profit[t] = revenue[t] - monthly_opex
-  
-  // Constraint: Must stay profitable by month 12
-  constraint profitability: profit[12] > $0 {
-    severity: warning,
-    message: "Not profitable by month 12"
-  }
 }
 ```
 

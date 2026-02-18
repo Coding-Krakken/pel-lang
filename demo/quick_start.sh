@@ -10,8 +10,8 @@ echo "===================================="
 echo ""
 
 # Step 1: Compile example model
-echo "[1/4] Compiling SaaS subscription model..."
-python3 ./pel compile examples/saas_subscription.pel -o demo/model.ir.json
+echo "[1/4] Compiling simple growth model..."
+python3 ./pel compile examples/simple_growth.pel -o demo/model.ir.json
 echo "✓ Compilation successful"
 echo ""
 

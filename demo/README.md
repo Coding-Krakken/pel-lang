@@ -48,20 +48,21 @@ cat demo/results_deterministic.json | jq .
 
 ## What You're Seeing
 
-The demo model (`examples/saas_subscription.pel`) demonstrates:
+The demo model (`examples/simple_growth.pel`) demonstrates:
 
-- **Economic types**: Currency, Rate, Fraction with units
-- **Uncertainty**: Distributions for growth, churn, CAC
-- **Provenance**: Full assumption tracking
-- **Constraints**: Cash runway, unit economics health checks
-- **Policies**: Adaptive hiring, pricing, marketing decisions
+- **Economic types**: Currency, Rate with units
+- **Uncertainty**: Distribution for growth rate
+- **Provenance**: Full assumption tracking for all parameters
+- **Time series**: Revenue and profit calculations
+- **Constraints**: Profitability checks
 
 ## Next Steps
 
-1. Try modifying parameters in `examples/saas_subscription.pel`
+1. Try modifying parameters in `examples/simple_growth.pel`
 2. Re-run the demo to see how results change
-3. Follow the tutorial: `docs/tutorials/your_first_model_15min.md`
-4. Build your own model!
+3. Explore the full-featured example: `examples/saas_subscription.pel`
+4. Follow the tutorial: `docs/tutorials/your_first_model_15min.md`
+5. Build your own model!
 
 ## Troubleshooting
 
@@ -81,5 +82,5 @@ chmod +x demo/quick_start.sh
 
 **"Model doesn't compile"**
 - Check that you're in the PEL project root directory
-- Ensure `examples/saas_subscription.pel` exists
-- Try: `python3 ./pel compile examples/saas_subscription.pel -v` for verbose errors
+- Ensure `examples/simple_growth.pel` exists
+- Try: `python3 ./pel compile examples/simple_growth.pel -v` for verbose errors
