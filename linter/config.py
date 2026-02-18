@@ -36,7 +36,7 @@ def _load_toml(path: Path) -> dict[str, Any]:
         import tomllib  # Python 3.11+
     except ModuleNotFoundError:
         try:
-            import tomli as tomllib  # type: ignore
+            import tomli as tomllib
         except ModuleNotFoundError:
             return {}
 

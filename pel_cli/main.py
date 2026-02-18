@@ -78,8 +78,8 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
         if prov_checker.has_errors():
             print("        Provenance errors found:")
-            for error in prov_checker.get_errors():
-                print(f"          - {error}")
+            for prov_error in prov_checker.get_errors():
+                print(f"          - {prov_error}")
             if not args.force:
                 return 1
         else:

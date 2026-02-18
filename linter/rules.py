@@ -321,8 +321,8 @@ class CircularDependencyRule(LintRule):
             visiting.remove(node)
             visited.add(node)
 
-        for var in dependencies:
-            _visit(var)
+        for var_name in dependencies:
+            _visit(var_name)
 
         return violations
 
