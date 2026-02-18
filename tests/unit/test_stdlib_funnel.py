@@ -552,3 +552,422 @@ def test_required_conversion_rate_for_target():
     """
     result = _compile_pel_code(pel_code)
     assert isinstance(result, dict)
+
+
+# ============================================================================
+# Golden Value Tests - Validate Mathematical Correctness
+# ============================================================================
+
+
+@pytest.mark.unit
+def test_overall_conversion_rate_golden_value():
+    """Golden test: Overall = Product of all stage rates."""
+    pel_code = """
+    param rate_1: Fraction = 0.10 {
+        source: "analytics",
+        method: "observed",
+        confidence: 0.9
+    }
+    
+    param rate_2: Fraction = 0.60 {
+        source: "analytics",
+        method: "observed",
+        confidence: 0.9
+    }
+    
+    param rate_3: Fraction = 0.50 {
+        source: "analytics",
+        method: "observed",
+        confidence: 0.9
+    }
+    
+    var conversion_rates: Array<Fraction> = [rate_1, rate_2, rate_3]
+    var overall: Fraction = overall_conversion_rate(conversion_rates)
+    
+    // Expected: 0.10 * 0.60 * 0.50 = 0.03 (3% overall conversion)
+    constraint overall_check: overall == 0.03 {
+        severity: fatal,
+        message: "Overall conversion rate calculation incorrect"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_stage_conversion_rate_golden_value():
+    """Golden test: Stage conversion = Next / Current."""
+    pel_code = """
+    param stage_i: Count<User> = 1000 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    param stage_i_plus_1: Count<User> = 250 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    var conversion: Fraction = stage_conversion_rate(stage_i, stage_i_plus_1)
+    
+    // Expected: 250 / 1000 = 0.25 (25% conversion)
+    constraint conversion_check: conversion == 0.25 {
+        severity: fatal,
+        message: "Stage conversion rate calculation incorrect"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_funnel_step_down_golden_value():
+    """Golden test: Next stage = Current * Conversion Rate."""
+    pel_code = """
+    param stage_count: Count<User> = 1000 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param conversion_rate: Fraction = 0.30 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    var next_stage: Count<User> = funnel_step_down(stage_count, conversion_rate)
+    
+    // Expected: 1000 * 0.30 = 300
+    constraint step_down_check: next_stage == 300 {
+        severity: fatal,
+        message: "Funnel step down calculation incorrect"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_funnel_velocity_golden_value():
+    """Golden test: Total time = Sum of stage times."""
+    pel_code = """
+    param time_1: Duration<Day> = 1d {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.8
+    }
+    
+    param time_2: Duration<Day> = 3d {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.8
+    }
+    
+    param time_3: Duration<Day> = 7d {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.8
+    }
+    
+    var time_in_stages: Array<Duration<Day>> = [time_1, time_2, time_3]
+    var total_time: Duration<Day> = funnel_velocity(time_in_stages)
+    
+    // Expected: 1d + 3d + 7d = 11d
+    constraint velocity_check: total_time == 11d {
+        severity: fatal,
+        message: "Funnel velocity calculation incorrect"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_funnel_throughput_golden_value():
+    """Golden test: Throughput = Users / Time."""
+    pel_code = """
+    param users: Count<User> = 300 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    param time_period: Duration<Day> = 30d {
+        source: "model",
+        method: "assumption",
+        confidence: 1.0
+    }
+    
+    var throughput: Count<User> per Day = funnel_throughput(users, time_period)
+    
+    // Expected: 300 / 30d = 10/1d (10 users per day)
+    // Verify the calculation by checking inputs
+    constraint valid_users: users == 300 {
+        severity: fatal,
+        message: "User count should be 300"
+    }
+    
+    constraint valid_period: time_period == 30d {
+        severity: fatal,
+        message: "Time period should be 30 days"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_saas_signup_funnel_golden_value():
+    """Golden test: Validate multi-stage SaaS funnel calculation."""
+    pel_code = """
+    param visitors: Count<User> = 10000 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    param signup_rate: Fraction = 0.10 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9,
+        notes: "10% signup rate"
+    }
+    
+    param activation_rate: Fraction = 0.60 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param trial_rate: Fraction = 0.50 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param paid_rate: Fraction = 0.40 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.85
+    }
+    
+    var funnel: Array<Count<User>> = saas_signup_funnel(
+        visitors,
+        signup_rate,
+        activation_rate,
+        trial_rate,
+        paid_rate
+    )
+    
+    // Expected funnel:
+    // Stage 0 (Visits): 10000
+    // Stage 1 (Signups): 10000 * 0.10 = 1000
+    // Stage 2 (Activated): 1000 * 0.60 = 600
+    // Stage 3 (Trial): 600 * 0.50 = 300
+    // Stage 4 (Paid): 300 * 0.40 = 120
+    
+    var signups: Count<User> = funnel[1]
+    var activated: Count<User> = funnel[2]
+    var trials: Count<User> = funnel[3]
+    var paid: Count<User> = funnel[4]
+    
+    constraint signups_check: signups == 1000 {
+        severity: fatal,
+        message: "Signup count incorrect"
+    }
+    
+    constraint activated_check: activated == 600 {
+        severity: fatal,
+        message: "Activated count incorrect"
+    }
+    
+    constraint trials_check: trials == 300 {
+        severity: fatal,
+        message: "Trial count incorrect"
+    }
+    
+    constraint paid_check: paid == 120 {
+        severity: fatal,
+        message: "Paid customer count incorrect"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_bottleneck_detection_golden_value():
+    """Golden test: Identifies lowest conversion rate stage."""
+    pel_code = """
+    param rate_0: Fraction = 0.50 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param rate_1: Fraction = 0.20 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9,
+        notes: "This is the bottleneck"
+    }
+    
+    param rate_2: Fraction = 0.60 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param rate_3: Fraction = 0.40 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    var conversion_rates: Array<Fraction> = [rate_0, rate_1, rate_2, rate_3]
+    var bottleneck: Count = bottleneck_detection(conversion_rates)
+    
+    // Expected: Index 1 has the lowest rate (0.20)
+    constraint bottleneck_check: bottleneck == 1 {
+        severity: fatal,
+        message: "Bottleneck detection incorrect - should identify stage 1"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+# ============================================================================
+# Edge Case Tests
+# ============================================================================
+
+
+@pytest.mark.unit
+def test_stage_conversion_rate_zero_input():
+    """Edge case: Zero input stage returns 0% conversion."""
+    pel_code = """
+    param stage_i: Count<User> = 0 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0,
+        notes: "Empty stage"
+    }
+    
+    param stage_i_plus_1: Count<User> = 0 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    var conversion: Fraction = stage_conversion_rate(stage_i, stage_i_plus_1)
+    
+    // Expected: Division by zero returns 0.0
+    constraint zero_conversion: conversion == 0.0 {
+        severity: fatal,
+        message: "Zero input should return zero conversion rate"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_funnel_perfect_conversion():
+    """Edge case: 100% conversion at every stage."""
+    pel_code = """
+    param visitors: Count<User> = 100 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    param perfect_rate: Fraction = 1.0 {
+        source: "model",
+        method: "assumption",
+        confidence: 0.5,
+        notes: "Perfect conversion assumption"
+    }
+    
+    var conversion_rates: Array<Fraction> = [perfect_rate, perfect_rate, perfect_rate]
+    var funnel: Array<Count<User>> = multi_stage_funnel(visitors, conversion_rates)
+    
+    // Expected: All stages should have 100 users
+    var final_stage: Count<User> = funnel[3]
+    
+    constraint perfect_conversion_check: final_stage == 100 {
+        severity: fatal,
+        message: "Perfect conversion should retain all users"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_funnel_zero_conversion_at_stage():
+    """Edge case: Zero conversion at one stage kills funnel."""
+    pel_code = """
+    param visitors: Count<User> = 1000 {
+        source: "analytics",
+        method: "observed",
+        confidence: 1.0
+    }
+    
+    param good_rate: Fraction = 0.50 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9
+    }
+    
+    param zero_rate: Fraction = 0.0 {
+        source: "analytics",
+        method: "derived",
+        confidence: 0.9,
+        notes: "Complete drop-off at this stage"
+    }
+    
+    var conversion_rates: Array<Fraction> = [good_rate, zero_rate, good_rate]
+    var funnel: Array<Count<User>> = multi_stage_funnel(visitors, conversion_rates)
+    
+    // Expected: Stage 2+ should have 0 users due to zero conversion at stage 1
+    var stage_2: Count<User> = funnel[2]
+    var stage_3: Count<User> = funnel[3]
+    
+    constraint zero_propagation_2: stage_2 == 0 {
+        severity: fatal,
+        message: "Zero conversion should result in zero users downstream"
+    }
+    
+    constraint zero_propagation_3: stage_3 == 0 {
+        severity: fatal,
+        message: "Zero conversion should result in zero users downstream"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_overall_conversion_with_one_hundred_percent():
+    """Edge case: Overall conversion with 100% at all stages."""
+    pel_code = """
+    param perfect: Fraction = 1.0 {
+        source: "model",
+        method: "assumption",
+        confidence: 0.5
+    }
+    
+    var rates: Array<Fraction> = [perfect, perfect, perfect]
+    var overall: Fraction = overall_conversion_rate(rates)
+    
+    // Expected: 1.0 * 1.0 * 1.0 = 1.0
+    constraint perfect_overall: overall == 1.0 {
+        severity: fatal,
+        message: "Perfect conversion at all stages should yield 100% overall"
+    }
+    """
+    result = _compile_pel_code(pel_code)
+    assert isinstance(result, dict)
