@@ -44,13 +44,16 @@ classifiers = [
 ]
 
 dependencies = [
-    # Core runtime dependencies
+    # Core runtime dependencies (none - minimal by default)
+]
+
+[project.optional-dependencies]
+viz = [
+    # Visualization and reporting dependencies
     "matplotlib>=3.8.0",
     "seaborn>=0.13.0",
     "jinja2>=3.1.0",
 ]
-
-[project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",

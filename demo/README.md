@@ -12,7 +12,7 @@ This demo showcases the complete PEL workflow from model writing to stakeholder 
 ## Running the Demo
 
 ```bash
-cd /home/obsidian/Projects/PEL
+# From the repository root directory
 chmod +x demo/quick_start.sh
 ./demo/quick_start.sh
 ```
@@ -65,9 +65,13 @@ The demo model (`examples/saas_subscription.pel`) demonstrates:
 
 ## Troubleshooting
 
-**"matplotlib not found"**
+**"matplotlib not found"** or **"Visualization requires matplotlib and seaborn"**
 ```bash
-pip install matplotlib seaborn
+# Install visualization dependencies
+pip install 'pel-lang[viz]'
+
+# Or install manually
+pip install matplotlib seaborn jinja2
 ```
 
 **"Permission denied"**

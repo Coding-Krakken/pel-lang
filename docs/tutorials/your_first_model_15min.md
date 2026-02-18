@@ -94,23 +94,24 @@ Compiling my_growth_model.pel...
 ## Step 3: Run Deterministic Simulation (2 minutes)
 
 ```bash
-pel run my_growth_model.ir.json --mode deterministic --seed 42
+pel run my_growth_model.ir.json --mode deterministic --seed 42 -o results.json
 ```
 
 **What this does:**
 - Uses mean values for all distributions
 - Same seed = same results (reproducible)
 - Fast execution for quick validation
+- Outputs to `results.json` (use `-o` flag to save)
 
-**Example output:**
+**Example output (results.json):**
 ```json
 {
   "status": "success",
   "mode": "deterministic",
   "seed": 42,
   "variables": {
-    "revenue": [10000, 11000, 12100, 13310, ...],
-    "profit": [4000, 5000, 6100, 7310, ...]
+    "revenue": [10000, 11000, 12100, 13310],
+    "profit": [4000, 5000, 6100, 7310]
   },
   "constraint_violations": []
 }
@@ -170,8 +171,10 @@ open report.html
 Add more realism:
 
 ```pel
-// Seasonal growth
-param seasonality: Array<Fraction> = [1.2, 1.1, 0.9, 0.8, ...] {
+// Seasonal growth (12 months)
+param seasonality: Array<Fraction> = [
+  1.2, 1.1, 0.9, 0.8, 1.0, 1.1, 1.3, 1.2, 1.0, 0.9, 0.8, 0.85
+] {
   source: "historical_patterns",
   method: "observed",
   confidence: 0.85
@@ -194,7 +197,7 @@ Make your model adaptive:
 
 ```pel
 policy cut_costs_if_unprofitable {
-  when: profit[t] < $0
+  when: profit[t] < $0,
   then: monthly_opex *= 0.8  // 20% cost cut
 }
 ```
