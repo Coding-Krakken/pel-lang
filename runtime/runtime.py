@@ -68,13 +68,26 @@ class PELRuntime:
         Distributions sampled at mean/median.
         """
         model = ir_doc["model"]
+        model_name = model.get("name", "Unknown")
         state: dict[str, Any] = {}  # Variable name -> value
 
         # Initialize parameters (sample distributions at mean)
+        assumptions = []
         for node in model["nodes"]:
             if node["node_type"] == "param":
                 value = self.evaluate_expression(node["value"], state, deterministic=True)
                 state[node["name"]] = value
+                
+                # Collect assumption/provenance data
+                if "provenance" in node:
+                    prov = node["provenance"]
+                    assumptions.append({
+                        "name": node["name"],
+                        "value": value,
+                        "source": prov.get("source", "unknown"),
+                        "method": prov.get("method", "unknown"),
+                        "confidence": prov.get("confidence", 0)
+                    })
 
         # Determine time horizon
         T = self.config.time_horizon or model.get("time_horizon") or 12
@@ -94,24 +107,33 @@ class PELRuntime:
 
             # Check constraints
             for constraint in model.get("constraints", []):
-                condition_value = self.evaluate_expression(constraint["condition"], state)
-                if not condition_value:
-                    violation = {
-                        "timestep": t,
-                        "constraint": constraint["name"],
-                        "severity": constraint["severity"],
-                        "message": constraint.get("message", "Constraint violated")
-                    }
-                    constraint_violations.append(violation)
-
-                    if constraint["severity"] == "fatal":
-                        # Stop simulation
-                        return {
-                            "status": "failed",
-                            "timesteps_completed": t,
-                            "constraint_violations": constraint_violations,
-                            "reason": f"Fatal constraint '{constraint['name']}' violated at t={t}"
+                # Check if this constraint applies to this timestep
+                # For now, we check all constraints at all timesteps
+                # TODO: Parse constraint "for" clauses to determine when to check
+                try:
+                    condition_value = self.evaluate_expression(constraint["condition"], state)
+                    if not condition_value:
+                        violation = {
+                            "timestep": t,
+                            "constraint": constraint["name"],
+                            "severity": constraint["severity"],
+                            "message": constraint.get("message", "Constraint violated")
                         }
+                        constraint_violations.append(violation)
+
+                        if constraint["severity"] == "fatal":
+                            # Stop simulation
+                            return {
+                                "status": "failed",
+                                "model": {"name": model_name},
+                                "timesteps_completed": t,
+                                "constraint_violations": constraint_violations,
+                                "assumptions": assumptions,
+                                "reason": f"Fatal constraint '{constraint['name']}' violated at t={t}"
+                            }
+                except Exception:
+                    # Skip constraints that can't be evaluated (e.g., out of bounds indexing)
+                    pass
 
             # Execute policies
             for policy in model.get("policies", []):
@@ -126,12 +148,14 @@ class PELRuntime:
 
         return {
             "status": "success",
+            "model": {"name": model_name},
             "mode": "deterministic",
             "seed": self.config.seed,
             "timesteps": T,
             "variables": timeseries_results,
             "constraint_violations": constraint_violations,
-            "policy_executions": policy_executions
+            "policy_executions": policy_executions,
+            "assumptions": assumptions
         }
 
     def run_monte_carlo(self, ir_doc: dict[str, Any]) -> dict[str, Any]:
@@ -171,11 +195,48 @@ class PELRuntime:
 
 
         if expr_type == "Literal":
-            return expr["literal_value"]
+            literal_value = expr["literal_value"]
+            literal_type = expr.get("literal_type", "unknown")
+            
+            # Handle currency literals - parse string to number
+            if literal_type == "currency" and isinstance(literal_value, str):
+                # Remove $ and underscores, convert to float
+                numeric_str = literal_value.replace("$", "").replace("_", "").strip()
+                return float(numeric_str)
+            
+            # Handle other literals
+            if isinstance(literal_value, (int, float)):
+                return literal_value
+            
+            # Try to convert string numbers to float
+            if isinstance(literal_value, str):
+                try:
+                    return float(literal_value.replace("_", ""))
+                except ValueError:
+                    return 0
+            
+            return literal_value
 
         elif expr_type == "Variable":
             var_name = expr["variable_name"]
             return state.get(var_name, 0)
+        
+        elif expr_type == "Indexing":
+            # Handle array/timeseries indexing like profit[12]
+            base_expr = expr["expression"]
+            index_expr = expr["index"]
+            
+            base_value = self.evaluate_expression(base_expr, state, deterministic)
+            index_value = self.evaluate_expression(index_expr, state, deterministic)
+            
+            # If base is a list/array, index into it
+            if isinstance(base_value, list) and isinstance(index_value, int):
+                if 0 <= index_value < len(base_value):
+                    return base_value[index_value]
+                else:
+                    return 0  # Out of bounds
+            
+            return 0
 
         elif expr_type == "BinaryOp":
             left = self.evaluate_expression(expr["left"], state, deterministic)
