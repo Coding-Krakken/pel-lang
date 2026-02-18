@@ -90,6 +90,40 @@ def test_runtime_evaluate_expression_binary_op_sub_and_mul() -> None:
 
 
 @pytest.mark.unit
+def test_runtime_evaluate_expression_string_literal_preserved() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {"expr_type": "Literal", "literal_value": "SMB", "literal_type": "string"}
+
+    assert runtime.evaluate_expression(expr, {}) == "SMB"
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_string_equality_false_for_distinct_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {
+        "expr_type": "BinaryOp",
+        "operator": "==",
+        "left": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+        "right": {"expr_type": "Literal", "literal_value": "B", "literal_type": "string"},
+    }
+
+    assert runtime.evaluate_expression(expr, {}) is False
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_string_equality_true_for_same_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {
+        "expr_type": "BinaryOp",
+        "operator": "==",
+        "left": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+        "right": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+    }
+
+    assert runtime.evaluate_expression(expr, {}) is True
+
+
+@pytest.mark.unit
 def test_runtime_evaluate_expression_unknown_expr_type_returns_zero() -> None:
     runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
     assert runtime.evaluate_expression({"expr_type": "Nope"}, {}) == 0

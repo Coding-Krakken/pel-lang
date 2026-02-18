@@ -426,12 +426,15 @@ class PELRuntime:
             if isinstance(literal_value, (int, float)):
                 return literal_value
 
+            if literal_type == "string" and isinstance(literal_value, str):
+                return literal_value
+
             # Try to convert string numbers to float
             if isinstance(literal_value, str):
                 try:
                     return float(literal_value.replace("_", ""))
                 except ValueError:
-                    return 0
+                    return literal_value
 
             return literal_value
 
