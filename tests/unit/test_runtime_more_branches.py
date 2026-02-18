@@ -90,6 +90,40 @@ def test_runtime_evaluate_expression_binary_op_sub_and_mul() -> None:
 
 
 @pytest.mark.unit
+def test_runtime_evaluate_expression_string_literal_preserved() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {"expr_type": "Literal", "literal_value": "SMB", "literal_type": "string"}
+
+    assert runtime.evaluate_expression(expr, {}) == "SMB"
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_string_equality_false_for_distinct_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {
+        "expr_type": "BinaryOp",
+        "operator": "==",
+        "left": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+        "right": {"expr_type": "Literal", "literal_value": "B", "literal_type": "string"},
+    }
+
+    assert runtime.evaluate_expression(expr, {}) is False
+
+
+@pytest.mark.unit
+def test_runtime_evaluate_expression_string_equality_true_for_same_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
+    expr = {
+        "expr_type": "BinaryOp",
+        "operator": "==",
+        "left": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+        "right": {"expr_type": "Literal", "literal_value": "A", "literal_type": "string"},
+    }
+
+    assert runtime.evaluate_expression(expr, {}) is True
+
+
+@pytest.mark.unit
 def test_runtime_evaluate_expression_unknown_expr_type_returns_zero() -> None:
     runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
     assert runtime.evaluate_expression({"expr_type": "Nope"}, {}) == 0
@@ -141,3 +175,169 @@ def test_runtime_run_deterministic_initializes_params_into_state() -> None:
     result = runtime.run_deterministic(ir_doc)
     assert result["status"] == "success"
     assert result["constraint_violations"] == []
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_samples_distribution_params_per_run() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=3, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "d",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 10.0, "sigma": 1.0},
+                    },
+                    "provenance": {"source": "test", "method": "fitted", "confidence": 1.0},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    result = runtime.run_monte_carlo(ir_doc)
+    sampled_values = [run["assumptions"][0]["value"] for run in result["runs"]]
+
+    assert result["status"] == "success"
+    assert len(set(sampled_values)) > 1
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_raises_for_invalid_correlation_coefficient() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["b", 1.5]},
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    with pytest.raises(ValueError, match="Invalid correlation coefficient"):
+        runtime.run_monte_carlo(ir_doc)
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_raises_for_conflicting_correlation_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["b", 0.0]},
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["a", 0.2]},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    with pytest.raises(ValueError, match="Conflicting correlation values"):
+        runtime.run_monte_carlo(ir_doc)
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_correlated_sampling_resolves_param_expressions() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "base",
+                    "value": {"expr_type": "Literal", "literal_value": 10.0},
+                    "provenance": {"source": "test", "method": "given", "confidence": 1.0},
+                },
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {
+                            "mu": {"expr_type": "Variable", "variable_name": "base"},
+                            "sigma": 1.0,
+                        },
+                    },
+                    "provenance": {
+                        "source": "test",
+                        "method": "fitted",
+                        "confidence": 1.0,
+                        "correlated_with": ["b", 0.5],
+                    },
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {
+                            "mu": {"expr_type": "Variable", "variable_name": "base"},
+                            "sigma": 1.0,
+                        },
+                    },
+                    "provenance": {"source": "test", "method": "fitted", "confidence": 1.0},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    result = runtime.run_monte_carlo(ir_doc)
+    assumptions = {item["name"]: item["value"] for item in result["runs"][0]["assumptions"]}
+
+    assert result["status"] == "success"
+    assert assumptions["base"] == 10.0
+    assert assumptions["a"] > 5.0
+    assert assumptions["b"] > 5.0

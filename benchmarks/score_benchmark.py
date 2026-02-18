@@ -12,6 +12,7 @@ Generates benchmarks/PEL_100_RESULTS.md
 """
 
 import json
+import argparse
 import subprocess
 import time
 from pathlib import Path
@@ -219,9 +220,25 @@ class BenchmarkScorer:
         
         return md_content
 
+    def get_success_rate_percent(self) -> float:
+        """Return benchmark success rate as percentage."""
+        if not self.results:
+            return 0.0
+        successful = sum(1 for r in self.results if r.get('status') == 'success')
+        return (successful / len(self.results)) * 100.0
+
 
 def main():
     """Run benchmark scoring."""
+    parser = argparse.ArgumentParser(description="Run PEL-100 benchmark scoring")
+    parser.add_argument(
+        "--min-success-rate",
+        type=float,
+        default=None,
+        help="Fail with non-zero exit code if success rate is below this percentage",
+    )
+    args = parser.parse_args()
+
     benchmarks_dir = Path(__file__).parent
     
     scorer = BenchmarkScorer(benchmarks_dir)
@@ -235,6 +252,16 @@ def main():
     with open(json_path, 'w') as f:
         json.dump(scorer.results, f, indent=2)
     print(f"JSON results: {json_path}")
+
+    success_rate = scorer.get_success_rate_percent()
+    print(f"Success rate: {success_rate:.1f}%")
+
+    if args.min_success_rate is not None and success_rate < args.min_success_rate:
+        print(
+            f"ERROR: Success rate {success_rate:.1f}% is below required threshold "
+            f"{args.min_success_rate:.1f}%"
+        )
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

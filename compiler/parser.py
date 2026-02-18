@@ -18,7 +18,7 @@ from compiler.lexer import Token, TokenType
 # Valid PEL type names (for validation)
 VALID_TYPE_NAMES = {
     "Currency", "Rate", "Duration", "Capacity", "Count", "Fraction",
-    "TimeSeries", "Distribution", "Array", "Boolean", "Int"
+    "TimeSeries", "Distribution", "Array", "Boolean", "Int", "String"
 }
 
 
