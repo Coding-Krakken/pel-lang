@@ -210,22 +210,36 @@ class PELType:
         )
 
     @staticmethod
-    def count(entity: str) -> 'PELType':
-        """Count of entities."""
-        return PELType(
-            type_kind="Count",
-            params={"entity": entity},
-            dimension=Dimension.count(entity)
-        )
+    def count(entity: str | None = None) -> 'PELType':
+        """Count of entities (or generic count if no entity specified)."""
+        if entity:
+            return PELType(
+                type_kind="Count",
+                params={"entity": entity},
+                dimension=Dimension.count(entity)
+            )
+        else:
+            return PELType(
+                type_kind="Count",
+                params={},
+                dimension=Dimension.dimensionless()
+            )
 
     @staticmethod
-    def capacity(resource: str) -> 'PELType':
-        """Capacity type."""
-        return PELType(
-            type_kind="Capacity",
-            params={"resource": resource},
-            dimension=Dimension.capacity(resource)
-        )
+    def capacity(resource: str | None = None) -> 'PELType':
+        """Capacity type (or generic if no resource specified)."""
+        if resource:
+            return PELType(
+                type_kind="Capacity",
+                params={"resource": resource},
+                dimension=Dimension.capacity(resource)
+            )
+        else:
+            return PELType(
+                type_kind="Capacity",
+                params={},
+                dimension=Dimension.dimensionless()
+            )
 
     @staticmethod
     def boolean() -> 'PELType':
@@ -287,12 +301,20 @@ class TypeChecker:
         self.errors: list[CompilerError] = []
         self.warnings: list[str] = []
         self.static_values: dict[str, Any] = {}  # Store static parameter values for constraint checking
+        self.functions: dict[str, tuple[list[PELType], PELType]] = {}
 
         # Built-ins used by the language surface syntax.
         # `t` is the implicit time index in TimeSeries expressions.
         self.env.bind("t", PELType.fraction())
         # `time_horizon` is often referenced in examples; treat as dimensionless.
         self.env.bind("time_horizon", PELType.fraction())
+
+        # Load stdlib function signatures into function registry
+        try:
+            self.load_stdlib_functions()
+        except Exception:
+            # Non-fatal: continue without stdlib if loading fails
+            pass
 
     def check(self, model: Model) -> Model:
         """Type-check a model and raise on the first error.
@@ -322,6 +344,78 @@ class TypeChecker:
                 value_type = self.infer_expression(param.value)
                 if not self.types_compatible(param_type, value_type):
                     self.errors.append(self.create_enhanced_type_error(param_type, value_type))
+
+        # Phase 1.5: Register model-defined function signatures for call checking
+        for func in model.funcs:
+            param_types: list[PELType] = []
+            for _, ptype in func.parameters:
+                param_types.append(self.ast_type_to_pel_type(ptype))
+            return_type = self.ast_type_to_pel_type(func.return_type)
+            self.functions[func.name] = (param_types, return_type)
+
+        # Phase 1.6: Type check function bodies against declared signatures
+        for func in model.funcs:
+            _, declared_return_type = self.functions[func.name]
+
+            parent_env = self.env
+            self.env = parent_env.child_scope()
+
+            for param_name, ptype in func.parameters:
+                self.env.bind(param_name, self.ast_type_to_pel_type(ptype))
+
+            def check_func_stmt(stmt: Statement, expected_return_type: PELType) -> None:
+                if isinstance(stmt, VarDecl):
+                    if stmt.type_annotation:
+                        var_type = self.ast_type_to_pel_type(stmt.type_annotation)
+                    elif stmt.value is not None:
+                        var_type = self.infer_expression(stmt.value)
+                    else:
+                        var_type = PELType.fraction()
+
+                    self.env.bind(stmt.name, var_type)
+
+                    if stmt.value is not None and not isinstance(stmt.value, Distribution):
+                        value_type = self.infer_expression(stmt.value)
+                        if not self.types_compatible(var_type, value_type):
+                            self.errors.append(self.create_enhanced_type_error(var_type, value_type))
+
+                elif isinstance(stmt, Assignment):
+                    target_type = self.infer_expression(stmt.target)
+                    value_type = self.infer_expression(stmt.value)
+                    if not self.types_compatible(target_type, value_type):
+                        self.errors.append(self.create_enhanced_type_error(target_type, value_type))
+
+                elif isinstance(stmt, Return):
+                    if stmt.value is None:
+                        return
+                    value_type = self.infer_expression(stmt.value)
+                    if not self.types_compatible(expected_return_type, value_type):
+                        self.errors.append(
+                            TypeError(
+                                "E0105",
+                                f"Return type mismatch: expected {expected_return_type}, got {value_type}",
+                            )
+                        )
+
+                elif isinstance(stmt, IfStmt):
+                    cond_type = self.infer_expression(stmt.condition)
+                    if cond_type.type_kind != "Boolean":
+                        self.errors.append(self.create_enhanced_type_error(PELType.boolean(), cond_type))
+                    for nested in stmt.then_body or []:
+                        check_func_stmt(nested, expected_return_type)
+                    for nested in stmt.else_body or []:
+                        check_func_stmt(nested, expected_return_type)
+
+                elif isinstance(stmt, ForStmt):
+                    _ = self.infer_expression(stmt.start)
+                    _ = self.infer_expression(stmt.end)
+                    for nested in stmt.body or []:
+                        check_func_stmt(nested, expected_return_type)
+
+            for stmt in func.body:
+                check_func_stmt(stmt, declared_return_type)
+
+            self.env = parent_env
 
         # Phase 2: Type check variables (with type inference if needed)
         for var in model.vars:
@@ -589,8 +683,9 @@ class TypeChecker:
             elif 'currency' in result_dim.units and len(result_dim.units) == 1:
                 return PELType.currency(result_dim.units['currency'])
             elif 'currency' in result_dim.units and 'per_time' in result_dim.units:
-                # Currency per time
-                return PELType.rate(result_dim.units['per_time'])
+                # Current type system does not model Currency-per-time as a distinct
+                # first-class type in annotations; keep currency compatibility.
+                return PELType.currency(result_dim.units['currency'])
             else:
                 # Generic result
                 return PELType(type_kind="Quotient", params={}, dimension=result_dim)
@@ -615,6 +710,30 @@ class TypeChecker:
             if (left_type.type_kind in ["Quotient", "Product"] and right_type.type_kind in ["Int", "Fraction"]) or \
                (right_type.type_kind in ["Quotient", "Product"] and left_type.type_kind in ["Int", "Fraction"]):
                 pass  # Allow comparison
+            # Allow comparisons between Count and Int thresholds (e.g., users >= 100)
+            elif (left_type.type_kind == "Count" and right_type.type_kind == "Int") or \
+                 (right_type.type_kind == "Count" and left_type.type_kind == "Int"):
+                pass
+            # Backward-compatibility for thresholds like `burn < $0/1mo`.
+            # Keep strict mismatch checks for non-zero Currency-vs-Rate comparisons.
+            elif left_type.type_kind == "Currency" and right_type.type_kind == "Rate":
+                if isinstance(expr.right, PerDurationExpression) and isinstance(expr.right.left, Literal) and expr.right.left.literal_type == "currency":
+                    currency_text = str(expr.right.left.value).replace("_", "")
+                    if re.match(r"^[^\d-]*0+(?:\.0+)?$", currency_text):
+                        pass
+                    else:
+                        self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
+                else:
+                    self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
+            elif right_type.type_kind == "Currency" and left_type.type_kind == "Rate":
+                if isinstance(expr.left, PerDurationExpression) and isinstance(expr.left.left, Literal) and expr.left.left.literal_type == "currency":
+                    currency_text = str(expr.left.left.value).replace("_", "")
+                    if re.match(r"^[^\d-]*0+(?:\.0+)?$", currency_text):
+                        pass
+                    else:
+                        self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
+                else:
+                    self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
             elif not self.dimensions_compatible(left_type.dimension, right_type.dimension):
                 self.errors.append(dimensional_mismatch(operator, str(left_type), str(right_type)))
 
@@ -680,9 +799,78 @@ class TypeChecker:
             return arg_type
 
         else:
-            # User-defined function: look up in environment
-            # TODO: Support function types
+            # User-defined function: look up in stdlib-registered functions
+            sig = self.functions.get(expr.function_name)
+            if sig:
+                param_types, return_type = sig
+                # Basic arity check
+                if len(param_types) != len(expr.arguments):
+                    self.errors.append(
+                        TypeError(
+                            "E0100",
+                            (
+                                f"Wrong number of arguments for function '{expr.function_name}': "
+                                f"expected {len(param_types)}, got {len(expr.arguments)}"
+                            ),
+                        )
+                    )
+                # Infer argument types and do light compatibility checks
+                for i, arg in enumerate(expr.arguments):
+                    if i < len(param_types):
+                        arg_type = self.infer_expression(arg)
+                        if not self.types_compatible(param_types[i], arg_type):
+                            self.errors.append(
+                                TypeError(
+                                    "E0101",
+                                    (
+                                        f"Type mismatch in function '{expr.function_name}' argument {i + 1}: "
+                                        f"expected {param_types[i]}, got {arg_type}"
+                                    ),
+                                )
+                            )
+                return return_type
+
+            self.errors.append(
+                TypeError("E0104", f"Undefined function '{expr.function_name}'")
+            )
             return PELType.fraction()
+
+    def load_stdlib_functions(self) -> None:
+        """Load function signatures from `stdlib/` directory into the function registry."""
+        from pathlib import Path
+
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
+
+        project_root = Path(__file__).resolve().parents[1]
+        stdlib_dir = project_root / 'stdlib'
+        if not stdlib_dir.exists():
+            return
+
+        for pel_file in stdlib_dir.rglob('*.pel'):
+            try:
+                src = pel_file.read_text(encoding='utf-8')
+                # Wrap in a model so Parser can parse function declarations
+                wrapped = f"model __stdlib_wrapper__ {{\n{src}\n}}\n"
+                lexer = Lexer(wrapped, filename=str(pel_file))
+                tokens = lexer.tokenize()
+                parser = Parser(tokens)
+                model = parser.parse()
+
+                for func in model.funcs:
+                    # func.parameters: list of (name, TypeAnnotation)
+                    param_types: list[PELType] = []
+                    for _, ptype in func.parameters:
+                        pel_t = self.ast_type_to_pel_type(ptype)
+                        param_types.append(pel_t)
+
+                    return_pel_type = self.ast_type_to_pel_type(func.return_type)
+                    self.functions[func.name] = (param_types, return_pel_type)
+            except Exception as e:
+                # Log parse errors for debugging but don't fail initialization
+                import sys
+                print(f"Warning: Failed to load stdlib from {pel_file.name}: {e}", file=sys.stderr)
+                continue
 
     def infer_if_then_else(self, expr: IfThenElse) -> PELType:
         """Infer type of if-then-else expression."""
@@ -815,11 +1003,11 @@ class TypeChecker:
             return PELType.fraction()
 
         elif ast_type.type_kind == "Count":
-            entity = ast_type.params.get("entity", "Items")
+            entity = ast_type.params.get("entity")
             return PELType.count(entity)
 
         elif ast_type.type_kind == "Capacity":
-            resource = ast_type.params.get("resource", "Units")
+            resource = ast_type.params.get("resource")
             return PELType.capacity(resource)
 
         elif ast_type.type_kind == "Boolean":
@@ -832,6 +1020,22 @@ class TypeChecker:
             else:
                 inner_type = PELType.fraction()
             return PELType.timeseries(inner_type)
+
+        elif ast_type.type_kind == "Array":
+            # Convert Array<Inner> to PELType with concrete element_type
+            inner_param = ast_type.params.get("inner")
+            if isinstance(inner_param, TypeAnnotation):
+                element_type = self.ast_type_to_pel_type(inner_param)
+            elif isinstance(inner_param, PELType):
+                element_type = inner_param
+            else:
+                element_type = PELType.fraction()
+
+            return PELType(
+                type_kind="Array",
+                params={"element_type": element_type},
+                dimension=Dimension.dimensionless(),
+            )
 
         elif ast_type.type_kind == "Distribution":
             inner_param = ast_type.params.get("inner")
@@ -871,6 +1075,16 @@ class TypeChecker:
         # Allow Int literals to be implicitly coerced to Count types
         if t1.type_kind == "Count" and t2.type_kind == "Int":
             return True
+
+        # Allow generic Count to be compatible with specific Count<Entity>
+        if t1.type_kind == "Count" and t2.type_kind == "Count":
+            # If either is generic (no entity param), allow the assignment
+            entity1 = t1.params.get("entity")
+            entity2 = t2.params.get("entity")
+            if entity1 is None or entity2 is None:
+                return True
+            # Otherwise, entities must match
+            return entity1 == entity2
 
         # Allow Int literals to be coerced to dimensionless types like Fraction
         if t1.dimension.units == {} and t2.type_kind == "Int":
@@ -914,6 +1128,19 @@ class TypeChecker:
         # Semantic contract: CountAggregation
         if t1.type_kind == "Count" and t2.type_kind == "Quotient":
             return True
+
+        # Array compatibility: element types must be compatible
+        if t1.type_kind == "Array" and t2.type_kind == "Array":
+            el1 = t1.params.get("element_type") or t1.params.get("inner")
+            el2 = t2.params.get("element_type") or t2.params.get("inner")
+            # If element types are AST TypeAnnotation (inner), convert to PELType
+            if isinstance(el1, TypeAnnotation):
+                el1 = self.ast_type_to_pel_type(el1)
+            if isinstance(el2, TypeAnnotation):
+                el2 = self.ast_type_to_pel_type(el2)
+            if el1 is None or el2 is None:
+                return False
+            return self.types_compatible(el1, el2)
 
         # Allow Rate to be assigned to Currency (for simplified benchmarks)
         # This handles: param price: Currency<USD> = $10/1mo (should be Rate but typed as Currency)

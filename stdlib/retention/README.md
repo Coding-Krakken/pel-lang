@@ -27,7 +27,8 @@ Functions for customer retention curves, churn analysis, and cohort dynamics.
 ## Example Usage
 
 ```pel
-import pel.stdlib.retention as ret
+// Note: Import syntax is aspirational/future feature
+// Currently use direct function calls
 
 model SaaS_Retention {
   param monthly_churn: Rate per Month = ~Beta(α=2, β=38) {
@@ -44,18 +45,20 @@ model SaaS_Retention {
   
   // Generate 36-month retention curve
   var retention_curve: Array<Fraction> = 
-    ret.exponential_retention_curve(monthly_churn, 36)
+    exponential_retention_curve(monthly_churn, 36)
+  // Index 0 is month 0 baseline (100%); index 36 is month 36
   
   // Calculate cohort sizes over time
   var cohort_sizes: Array<Count<Customer>> = 
-    ret.cohort_retention_table(initial_customers, retention_curve)
+    cohort_retention_table(initial_customers, retention_curve)
+  // cohort_sizes[t] corresponds to retention_curve[t]
   
   // Calculate average customer lifetime
   var avg_lifetime: Duration<Month> = 
-    ret.customer_lifetime_months(1.0 - monthly_churn * 1mo)
+    customer_lifetime_months(1.0 - monthly_churn * 1mo)
   
   // NDR calculation
-  var ndr: Fraction = ret.net_dollar_retention(
+  var ndr: Fraction = net_dollar_retention(
     $100_000,  // Starting MRR
     $20_000,   // Expansion
     $8_000,    // Churn
@@ -85,12 +88,12 @@ model SaaS_Retention {
 ### Example Comparison
 ```pel
 // For a product with 5% monthly churn:
-var exp_curve: Array<Fraction> = ret.exponential_retention_curve(0.05/1mo, 24)
+var exp_curve: Array<Fraction> = exponential_retention_curve(0.05/1mo, 24)
 // Month 12: ~54% retained
 // Month 24: ~29% retained
 
 // Power law might show:
-var power_curve: Array<Fraction> = ret.power_law_retention_curve(0.9, 0.15, 24)
+var power_curve: Array<Fraction> = power_law_retention_curve(0.9, 0.15, 24)
 // Month 12: ~65% retained (better long-tail)
 // Month 24: ~55% retained
 ```
@@ -99,11 +102,11 @@ var power_curve: Array<Fraction> = ret.power_law_retention_curve(0.9, 0.15, 24)
 
 ### Cohort Comparison
 ```pel
-var cohort_2023_curve: Array<Fraction> = ret.exponential_retention_curve(0.06/1mo, 12)
-var cohort_2024_curve: Array<Fraction> = ret.exponential_retention_curve(0.04/1mo, 12)
+var cohort_2023_curve: Array<Fraction> = exponential_retention_curve(0.06/1mo, 12)
+var cohort_2024_curve: Array<Fraction> = exponential_retention_curve(0.04/1mo, 12)
 
 var improvement: Fraction = 
-  cohort_2024_curve[12] - cohort_2023_curve[12]
+  cohort_2024_curve[11] - cohort_2023_curve[11]
 // Shows retention improvement over time
 ```
 
@@ -113,10 +116,10 @@ var starting_mrr: Currency<USD> = $1_000_000
 var churned_mrr: Currency<USD> = $50_000
 var expansion_mrr: Currency<USD> = $150_000
 
-var gdr: Fraction = ret.gross_dollar_retention(starting_mrr, churned_mrr, $0)
+var gdr: Fraction = gross_dollar_retention(starting_mrr, churned_mrr, $0)
 // GDR = 95% (retained 95% of base)
 
-var ndr: Fraction = ret.net_dollar_retention(starting_mrr, expansion_mrr, churned_mrr, $0)
+var ndr: Fraction = net_dollar_retention(starting_mrr, expansion_mrr, churned_mrr, $0)
 // NDR = 110% (10% net growth from existing customers)
 ```
 

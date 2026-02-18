@@ -36,7 +36,8 @@ Functions for multi-stage conversion funnels and funnel optimization analysis.
 ## Example Usage
 
 ```pel
-import pel.stdlib.funnel as fn
+// Note: Import syntax is aspirational/future feature
+// Currently use direct function calls
 
 model SaaS_Acquisition_Funnel {
   // Stage sizes (top of funnel)
@@ -74,7 +75,7 @@ model SaaS_Acquisition_Funnel {
   }
   
   // Calculate funnel
-  var funnel: Array<Count<User>> = fn.saas_signup_funnel(
+  var funnel: Array<Count<User>> = saas_signup_funnel(
     website_visitors * 1mo,  // Convert to Count
     signup_rate,
     activation_rate,
@@ -89,7 +90,7 @@ model SaaS_Acquisition_Funnel {
   var paid_customers: Count<User> = funnel[4]
   
   // Calculate overall conversion
-  var overall_conversion: Fraction = fn.overall_conversion_rate([
+  var overall_conversion: Fraction = overall_conversion_rate([
     signup_rate,
     activation_rate,
     trial_start_rate,
@@ -97,7 +98,7 @@ model SaaS_Acquisition_Funnel {
   ])
   
   // Find bottleneck
-  var bottleneck_stage: Count = fn.bottleneck_detection([
+  var bottleneck_stage: Count = bottleneck_detection([
     signup_rate,
     activation_rate,
     trial_start_rate,
@@ -125,7 +126,7 @@ model SaaS_Acquisition_Funnel {
 var conversion_rates: Array<Fraction> = [0.08, 0.60, 0.75, 0.25]
 var stage_names: Array<String> = ["Signup", "Activation", "Trial", "Paid"]
 
-var bottleneck: Count = fn.bottleneck_detection(conversion_rates)
+var bottleneck: Count = bottleneck_detection(conversion_rates)
 // Returns index of worst stage
 // Focus optimization here for maximum impact
 ```
@@ -139,7 +140,7 @@ var visitors: Count<User> = 10_000
 // Test variant shows potential improvement
 var new_activation_rate: Fraction = 0.70
 
-var impact: Count<User> = fn.stage_improvement_impact(
+var impact: Count<User> = stage_improvement_impact(
   current_funnel,
   1,  // Stage index (activation)
   new_activation_rate,
@@ -154,7 +155,7 @@ var website_traffic: Count<User> = 10_000
 var target_customers: Count<User> = 200
 var downstream_conversion: Fraction = 0.60 * 0.75 * 0.25  // Activation × Trial × Paid
 
-var required_signup_rate: Fraction = fn.required_conversion_rate_for_target(
+var required_signup_rate: Fraction = required_conversion_rate_for_target(
   website_traffic,
   target_customers,
   downstream_conversion
@@ -171,7 +172,7 @@ var avg_time_per_stage: Array<Duration<Day>> = [
   14d      // Trial → Paid (trial period)
 ]
 
-var total_funnel_time: Duration<Day> = fn.funnel_velocity(avg_time_per_stage)
+var total_funnel_time: Duration<Day> = funnel_velocity(avg_time_per_stage)
 // = 17 days from visit to paid customer
 ```
 
@@ -179,7 +180,7 @@ var total_funnel_time: Duration<Day> = fn.funnel_velocity(avg_time_per_stage)
 
 ### SaaS Signup Funnel
 ```pel
-var funnel: Array<Count<User>> = fn.saas_signup_funnel(
+var funnel: Array<Count<User>> = saas_signup_funnel(
   visitors,
   signup_rate,
   activation_rate,
@@ -191,7 +192,7 @@ var funnel: Array<Count<User>> = fn.saas_signup_funnel(
 
 ### E-Commerce Checkout
 ```pel
-var checkout_funnel: Array<Count<User>> = fn.ecommerce_checkout_funnel(
+var checkout_funnel: Array<Count<User>> = ecommerce_checkout_funnel(
   product_views,
   add_to_cart_rate,
   checkout_rate,
@@ -202,7 +203,7 @@ var checkout_funnel: Array<Count<User>> = fn.ecommerce_checkout_funnel(
 
 ### B2B Sales
 ```pel
-var sales_funnel: Array<Count<Contact>> = fn.b2b_sales_funnel(
+var sales_funnel: Array<Count<Contact>> = b2b_sales_funnel(
   leads,
   mql_rate,
   sql_rate,

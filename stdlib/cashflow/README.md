@@ -28,7 +28,8 @@ Functions for cash flow timing, accounts receivable/payable, burn rate, and runw
 ## Example Usage
 
 ```pel
-import pel.stdlib.cashflow as cf
+// Note: Import syntax is aspirational/future feature
+// Currently use direct function calls
 
 model SaaS_Cashflow {
   // Parameters
@@ -57,18 +58,18 @@ model SaaS_Cashflow {
   }
   
   // Calculations
-  var ar_balance: Currency<USD> = cf.accounts_receivable(
+  var ar_balance: Currency<USD> = accounts_receivable(
     monthly_revenue,
     dso,
     30d  // Standard payment terms
   )
   
-  var burn: Currency<USD> per Month = cf.burn_rate(
+  var burn: Currency<USD> per Month = burn_rate(
     monthly_revenue,
     monthly_opex
   )
   
-  var runway: Duration<Month> = cf.runway_months(
+  var runway: Duration<Month> = runway_months(
     current_cash,
     burn
   )
@@ -96,13 +97,13 @@ var baseline_dso: Duration<Day> = 45d
 var optimized_dso: Duration<Day> = 30d
 
 var cash_freed: Currency<USD> = 
-  cf.accounts_receivable(mrr, baseline_dso, 30d) -
-  cf.accounts_receivable(mrr, optimized_dso, 30d)
+  accounts_receivable(mrr, baseline_dso, 30d) -
+  accounts_receivable(mrr, optimized_dso, 30d)
 ```
 
 ### Runway Planning
 ```pel
-var current_runway: Duration<Month> = cf.runway_months(cash, burn)
+var current_runway: Duration<Month> = runway_months(cash, burn)
 var target_runway: Duration<Month> = 12mo
 
 var fundraise_target: Currency<USD> = 

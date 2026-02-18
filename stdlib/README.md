@@ -78,6 +78,8 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 
 ### Import a module
 
+Import syntax is not yet implemented in the parser and is shown here as aspirational/future syntax.
+
 ```pel
 import stdlib.unit_econ as ue
 
@@ -109,11 +111,10 @@ model MyModel {
 ### Compose functions
 
 ```pel
-import stdlib.unit_econ as ue
-import stdlib.cashflow as cf
+// Use direct function calls for now.
 
-var payback = ue.payback_period(cac, monthly_margin)
-var cash_impact = cf.ar_timing(revenue, payment_terms)
+var payback = payback_period(cac, monthly_margin)
+var ar_balance = accounts_receivable(revenue, 45d, payment_terms)
 ```
 
 ## Governance
