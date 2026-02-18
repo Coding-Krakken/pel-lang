@@ -1,0 +1,27 @@
+model saas_enterprise_expansion {
+  param initial_acv: Currency<USD> = $100_000
+  param enterprise_accounts: Count<Account> = 80
+  param dilution_rate: Fraction = 0.02
+  param avg_seats_per_account: Fraction = 150
+  param price_per_seat: Currency<USD> = $500
+  param seat_expansion_rate: Fraction = 0.20
+  param feature_upsell_rate: Fraction = 0.15
+  param feature_upsell_value: Currency<USD> = $25_000
+  param integration_upsell_rate: Fraction = 0.10
+  param integration_value: Currency<USD> = $15_000
+  param premium_support_adoption: Fraction = 0.40
+  param premium_support_value: Currency<USD> = $5_000
+
+  var base_acv: Currency<USD> = initial_acv * enterprise_accounts
+  var seat_expansion_revenue: Currency<USD> = avg_seats_per_account * seat_expansion_rate * price_per_seat * enterprise_accounts
+  var feature_upsell_revenue: Currency<USD> = feature_upsell_rate * feature_upsell_value * enterprise_accounts
+  var integration_revenue: Currency<USD> = integration_upsell_rate * integration_value * enterprise_accounts
+  var premium_support_revenue: Currency<USD> = premium_support_adoption * premium_support_value * enterprise_accounts
+  var total_expansion: Currency<USD> = seat_expansion_revenue + feature_upsell_revenue + integration_revenue + premium_support_revenue
+  var total_arr: Currency<USD> = base_acv + total_expansion
+
+  constraint nrr_expansion: total_arr >= base_acv {
+    severity: warning,
+    message: "Need expansion revenue"
+  }
+}

@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: SaaS Usage-based Billing
+// Metered usage, per-unit pricing, and volume discounts
+
+model saas_usage_based {
+  param active_customers: Count<Customer> = 4_000
+  param avg_units_per_month: Fraction = 120
+  param price_per_unit: Currency<USD> = $0.10
+  param discount_threshold: Fraction = 1000
+  param discount_pct: Fraction = 0.10
+
+  var base_revenue: Currency<USD> = active_customers * avg_units_per_month * price_per_unit
+  var monthly_revenue: Currency<USD> = base_revenue * 0.90
+
+  constraint revenue_positive: monthly_revenue > $0 {
+    severity: fatal,
+    message: "Revenue must be positive"
+  }
+}

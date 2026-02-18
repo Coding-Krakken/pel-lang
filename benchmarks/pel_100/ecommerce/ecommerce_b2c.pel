@@ -1,0 +1,77 @@
+// PEL-100 Benchmark: E-Commerce B2C Model
+// Direct-to-consumer e-commerce with CAC, CLTV, and ROAS
+
+model ecommerce_b2c_bench {
+  // Monthly traffic
+  param monthly_visitors: Count<Visitor> = 50_000 {
+    source: "google_analytics",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Conversion rate
+  param conversion_rate: Fraction = 0.025 {
+    source: "conversion_tracking",
+    method: "observed",
+    confidence: 0.90,
+    notes: "2.5% visitor to purchase"
+  }
+  
+  // Average Order Value (AOV)
+  param aov: Currency<USD> = $125 {
+    source: "shopify_data",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Cost of Goods Sold (percentage)
+  param cogs_pct: Fraction = 0.40 {
+    source: "inventory_analysis",
+    method: "derived",
+    confidence: 0.85,
+    notes: "40% COGS typical for DTC"
+  }
+  
+  // Marketing spend
+  param monthly_ad_spend: Currency<USD> = $15_000 {
+    source: "facebook_ads_google_ads",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Repeat purchase rate
+  param repeat_rate: Fraction = 0.30 {
+    source: "customer_cohorts",
+    method: "fitted",
+    confidence: 0.75,
+    notes: "30% make 2nd purchase within 6mo"
+  }
+  
+  // Calculations
+  var monthly_orders: Count<Order> = monthly_visitors * conversion_rate
+  var monthly_revenue: Currency<USD> = monthly_orders * aov
+  var monthly_cogs: Currency<USD> = monthly_revenue * cogs_pct
+  var contribution_margin: Currency<USD> = monthly_revenue - monthly_cogs
+  
+  var cac: Currency<USD> = monthly_ad_spend / monthly_orders
+  var cltv: Currency<USD> = aov * (1 + repeat_rate)
+  
+  var roas: Fraction = monthly_revenue / monthly_ad_spend
+  var cltv_to_cac: Fraction = cltv / cac
+  
+  // Constraints
+  constraint positive_contribution: contribution_margin > $0 {
+    severity: fatal,
+    message: "Negative contribution margin"
+  }
+  
+  constraint roas_target: roas >= 3.0 {
+    severity: warning,
+    message: "ROAS below 3.0x target"
+  }
+  
+  constraint unit_economics: cltv_to_cac >= 2.0 {
+    severity: warning,
+    message: "CLTV:CAC below 2.0 minimum"
+  }
+}

@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: SaaS Cybersecurity Platform
+// Endpoint-based pricing with security monitoring costs
+
+model saas_cybersecurity_bench {
+  param total_customers: Count<Customer> = 850
+  param avg_endpoints_per_customer: Fraction = 120
+  param price_per_endpoint: Rate per Month = $4.50/1mo
+  param threat_intel_costs: Currency<USD> = $25_000
+  param soc_team_costs: Currency<USD> = $180_000
+
+  var total_endpoints: Count<Endpoint> = total_customers * avg_endpoints_per_customer
+  var monthly_revenue: Currency<USD> = total_endpoints * price_per_endpoint
+  var monthly_costs: Currency<USD> = threat_intel_costs + soc_team_costs
+  var operating_margin: Fraction = (monthly_revenue - monthly_costs) / monthly_revenue
+
+  constraint profitable: operating_margin > 0.20 {
+    severity: warning,
+    message: "Operating margin below 20%"
+  }
+}

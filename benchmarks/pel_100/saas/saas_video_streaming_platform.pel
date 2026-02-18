@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: SaaS Video Streaming Platform
+// Bandwidth and storage costs with tiered pricing
+
+model saas_video_streaming_bench {
+  param subscribers: Count<Subscriber> = 125_000
+  param avg_arpu: Currency<USD> = $35/1mo
+  param bandwidth_cost_per_user: Currency<USD> = $8/1mo
+  param storage_cost_per_user: Currency<USD> = $3/1mo
+  param platform_costs: Currency<USD> = $180_000
+
+  var monthly_revenue: Currency<USD> = subscribers * avg_arpu
+  var bandwidth_costs: Currency<USD> = subscribers * bandwidth_cost_per_user
+  var storage_costs: Currency<USD> = subscribers * storage_cost_per_user
+  var gross_margin: Fraction = (monthly_revenue - bandwidth_costs - storage_costs) / monthly_revenue
+
+  constraint healthy_margins: gross_margin > 0.60 {
+    severity: warning,
+    message: "Gross margin below 60% (bandwidth/storage too high)"
+  }
+}

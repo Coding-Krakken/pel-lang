@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Executive Coaching Services
+// 1:1 coaching plus group programs
+
+model services_executive_coaching_bench {
+  param one_on_one_clients: Count<Client> = 35
+  param monthly_rate_1on1: Currency<USD> = $2500/1mo
+  param group_program_participants: Count<Participant> = 120
+  param group_program_monthly_fee: Currency<USD> = $495/1mo
+  param coach_payroll_costs: Currency<USD> = $45_000
+
+  var one_on_one_revenue: Currency<USD> = one_on_one_clients * monthly_rate_1on1
+  var group_revenue: Currency<USD> = group_program_participants * group_program_monthly_fee
+  var total_revenue: Currency<USD> = one_on_one_revenue + group_revenue
+  var net_revenue: Currency<USD> = total_revenue - coach_payroll_costs
+
+  constraint revenue_target: total_revenue >= $140_000 {
+    severity: warning,
+    message: "Total revenue below $140K monthly target"
+  }
+}

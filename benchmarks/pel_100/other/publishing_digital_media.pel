@@ -1,0 +1,23 @@
+// PEL-100 Benchmark: Digital Publishing / Media
+// Subscription paywall plus advertising revenue
+
+model publishing_digital_media_bench {
+  param paying_subscribers: Count<Subscriber> = 45_000
+  param subscription_price: Currency<USD> = $15/1mo
+  param monthly_pageviews: Count<Pageview> = 12_500_000
+  param ad_rpm: Currency<USD> = $8.50
+  param content_costs: Currency<USD> = $185_000
+  param tech_platform_costs: Currency<USD> = $65_000
+
+  var subscription_revenue: Currency<USD> = paying_subscribers * subscription_price
+  var ad_revenue: Currency<USD> = (monthly_pageviews / 1000) * ad_rpm
+  var total_revenue: Currency<USD> = subscription_revenue + ad_revenue
+  var total_costs: Currency<USD> = content_costs + tech_platform_costs
+  var net_income: Currency<USD> = total_revenue - total_costs
+  var subscription_revenue_pct: Fraction = subscription_revenue / total_revenue
+
+  constraint subscription_focus: subscription_revenue_pct >= 0.50 {
+    severity: warning,
+    message: "Subscription revenue should be at least 50% of total"
+  }
+}

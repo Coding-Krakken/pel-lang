@@ -1,0 +1,164 @@
+/*
+ * Example: CountFromDuration and TemporalAggregation Contracts
+ * 
+ * Demonstrates:
+ * - Duration<T> → Count<T>: CountFromDuration contract
+ * - Sum(Count<T> over Duration) → Count<T>: TemporalAggregation contract
+ * 
+ * Use case: Time-based counting, temporal rollups, period conversions
+ * 
+ * Semantic justification:
+ * - Duration<Day> can be counted as discrete periods
+ * - Aggregating counts over time produces total counts
+ */
+
+model Temporal_Aggregation_Metrics {
+    // Configuration: observation periods
+    param quarter_duration: Duration<Month> = 3
+    param year_duration: Duration<Month> = 12
+    
+    // CountFromDuration: Convert duration to count for iteration/division
+    var months_in_quarter: Count<Month> = quarter_duration
+    var months_in_year: Count<Month> = year_duration
+    
+    // Monthly activity counts
+    param january_signups: Count<User> = 150
+    param february_signups: Count<User> = 180
+    param march_signups: Count<User> = 200
+    
+    // TemporalAggregation: Sum counts across time period
+    var q1_signups: Count<User> = 
+        january_signups + february_signups + march_signups
+    
+    // Average monthly signups in Q1
+    var avg_monthly_signups: Quotient<Count<User>, Count<Month>> = 
+        q1_signups / months_in_quarter
+    
+    // Multi-quarter aggregation
+    param q1_revenue: Currency<USD> = $450000
+    param q2_revenue: Currency<USD> = $520000
+    param q3_revenue: Currency<USD> = $580000
+    param q4_revenue: Currency<USD> = $630000
+    
+    // TemporalAggregation: Annual revenue from quarterly revenues
+    var annual_revenue: Currency<USD> = 
+        q1_revenue + q2_revenue + q3_revenue + q4_revenue
+    
+    // Average quarterly revenue
+    param quarters_per_year: Count<Quarter> = 4
+    var avg_quarterly_revenue: Quotient<Currency<USD>, Count<Quarter>> = 
+        annual_revenue / quarters_per_year
+    
+    // Usage metrics over time periods
+    param week1_active_users: Count<User> = 5000
+    param week2_active_users: Count<User> = 5200
+    param week3_active_users: Count<User> = 5400
+    param week4_active_users: Count<User> = 5600
+    
+    // TemporalAggregation: Total weekly active users (deduplicated externally)
+    var monthly_active_users: Count<User> = 
+        week1_active_users + week2_active_users + 
+        week3_active_users + week4_active_users
+    
+    // Note: In reality, MAU ≠ sum(WAU) due to user overlap
+    // This shows the syntactic pattern; business logic ensures correctness
+    
+    // Event counting over periods
+    param day1_transactions: Count<Transaction> = 450
+    param day2_transactions: Count<Transaction> = 520
+    param day3_transactions: Count<Transaction> = 610
+    param day4_transactions: Count<Transaction> = 580
+    param day5_transactions: Count<Transaction> = 670
+    
+    // TemporalAggregation: Total transactions in a work week
+    var weekly_transactions: Count<Transaction> = 
+        day1_transactions + day2_transactions + day3_transactions + 
+        day4_transactions + day5_transactions
+    
+    param work_days: Count<Day> = 5
+    
+    // Average daily transaction volume
+    var avg_daily_transactions: Quotient<Count<Transaction>, Count<Day>> = 
+        weekly_transactions / work_days
+    
+    // Time period counting
+    param billing_cycle: Duration<Day> = 30
+    param year_span: Duration<Day> = 365
+    
+    // CountFromDuration: How many billing cycles in a year?
+    var billing_cycles_per_year: Count<BillingCycle> = 
+        year_span / billing_cycle  // 365 / 30 ≈ 12.16
+    
+    // Duration arithmetic for temporal windows
+    param retention_window: Duration<Day> = 90
+    param churn_window: Duration<Day> = 30
+    
+    // CountFromDuration: Calculate period counts
+    var retention_window_days: Count<Day> = retention_window
+    var churn_window_days: Count<Day> = churn_window
+    
+    // Ratio of observation windows
+    var retention_to_churn_ratio: Quotient<Count<Day>, Count<Day>> = 
+        retention_window_days / churn_window_days  // 90 / 30 = 3
+    
+    // Multi-period revenue recognition
+    param monthly_subscription_revenue: Currency<USD> = $50000
+    param recognition_period: Duration<Month> = 12
+    
+    // CountFromDuration: Number of periods for recognition
+    var recognition_periods: Count<Month> = recognition_period
+    
+    // Total recognized revenue over contract
+    var total_contract_value: Currency<USD> = 
+        monthly_subscription_revenue * recognition_periods
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. months_in_quarter = quarter_duration (Duration<Month>)
+ *    - From: Duration<Month>
+ *    - To: Count<Month>
+ *    - Contract: CountFromDuration
+ *    - Justification: Convert 3-month period to count for division
+ * 
+ * 2. q1_signups = january_signups + february_signups + march_signups
+ *    - From: Sum of Count<User> over time period
+ *    - To: Count<User>
+ *    - Contract: TemporalAggregation
+ *    - Justification: Aggregate monthly counts to quarterly total
+ * 
+ * 3. annual_revenue = q1 + q2 + q3 + q4 revenues
+ *    - From: Sum of Currency<USD> over quarters
+ *    - To: Currency<USD>
+ *    - Contract: TemporalAggregation
+ *    - Justification: Roll up quarterly revenue to annual
+ * 
+ * 4. billing_cycles_per_year = year_span / billing_cycle
+ *    - From: Quotient<Duration<Day>, Duration<Day>>
+ *    - To: Count<BillingCycle>
+ *    - Contract: CountFromDuration (implicit)
+ *    - Justification: Period division yields cycle count
+ * 
+ * 5. recognition_periods = recognition_period
+ *    - From: Duration<Month>
+ *    - To: Count<Month>
+ *    - Contract: CountFromDuration
+ *    - Justification: Revenue recognition over counted periods
+ * 
+ * Key insights:
+ * 
+ * CountFromDuration use cases:
+ * - Converting time spans to countable units for division/multiplication
+ * - Breaking durations into discrete periods
+ * - Calculating "how many X in Y duration"
+ * 
+ * TemporalAggregation use cases:
+ * - Rolling up metrics from sub-periods to larger periods
+ * - Weekly → Monthly → Quarterly → Annual aggregation
+ * - Summing event counts over observation windows
+ * 
+ * Important: TemporalAggregation assumes non-overlapping time periods
+ * and appropriate additive semantics (counts, currency, events).
+ * For metrics like MAU, business logic must handle deduplication.
+ */

@@ -1,0 +1,25 @@
+// PEL-100 Benchmark: Marketplace Supply Growth
+// Models seller onboarding and supply elasticity
+
+model marketplace_supply_growth {
+  param monthly_seller_onboard: Count<Seller> = 120
+  param churn_sellers_monthly: Fraction = 0.02
+  param active_sellers_initial: Count<Seller> = 2_000
+  param platform_take: Fraction = 0.15
+  param buyer_conversion: Fraction = 0.12
+  param avg_tx_value: Currency<USD> = $80
+
+  var active_sellers: TimeSeries<Count<Seller>>active_sellers[0] = active_sellers_initial
+  active_sellers[t+1] = active_sellers[t] + monthly_seller_onboard - (active_sellers[t] * churn_sellers_monthly)
+
+  var monthly_transactions: TimeSeries<Count<Transaction>>monthly_transactions[t] = (active_sellers[t] * 10) * buyer_conversion
+
+  var gmv: TimeSeries<Currency<USD>>gmv[t] = monthly_transactions[t] * avg_tx_value
+
+  var revenue: TimeSeries<Currency<USD>>revenue[t] = gmv[t] * platform_take
+
+  constraint supply_growth: active_sellers[12] >= active_sellers_initial {
+    severity: warning,
+    message: "Seller base did not grow after 12 months"
+  }
+}

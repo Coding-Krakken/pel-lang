@@ -1,0 +1,35 @@
+// PEL-100 Benchmark: SaaS Tiered Pricing
+// Tiered plans with upgrade/downgrade migration and churn differences
+
+model saas_tiered_tiers {
+  param starter_price: Currency<USD> = $29/1mo
+  param pro_price: Currency<USD> = $99/1mo
+  param enterprise_price: Currency<USD> = $499/1mo
+
+  param starter_pct: Fraction = 0.60
+  param pro_pct: Fraction = 0.30
+  param enterprise_pct: Fraction = 0.10
+
+  param avg_churn_starter: Rate per Month = 0.06/1mo
+  param avg_churn_pro: Rate per Month = 0.04/1mo
+  param avg_churn_enterprise: Rate per Month = 0.01/1mo
+
+  var customers: Count<Customer> = 10_000
+
+  var starter_customers: Count<Customer> = customers * starter_pct
+  var pro_customers: Count<Customer> = customers * pro_pct
+  var enterprise_customers: Count<Customer> = customers * enterprise_pct
+
+  var mrr: Currency<USD> =starter_customers * starter_price + 
+    pro_customers * pro_price +enterprise_customers * enterprise_price
+
+  var weighted_churn: Rate per Month = (
+    starter_customers * avg_churn_starter +pro_customers * avg_churn_pro +
+    enterprise_customers * avg_churn_enterprise
+  ) / customers
+
+  constraint reasonable_pricing: mrr > $0 {
+    severity: fatal,
+    message: "MRR must be positive"
+  }
+}

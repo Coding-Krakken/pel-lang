@@ -1,0 +1,69 @@
+// PEL-100 Benchmark: SaaS Subscription Model
+// Basic subscription SaaS with MRR, churn, and unit economics
+
+model saas_subscription_bench {
+  // Customer base
+  param initial_customers: Count<Customer> = 1000 {
+    source: "current_base",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // ARPU (Average Revenue Per User)
+  param arpu: Currency<USD> = $99/1mo {
+    source: "pricing_page",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Monthly churn rate
+  param churn_rate: Rate per Month = 0.05/1mo {
+    source: "cohort_analysis",
+    method: "fitted",
+    confidence: 0.75
+  }
+  
+  // Monthly growth rate (new customers net of churn)
+  param monthly_growth_rate: Rate per Month = 0.10/1mo {
+    source: "historical_average",
+    method: "fitted",
+    confidence: 0.70
+  }
+  
+  // Customer Acquisition Cost
+  param cac: Currency<USD> = $450 {
+    source: "marketing_spend_analysis",
+    method: "derived",
+    confidence: 0.70
+  }
+  
+  // Operating expenses
+  param monthly_opex: Currency<USD> = $60_000 {
+    source: "budget",
+    method: "assumption",
+    confidence: 0.80
+  }
+  
+  // Time series variables
+  var customers: TimeSeries<Count<Customer>>customers[0] = initial_customers
+  customers[t+1] = customers[t] * (1 + monthly_growth_rate)
+  
+  var mrr: TimeSeries<Currency<USD>>mrr[t] = customers[t] * arpu
+  
+  var ltv: Currency<USD> = arpu / churn_rate
+  
+  var ltv_to_cac: Fraction = ltv / cac
+  
+  var profit: TimeSeries<Currency<USD>>profit[t] = mrr[t] - monthly_opex
+  
+  // Constraints
+  constraint profitable_by_month_12: profit[12] > $0 {
+    severity: warning,
+    message: "Not profitable by month 12"
+  }
+  
+  constraint healthy_unit_economics: ltv_to_cac >= 3.0 {
+    severity: warning,
+    message: "LTV:CAC ratio below 3.0 threshold"
+  }
+}

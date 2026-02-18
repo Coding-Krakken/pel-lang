@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: Telecom MVNO
+// Mobile virtual network operator with wholesale costs
+
+model telecom_mvno_bench {
+  param total_subscribers: Count<Subscriber> = 85_000
+  param avg_arpu: Currency<USD> = $38/1mo
+  param wholesale_cost_per_subscriber: Currency<USD> = $18/1mo
+  param subscriber_acquisition_cost: Currency<USD> = $65
+  param new_subscribers_monthly: Count<Subscriber> = 4200
+
+  var monthly_revenue: Currency<USD> = total_subscribers * avg_arpu
+  var wholesale_costs: Currency<USD> = total_subscribers * wholesale_cost_per_subscriber
+  var acquisition_costs: Currency<USD> = new_subscribers_monthly * subscriber_acquisition_cost
+  var gross_margin: Currency<USD> = monthly_revenue - wholesale_costs - acquisition_costs
+  var margin_pct: Fraction = gross_margin / monthly_revenue
+
+  constraint positive_margin: margin_pct > 0.30 {
+    severity: warning,
+    message: "Gross margin below 30% after wholesale costs"
+  }
+}

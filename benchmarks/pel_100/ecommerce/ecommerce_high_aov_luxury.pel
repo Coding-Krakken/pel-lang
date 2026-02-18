@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: E-commerce — High AOV / Luxury
+// Low-volume, high-AOV dynamics and return rates
+
+model ecommerce_high_aov_luxury {
+  param monthly_visitors: Count<Visitor> = 40_000
+  param conversion_rate: Fraction = 0.012
+  param aov: Currency<USD> = $1_200
+  param return_rate: Fraction = 0.05
+
+  var monthly_orders: Count<Order> = monthly_visitors * conversion_rate
+  var gross_revenue: Currency<USD> = monthly_orders * aov
+  var net_revenue: Currency<USD> = gross_revenue * (1 - return_rate)
+
+  constraint net_positive: net_revenue > $0 {
+    severity: fatal,
+    message: "Net revenue must be positive"
+  }
+}

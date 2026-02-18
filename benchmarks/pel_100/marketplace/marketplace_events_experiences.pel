@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Event & Experience Marketplace
+// Ticketed experiences with dynamic pricing
+
+model marketplace_events_experiences_bench {
+  param monthly_events: Count<Event> = 1200
+  param avg_attendees_per_event: Count<Attendee> = 24
+  param avg_ticket_price: Currency<USD> = $65
+  param platform_commission: Fraction = 0.18
+  param payment_processing_rate: Fraction = 0.029
+  param host_support_costs: Currency<USD> = $28_000
+
+  var total_attendees: Count<Attendee> = monthly_events * avg_attendees_per_event
+  var gmv: Currency<USD> = total_attendees * avg_ticket_price
+  var commission_revenue: Currency<USD> = gmv * platform_commission
+  var processing_costs: Currency<USD> = gmv * payment_processing_rate
+  var net_revenue: Currency<USD> = commission_revenue - processing_costs - host_support_costs
+
+  constraint liquidity_balance: (total_attendees / monthly_events) >= 15 {
+    severity: warning,
+    message: "Need at least 15 attendees per event on average"
+  }
+}

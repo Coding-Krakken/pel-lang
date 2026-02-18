@@ -1,0 +1,52 @@
+model MarketplaceGigEconomyCommissions {
+  // Gig economy platform commission model with matching efficiency and take rate
+  
+  param monthly_active_workers: Count<Item> =8000
+  param monthly_active_customers: Count<Item> =12000
+  
+  param avg_gigs_per_worker: Fraction = 15
+  param avg_gig_value: Currency<USD> = $85
+  param platform_take_rate: Fraction =0.25
+  
+  param worker_churn_monthly: Fraction =0.08
+  param customer_churn_monthly: Fraction =0.05
+  
+  param matching_efficiency: Fraction =0.92
+  param cancellation_rate: Fraction =0.05
+  
+  param worker_acquisition_cost: Currency<USD> = $150
+  param customer_acquisition_cost: Currency<USD> = $80
+  param monthly_marketing_spend: Currency<USD> = $500000
+  
+  param infrastructure_cost: Currency<USD> = $800000/1mo
+  param customer_support_cost: Currency<USD> = $400000/1mo
+  param payment_processing_fee: Fraction = 0.03
+  
+  // Gross merchandise value
+  var monthly_gig_volume: Count<Item> = monthly_active_workers * avg_gigs_per_worker * matching_efficiency * (1 - cancellation_rate)
+  var monthly_gmv: Currency<USD> = monthly_gig_volume * avg_gig_value
+  
+  // Commission revenue
+  var commission_revenue: Currency<USD> = monthly_gmv * platform_take_rate
+  var annual_commission_revenue: Currency<USD> = commission_revenue * 12
+  
+  // Net revenue (after payment processing)
+  var payment_processing_cost: Currency<USD> = monthly_gmv * payment_processing_fee
+  var net_revenue: Currency<USD> = commission_revenue - payment_processing_cost
+  
+  // Operating costs
+  var infrastructure_and_support: Currency<USD> = infrastructure_cost + customer_support_cost
+  
+  // Acquisition costs
+  var monthly_new_workers: Count<Item> = monthly_active_workers * worker_churn_monthly
+  var monthly_new_customers: Count<Item> = monthly_active_customers * customer_churn_monthly
+  var acquisition_cost: Currency<USD> = (monthly_new_workers * worker_acquisition_cost) + (monthly_new_customers * customer_acquisition_cost)
+  
+  var monthly_opex: Currency<USD> = infrastructure_and_support + monthly_marketing_spend + acquisition_cost
+  
+  var monthly_contribution: Currency<USD> = net_revenue - monthly_opex
+  
+  constraint monthly_gmv_constraint: monthly_gmv > $0 { severity: warning }
+  constraint matching_efficiency_constraint: matching_efficiency > 0.80 { severity: warning }
+  constraint monthly_contribution_constraint: monthly_contribution > $0 { severity: warning }
+}

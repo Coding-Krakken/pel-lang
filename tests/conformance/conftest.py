@@ -24,16 +24,32 @@ def load_yaml_test():
 
 @pytest.fixture
 def pel_compiler():
-    """Return PEL compiler instance."""
+    """Return PEL compiler instance.
+
+    NOTE: this fixture performs parsing and *lightweight* static checks so
+    conformance tests that expect compile-time detection of certain runtime
+    errors (e.g. division by zero in constant expressions) will fail early.
+    """
     from compiler.lexer import Lexer
     from compiler.parser import Parser
+    from compiler.typechecker import TypeChecker
 
     def _compile(source: str):
-        """Compile PEL source to AST."""
+        """Compile PEL source to AST (parser + lightweight static checks)."""
         lexer = Lexer(source)
         tokens = lexer.tokenize()
         parser = Parser(tokens)
         ast = parser.parse()
+
+        # Run type checker to catch static/runtime-detectable errors early
+        checker = TypeChecker()
+        # If checking fails this will raise — conformance tests expect that.
+        try:
+            checker.check(ast)
+        except Exception:
+            # Re-raise so conformance harness can inspect the message
+            raise
+
         return ast
 
     return _compile

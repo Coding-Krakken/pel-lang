@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Boat & RV Rental Marketplace
+// Peer-to-peer rentals with insurance bundling
+
+model marketplace_boat_rv_rental_bench {
+  param monthly_rentals: Count<Rental> = 850
+  param avg_rental_value: Currency<USD> = $1450
+  param commission_rate: Fraction = 0.25
+  param insurance_attachment_rate: Fraction = 0.85
+  param insurance_revenue_per_rental: Currency<USD> = $95
+  param damage_claims_reserve: Currency<USD> = $15_000
+
+  var gmv: Currency<USD> = monthly_rentals * avg_rental_value
+  var commission_revenue: Currency<USD> = gmv * commission_rate
+  var insurance_rentals: Count<Rental> = monthly_rentals * insurance_attachment_rate
+  var insurance_revenue: Currency<USD> = insurance_rentals * insurance_revenue_per_rental
+  var total_revenue: Currency<USD> = commission_revenue + insurance_revenue - damage_claims_reserve
+
+  constraint insurance_penetration: insurance_attachment_rate >= 0.80 {
+    severity: warning,
+    message: "Insurance attachment below 80% target"
+  }
+}

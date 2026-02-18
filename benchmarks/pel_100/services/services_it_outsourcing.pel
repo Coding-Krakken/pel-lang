@@ -1,0 +1,75 @@
+// Professional Services - IT Outsourcing Provider
+// Models IT outsourcing with FTE-based contracts and project work
+
+model ServicesITOutsourcing {
+  param total_fte_contracts: Count<Item> = 45 // full-time equivalent placements
+  param avg_rate_per_fte: Currency<USD> = $95.0 // hourly bill rate
+  param hours_per_fte_month: Count<Item> = 160
+  param fte_contract_retention: Fraction = 0.93 // monthly retention
+  
+  // Project work (non-FTE)
+  param active_projects: Count<Item> = 12
+  param avg_project_monthly_revenue: Currency<USD> = $22000.0
+  param project_completion_rate: Fraction = 0.25 // projects completing
+  
+  // Staff composition (technical resources)
+  param senior_engineers: Count<Item> = 15
+  param mid_level_engineers: Count<Item> = 25
+  param junior_engineers: Count<Item> = 18
+  param bench_engineers: Count<Item> = 8 // unallocated resources
+  
+  // Compensation
+  param senior_engineer_cost: Currency<USD> = $11000.0
+  param mid_engineer_cost: Currency<USD> = $7500.0
+  param junior_engineer_cost: Currency<USD> = $5000.0
+  
+  // Sales and account management
+  param sales_team: Count<Item> = 5
+  param cost_per_sales: Currency<USD> = $9000.0
+  param account_managers: Count<Item> = 4
+  param cost_per_am: Currency<USD> = $7500.0
+  
+  // Overhead
+  param office_costs: Currency<USD> = $12000.0
+  param recruiting_costs: Currency<USD> = $8500.0
+  param training_development: Currency<USD> = $6000.0
+  param technology_infrastructure: Currency<USD> = $9000.0
+  param admin_overhead: Currency<USD> = $7000.0
+  
+  // Calculate revenue
+  var fte_hours_billed: Count<Item> = total_fte_contracts * hours_per_fte_month * fte_contract_retention
+  var fte_revenue: Currency<USD> = fte_hours_billed * avg_rate_per_fte
+  var project_revenue: Currency<USD> = active_projects * avg_project_monthly_revenue
+  var total_revenue: Currency<USD> = fte_revenue + project_revenue
+  
+  // Technical staff costs
+  var senior_costs: Currency<USD> = senior_engineers * senior_engineer_cost
+  var mid_costs: Currency<USD> = mid_level_engineers * mid_engineer_cost
+  var junior_costs: Currency<USD> = junior_engineers * junior_engineer_cost
+  var bench_costs: Currency<USD> = bench_engineers * ((senior_engineer_cost + mid_engineer_cost + junior_engineer_cost) / 3.0)
+  var total_technical_costs: Currency<USD> = senior_costs + mid_costs + junior_costs + bench_costs
+  
+  // Sales and account management costs
+  var sales_costs: Currency<USD> = sales_team * cost_per_sales
+  var am_costs: Currency<USD> = account_managers * cost_per_am
+  
+  // Operating expenses
+  var total_opex: Currency<USD> = office_costs + recruiting_costs + training_development +technology_infrastructure + admin_overhead
+  
+  var total_costs: Currency<USD> = total_technical_costs + sales_costs + am_costs + total_opex
+  var net_income: Currency<USD> = total_revenue - total_costs
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Key metrics
+  var total_engineers: Count<Item> = senior_engineers + mid_level_engineers + junior_engineers + bench_engineers
+  var billable_engineers: Count<Item> = total_engineers - bench_engineers
+  var utilization_rate: Fraction = billable_engineers / total_engineers
+  var revenue_per_billable_engineer: Currency<USD> = total_revenue / billable_engineers
+  var gross_margin: Fraction = (total_revenue - total_technical_costs) / total_revenue
+  var fte_vs_project_mix: Fraction = fte_revenue / total_revenue
+  var bench_cost_burden: Fraction = bench_costs / total_technical_costs
+  
+  constraint healthy_utilization: utilization_rate > 0.85 { severity: warning }
+  constraint profitable_margins: operating_margin > 0.12 { severity: warning }
+  constraint low_bench_burden: bench_cost_burden < 0.15 { severity: warning }
+}

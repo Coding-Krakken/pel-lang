@@ -1,0 +1,51 @@
+model MarketplacePeerToPeerLending {
+  // P2P lending platform model with loan origination and default risk
+  
+  param loan_origination_volume_monthly: Currency<USD> = $50000000/1mo
+  param platform_origination_fee: Fraction = 0.025
+  param servicing_fee_annual: Fraction = 0.01
+  
+  param avg_loan_rate: Fraction =0.12
+  param platform_blended_yield: Fraction =0.03
+  
+  param loss_reserve_rate: Fraction =0.04
+  param expected_default_rate: Fraction =0.06
+  
+  param borrower_acquisition_cost: Currency<USD> = $40
+  param monthly_new_borrowers: Count<Borrower> = 6000
+  
+  param investor_acquisition_cost: Currency<USD> = $150
+  param investor_base: Count<Investor> = 45000
+  param annual_investor_churn: Fraction =0.15
+  
+  param platform_technology_cost: Currency<USD> = $1200000/1mo
+  param compliance_and_legal_cost: Currency<USD> = $400000/1mo
+  param customer_support_cost: Currency<USD> = $500000/1mo
+  
+  var monthly_origination_fee: Currency<USD> = loan_origination_volume_monthly * platform_origination_fee
+  
+  var loan_portfolio_value: Currency<USD> = loan_origination_volume_monthly * 12
+  var servicing_fee_revenue: Currency<USD> = loan_portfolio_value * servicing_fee_annual
+  
+  var platform_yield: Currency<USD> = loan_portfolio_value * platform_blended_yield
+  
+  var default_loss: Currency<USD> = loan_portfolio_value * expected_default_rate
+  var loss_reserve: Currency<USD> = loan_portfolio_value * loss_reserve_rate
+  
+  // Acquisition costs
+  var borrower_acquisition_cost_monthly: Currency<USD> = monthly_new_borrowers * borrower_acquisition_cost
+  var investor_replacements: Fraction = investor_base * annual_investor_churn / 12
+  var investor_acquisition_cost_monthly: Currency<USD> = investor_replacements * investor_acquisition_cost
+  
+  var total_acquisition_cost: Currency<USD> = borrower_acquisition_cost_monthly + investor_acquisition_cost_monthly
+  var total_opex: Currency<USD> = platform_technology_cost + compliance_and_legal_cost + customer_support_cost
+  
+  var gross_revenue: Currency<USD> = monthly_origination_fee
+  var net_revenue: Currency<USD> = gross_revenue + platform_yield - default_loss - loss_reserve
+  
+  var monthly_ebitda: Currency<USD> = net_revenue - total_acquisition_cost - total_opex
+  
+  constraint loan_origination_volume_monthly_constraint: loan_origination_volume_monthly > $0 { severity: warning }
+  constraint expected_default_rate_constraint: expected_default_rate > 0.04 { severity: warning }
+  constraint monthly_ebitda_constraint: monthly_ebitda > $0 { severity: warning }
+}

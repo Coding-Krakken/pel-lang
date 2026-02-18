@@ -1,0 +1,38 @@
+model SaaSVerticalMarketplace {
+  // Vertical SaaS for specialized industry (e.g. legal/accounting/insurance)
+  // Focuses on premium pricing and compliance/feature complexity
+  
+  param vertical_industry: String = "Legal Tech"
+  param addressable_firms: Count<Item> =10000
+  param market_penetration: Fraction =0.15
+  param current_customers: Count<Item> = addressable_firms * market_penetration
+  
+  param monthly_subscription: Currency<USD> = $500
+  param setup_fee: Currency<USD> = $3000
+  param implementation_days: Count<Item> =10
+  param pro_services_per_day: Currency<USD> = $300
+  
+  param annual_feature_seats: Count<Item> =5
+  param seat_overage_rate: Fraction =0.15
+  param seat_overage_price: Currency<USD> = $150
+  
+  param compliance_training_adoption: Fraction =0.80
+  param training_price: Currency<USD> = $2000
+  
+  param annual_churn: Fraction =0.08
+  
+  // Recurring revenue
+  var base_mrr: Currency<USD> = monthly_subscription * current_customers
+  var seat_overage_mrr: Currency<USD> = (current_customers * seat_overage_rate * seat_overage_price) / 12
+  var recurring_revenue: Currency<USD> = (base_mrr + seat_overage_mrr) * (1 - annual_churn)
+  
+  // One-time revenue
+  var implementation_revenue: Currency<USD> = setup_fee * current_customers + (current_customers * pro_services_per_day * implementation_days)
+  var training_revenue: Currency<USD> = current_customers * compliance_training_adoption * training_price
+  
+  var total_annual_revenue: Currency<USD> = (recurring_revenue * 12) + implementation_revenue + training_revenue
+  
+  constraint current_customers_constraint: current_customers >= current_customers { severity: warning }
+  constraint total_annual_revenue_constraint: total_annual_revenue > $0 { severity: warning }
+  constraint annual_churn_constraint: annual_churn < 0.15 { severity: warning }
+}

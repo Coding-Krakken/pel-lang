@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Services Utilization Ramp
+// Model staffing ramp and utilization improvement over time
+
+model services_utilization_ramp {
+  param starting_consultants: Int = 5
+  param ramp_months: Int = 6
+  param monthly_hire: Int = 2
+  param target_utilization: Fraction = 0.75
+  param billable_rate: Currency<USD> = $200
+  param hours_per_month: Int = 160
+
+  var ending_consultants: Int = starting_consultants + (monthly_hire * ramp_months)
+  var ending_utilization: Fraction = 0.5 + (0.5 / ramp_months * ramp_months)
+  
+  var monthly_billable_hours: Fraction = ending_consultants * hours_per_month * ending_utilization
+  var monthly_revenue: Currency<USD> = monthly_billable_hours * billable_rate
+  
+  constraint utilization_target: ending_utilization >= 0.6 {
+    severity: warning,
+    message: "Utilization at end of ramp below expectations"
+  }
+}
