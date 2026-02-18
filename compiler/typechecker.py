@@ -20,8 +20,6 @@ from typing import Any, Optional
 from compiler.ast_nodes import *
 from compiler.errors import (
     CompilerError,
-    ConstraintError,
-    SourceLocation,
     TypeError,
     constraint_violation,
     dimensional_mismatch,
