@@ -239,6 +239,7 @@ class PELRuntime:
         index = {name: i for i, name in enumerate(names)}
         size = len(names)
         matrix = [[0.0 for _ in range(size)] for _ in range(size)]
+        seen_pairs: dict[tuple[str, str], float] = {}
         for i in range(size):
             matrix[i][i] = 1.0
 
@@ -257,11 +258,13 @@ class PELRuntime:
                     raise ValueError(
                         f"Invalid correlation coefficient {corr} between '{name}' and '{other_name}'"
                     )
-                existing = matrix[i][j]
-                if existing != 0.0 and abs(existing - corr) > 1e-9:
+                pair = tuple(sorted((name, other_name)))
+                existing = seen_pairs.get(pair)
+                if existing is not None and abs(existing - corr) > 1e-9:
                     raise ValueError(
                         f"Conflicting correlation values for '{name}' and '{other_name}'"
                     )
+                seen_pairs[pair] = corr
                 matrix[i][j] = corr
                 matrix[j][i] = corr
 

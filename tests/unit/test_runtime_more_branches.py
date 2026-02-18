@@ -209,3 +209,41 @@ def test_runtime_run_monte_carlo_raises_for_invalid_correlation_coefficient() ->
 
     with pytest.raises(ValueError, match="Invalid correlation coefficient"):
         runtime.run_monte_carlo(ir_doc)
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_raises_for_conflicting_correlation_values() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["b", 0.0]},
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["a", 0.2]},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    with pytest.raises(ValueError, match="Conflicting correlation values"):
+        runtime.run_monte_carlo(ir_doc)
