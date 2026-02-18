@@ -15,6 +15,12 @@ from compiler.ast_nodes import *
 from compiler.errors import SourceLocation, syntax_error, unexpected_token
 from compiler.lexer import Token, TokenType
 
+# Valid PEL type names (for validation)
+VALID_TYPE_NAMES = {
+    "Currency", "Rate", "Duration", "Capacity", "Count", "Fraction",
+    "TimeSeries", "Distribution", "Array", "Boolean", "Int"
+}
+
 
 class Parser:
     """Complete recursive descent parser for PEL language."""
@@ -358,6 +364,12 @@ class Parser:
         # User-defined types (identifier)
         elif self.match(TokenType.IDENTIFIER):
             type_name = self.advance().value
+            # Validate type name
+            if type_name not in VALID_TYPE_NAMES:
+                raise syntax_error(
+                    f"Invalid type '{type_name}'. Valid types are: {', '.join(sorted(VALID_TYPE_NAMES))}",
+                    self.current_location()
+                )
             return TypeAnnotation(type_kind=type_name)
 
         else:
