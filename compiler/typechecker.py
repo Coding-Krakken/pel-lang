@@ -210,20 +210,24 @@ class PELType:
         )
 
     @staticmethod
-    def count(entity: str | None = None) -> 'PELType':
-        """Count of entities (or generic count if no entity specified)."""
+    def count(entity: str | None = None, per: str | None = None) -> 'PELType':
+        """Count of entities (optionally per time unit)."""
+        params: dict[str, Any] = {}
+        units: dict[str, Any] = {}
+
         if entity:
-            return PELType(
-                type_kind="Count",
-                params={"entity": entity},
-                dimension=Dimension.count(entity)
-            )
-        else:
-            return PELType(
-                type_kind="Count",
-                params={},
-                dimension=Dimension.dimensionless()
-            )
+            params["entity"] = entity
+            units["count"] = entity
+
+        if per:
+            params["per"] = per
+            units["inv_time"] = per
+
+        return PELType(
+            type_kind="Count",
+            params=params,
+            dimension=Dimension(units) if units else Dimension.dimensionless()
+        )
 
     @staticmethod
     def capacity(resource: str | None = None) -> 'PELType':
@@ -409,8 +413,12 @@ class TypeChecker:
                 elif isinstance(stmt, ForStmt):
                     _ = self.infer_expression(stmt.start)
                     _ = self.infer_expression(stmt.end)
+                    loop_parent_env = self.env
+                    self.env = loop_parent_env.child_scope()
+                    self.env.bind(stmt.var_name, PELType.count())
                     for nested in stmt.body or []:
                         check_func_stmt(nested, expected_return_type)
+                    self.env = loop_parent_env
 
             for stmt in func.body:
                 check_func_stmt(stmt, declared_return_type)
@@ -508,6 +516,23 @@ class TypeChecker:
                 # Basic validation of loop bounds
                 _ = self.infer_expression(stmt.start)
                 _ = self.infer_expression(stmt.end)
+
+                loop_parent_env = self.env
+                self.env = loop_parent_env.child_scope()
+                self.env.bind(stmt.var_name, PELType.count())
+
+                for nested in stmt.body or []:
+                    if isinstance(nested, Assignment):
+                        tt = self.infer_expression(nested.target)
+                        vt = self.infer_expression(nested.value)
+                        if not self.types_compatible(tt, vt):
+                            self.errors.append(self.create_enhanced_type_error(tt, vt))
+                    elif isinstance(nested, IfStmt):
+                        cond_t = self.infer_expression(nested.condition)
+                        if cond_t.type_kind != "Boolean":
+                            self.errors.append(self.create_enhanced_type_error(PELType.boolean(), cond_t))
+
+                self.env = loop_parent_env
 
         # Phase 4: Type check policies
         for policy in model.policies:
@@ -1004,10 +1029,11 @@ class TypeChecker:
 
         elif ast_type.type_kind == "Count":
             entity = ast_type.params.get("entity")
-            return PELType.count(entity)
+            per = ast_type.params.get("per")
+            return PELType.count(entity, per)
 
         elif ast_type.type_kind == "Capacity":
-            resource = ast_type.params.get("resource")
+            resource = ast_type.params.get("resource") or ast_type.params.get("entity") or "Units"
             return PELType.capacity(resource)
 
         elif ast_type.type_kind == "Boolean":
@@ -1072,8 +1098,8 @@ class TypeChecker:
         Future phases will integrate semantic contract enforcement directly into this
         method, tightening these rules while maintaining upgrade paths for existing code.
         """
-        # Allow Int literals to be implicitly coerced to Count types
-        if t1.type_kind == "Count" and t2.type_kind == "Int":
+        # Allow Int literals to be implicitly coerced to Count types (not Count-per-time)
+        if t1.type_kind == "Count" and t2.type_kind == "Int" and t1.params.get("per") is None:
             return True
 
         # Allow generic Count to be compatible with specific Count<Entity>
@@ -1081,6 +1107,12 @@ class TypeChecker:
             # If either is generic (no entity param), allow the assignment
             entity1 = t1.params.get("entity")
             entity2 = t2.params.get("entity")
+            per1 = t1.params.get("per")
+            per2 = t2.params.get("per")
+
+            if per1 != per2:
+                return False
+
             if entity1 is None or entity2 is None:
                 return True
             # Otherwise, entities must match
@@ -1127,6 +1159,13 @@ class TypeChecker:
         # This handles: var customers: Count<Customer> = revenue / price_per_customer
         # Semantic contract: CountAggregation
         if t1.type_kind == "Count" and t2.type_kind == "Quotient":
+            if t1.params.get("per") is not None:
+                expected_units: dict[str, Any] = {}
+                expected_entity = t1.params.get("entity")
+                if expected_entity is not None:
+                    expected_units["count"] = expected_entity
+                expected_units["inv_time"] = t1.params["per"]
+                return t2.dimension.units == expected_units
             return True
 
         # Array compatibility: element types must be compatible
