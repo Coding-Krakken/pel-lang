@@ -2,10 +2,10 @@
 // Models residential solar panel installation with financing options
 
 model EnergySolarInstallation {
-  param monthly_installations: Count<Item> = 35
+  param monthly_installations: Fraction = 35
   param avg_system_size_kw: Fraction = 7.5
-  param cost_per_watt: Currency<USD> = 2.80 // customer price
-  param system_price: Currency<USD> = 21000.0 // avg 7.5kW system
+  param cost_per_watt: Currency<USD> = $2.80 // customer price
+  param system_price: Currency<USD> = $21000.0 // avg 7.5kW system
   
   // Financing mix
   param cash_purchases_pct: Fraction = 0.25
@@ -16,44 +16,44 @@ model EnergySolarInstallation {
   param loan_referral_fee_pct: Fraction = 0.08 // financing partner pays fee
   
   // Lease/PPA model (recurring revenue)
-  param avg_monthly_lease_payment: Currency<USD> = 125.0
+  param avg_monthly_lease_payment: Currency<USD> = $125.0
   param lease_portfolio_systems: Count<Item> = 850 // cumulative leased systems
   param lease_customer_churn_annual: Fraction = 0.04
   
   // Cost of goods sold
-  param panel_cost_per_watt: Currency<USD> = 0.65
-  param inverter_cost_per_system: Currency<USD> = 1800.0
-  param mounting_materials_per_system: Currency<USD> = 950.0
-  param electrical_components: Currency<USD> = 650.0
+  param panel_cost_per_watt: Currency<USD> = $0.65
+  param inverter_cost_per_system: Currency<USD> = $1800.0
+  param mounting_materials_per_system: Currency<USD> = $950.0
+  param electrical_components: Currency<USD> = $650.0
   
   // Installation labor
   param installation_crew_size: Count<Item> = 3
   param hours_per_installation: Count<Item> = 16
-  param labor_cost_per_hour: Currency<USD> = 45.0
+  param labor_cost_per_hour: Currency<USD> = $45.0
   
   // Permitting and interconnection
-  param permit_fees_per_install: Currency<USD> = 450.0
-  param utility_interconnection_fee: Currency<USD> = 350.0
+  param permit_fees_per_install: Currency<USD> = $450.0
+  param utility_interconnection_fee: Currency<USD> = $350.0
   
   // Sales and customer acquisition
   param sales_team_headcount: Count<Item> = 8
-  param cost_per_sales_rep: Currency<USD> = 8500.0
-  param lead_generation_cost_per_install: Currency<USD> = 850.0
-  param site_assessment_cost: Currency<USD> = 150.0
+  param cost_per_sales_rep: Currency<USD> = $8500.0
+  param lead_generation_cost_per_install: Currency<USD> = $850.0
+  param site_assessment_cost: Currency<USD> = $150.0
   
   // Operations
   param installation_crews: Count<Item> = 6 // @ 3 people each = 18 installers
-  param cost_per_installer: Currency<USD> = 6500.0
+  param cost_per_installer: Currency<USD> = $6500.0
   param operations_manager: Count<Item> = 2
-  param cost_per_ops_manager: Currency<USD> = 9000.0
-  param warehouse_vehicle_costs: Currency<USD> = 12000.0
-  param insurance_bonding: Currency<USD> = 8500.0
-  param admin_overhead: Currency<USD> = 7000.0
+  param cost_per_ops_manager: Currency<USD> = $9000.0
+  param warehouse_vehicle_costs: Currency<USD> = $12000.0
+  param insurance_bonding: Currency<USD> = $8500.0
+  param admin_overhead: Currency<USD> = $7000.0
   
   // Calculate installation revenue mix
-  var cash_installs: Count<Item> = monthly_installations * cash_purchases_pct
-  var loan_installs: Count<Item> = monthly_installations * loan_purchases_pct
-  var lease_installs: Count<Item> = monthly_installations * lease_ppa_pct
+  var cash_installs: Fraction = monthly_installations * cash_purchases_pct
+  var loan_installs: Fraction = monthly_installations * loan_purchases_pct
+  var lease_installs: Fraction = monthly_installations * lease_ppa_pct
   
   // Revenue from installations
   var cash_revenue: Currency<USD> = cash_installs * system_price
@@ -98,7 +98,7 @@ model EnergySolarInstallation {
   var recurring_revenue_pct: Fraction = lease_recurring_revenue / total_revenue
   var blended_cac: Currency<USD> = (sales_costs + lead_gen_costs) / monthly_installations
   
-  constraint healthy_margins: gross_margin > 0.35
-  constraint positive_contribution: contribution_margin_per_install > 5000.0
-  constraint growing_recurring: recurring_revenue_pct > 0.15
+  constraint healthy_margins: gross_margin > 0.35 { severity: warning }
+  constraint positive_contribution: contribution_margin_per_install > $5000 { severity: warning }
+  constraint growing_recurring: recurring_revenue_pct > 0.15 { severity: warning }
 }

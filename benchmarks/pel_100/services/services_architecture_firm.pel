@@ -3,8 +3,8 @@
 
 model ServicesArchitectureFirm {
   param active_projects: Count<Item> = 18
-  param avg_project_fee: Currency<USD> = 125000.0
-  param project_duration_months: Count<Item> = 9
+  param avg_project_fee: Currency<USD> = $125000.0
+  param project_duration_months: Fraction = 9
   
   // Fee structure by project phase
   param schematic_design_pct: Fraction = 0.15
@@ -26,22 +26,22 @@ model ServicesArchitectureFirm {
   param admin_staff: Count<Item> = 3
   
   // Compensation
-  param principal_cost: Currency<USD> = 22000.0
-  param project_architect_cost: Currency<USD> = 12000.0
-  param designer_cost: Currency<USD> = 8500.0
-  param drafter_cost: Currency<USD> = 6000.0
-  param admin_cost: Currency<USD> = 4500.0
+  param principal_cost: Currency<USD> = $22000.0
+  param project_architect_cost: Currency<USD> = $12000.0
+  param designer_cost: Currency<USD> = $8500.0
+  param drafter_cost: Currency<USD> = $6000.0
+  param admin_cost: Currency<USD> = $4500.0
   
   // Project costs
   param consultant_fees_pct: Fraction = 0.18 // structural, MEP engineers
-  param software_licenses: Currency<USD> = 4500.0 // CAD, BIM, rendering
-  param model_printing_costs: Currency<USD> = 2800.0
+  param software_licenses: Currency<USD> = $4500.0 // CAD, BIM, rendering
+  param model_printing_costs: Currency<USD> = $2800.0
   
   // Office and overhead
-  param office_rent: Currency<USD> = 18000.0
-  param insurance_liability: Currency<USD> = 6500.0
-  param marketing_costs: Currency<USD> = 8000.0
-  param travel_expenses: Currency<USD> = 5500.0
+  param office_rent: Currency<USD> = $18000.0
+  param insurance_liability: Currency<USD> = $6500.0
+  param marketing_costs: Currency<USD> = $8000.0
+  param travel_expenses: Currency<USD> = $5500.0
   
   // Revenue recognition by phase
   var schematic_revenue: Currency<USD> = projects_schematic * avg_project_fee * schematic_design_pct / project_duration_months
@@ -79,7 +79,7 @@ model ServicesArchitectureFirm {
   var profit_per_principal: Currency<USD> = net_income / principals
   var overhead_rate: Fraction = overhead_costs / total_staff_costs
   
-  constraint healthy_margins: operating_margin > 0.18
-  constraint efficient_staffing: revenue_per_person > 12000.0
-  constraint manageable_overhead: overhead_rate < 0.60
+  constraint healthy_margins: operating_margin > 0.18 { severity: warning }
+  constraint efficient_staffing: revenue_per_person > $12000 { severity: warning }
+  constraint manageable_overhead: overhead_rate < 0.60 { severity: warning }
 }

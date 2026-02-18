@@ -1,55 +1,55 @@
 model HealthcareClinicPnL {
   // Healthcare clinic P&L with patient volume, reimbursement rates, and staffing
   
-  param patient_visits_monthly = 2000 visits
-  param avg_reimbursement_per_visit = 180 USD
-  param payer_mix_cash_rate = 0.15
-  param cash_reimbursement_premium = 1.10
+  param patient_visits_monthly: Count<Visit> = 2000
+  param avg_reimbursement_per_visit: Currency<USD> = $180
+  param payer_mix_cash_rate: Fraction = 0.15
+  param cash_reimbursement_premium: Fraction = 1.10
   
-  param provider_fte_count = 8 providers
-  param provider_salary = 200000 USD / year / provider
-  param provider_benefits_rate = 0.30
+  param provider_fte_count: Count<Provider> = 8
+  param provider_salary: Currency<USD> = $200000/1yr
+  param provider_benefits_rate: Fraction = 0.30
   
-  param nursing_fte_count = 12 nurses
-  param nursing_salary = 65000 USD / year / nurse
-  param nursing_benefits_rate = 0.25
+  param nursing_fte_count: Count<Nurse> = 12
+  param nursing_salary: Currency<USD> = $65000/1yr
+  param nursing_benefits_rate: Fraction = 0.25
   
-  param admin_staff_fte = 6 staff
-  param admin_salary = 40000 USD / year / staff
+  param admin_staff_fte: Count<Staff> = 6
+  param admin_salary: Currency<USD> = $40000/1yr
   
-  param facility_rent = 50000 USD / month
-  param medical_supplies_per_visit = 25 USD / visit
-  param equipment_maintenance = 15000 USD / month
-  param utilities_and_overhead = 30000 USD / month
-  param insurance_and_licensing = 20000 USD / month
+  param facility_rent: Currency<USD> = $50000/1mo
+  param medical_supplies_per_visit: Currency<USD> = $25
+  param equipment_maintenance: Currency<USD> = $15000/1mo
+  param utilities_and_overhead: Currency<USD> = $30000/1mo
+  param insurance_and_licensing: Currency<USD> = $20000/1mo
   
-  param bad_debt_rate = 0.08
-  param collection_rate = 1 - bad_debt_rate
+  param bad_debt_rate: Fraction = 0.08
+  param collection_rate: Fraction = 1 - bad_debt_rate
   
   // Revenue
-  var insurance_patient_visits = patient_visits_monthly * (1 - payer_mix_cash_rate)
-  var cash_patient_visits = patient_visits_monthly * payer_mix_cash_rate
+  var insurance_patient_visits: Count<Visit> = patient_visits_monthly * (1 - payer_mix_cash_rate)
+  var cash_patient_visits: Count<Visit> = patient_visits_monthly * payer_mix_cash_rate
   
-  var insurance_revenue = insurance_patient_visits * avg_reimbursement_per_visit
-  var cash_revenue = cash_patient_visits * (avg_reimbursement_per_visit * cash_reimbursement_premium)
+  var insurance_revenue: Currency<USD> = insurance_patient_visits * avg_reimbursement_per_visit
+  var cash_revenue: Currency<USD> = cash_patient_visits * (avg_reimbursement_per_visit * cash_reimbursement_premium)
   
-  var gross_revenue = (insurance_revenue + cash_revenue) * collection_rate
-  var monthly_revenue = gross_revenue
+  var gross_revenue: Currency<USD> = (insurance_revenue + cash_revenue) * collection_rate
+  var monthly_revenue: Currency<USD> = gross_revenue
   
   // Payroll
-  var provider_payroll = provider_fte_count * provider_salary * (1 + provider_benefits_rate) / 12 month
-  var nursing_payroll = nursing_fte_count * nursing_salary * (1 + nursing_benefits_rate) / 12 month
-  var admin_payroll = admin_staff_fte * admin_salary / 12 month
+  var provider_payroll: Currency<USD> = provider_fte_count * provider_salary * (1 + provider_benefits_rate) / 12
+  var nursing_payroll: Currency<USD> = nursing_fte_count * nursing_salary * (1 + nursing_benefits_rate) / 12
+  var admin_payroll: Currency<USD> = admin_staff_fte * admin_salary / 12
   
-  var total_payroll = provider_payroll + nursing_payroll + admin_payroll
+  var total_payroll: Currency<USD> = provider_payroll + nursing_payroll + admin_payroll
   
   // Operating costs
-  var medical_supplies_cost = patient_visits_monthly * medical_supplies_per_visit
-  var total_opex = facility_rent + medical_supplies_cost + equipment_maintenance + utilities_and_overhead + insurance_and_licensing
+  var medical_supplies_cost: Currency<USD> = patient_visits_monthly * medical_supplies_per_visit
+  var total_opex: Currency<USD> = facility_rent + medical_supplies_cost + equipment_maintenance + utilities_and_overhead + insurance_and_licensing
   
-  var monthly_ebitda = monthly_revenue - total_payroll - total_opex
+  var monthly_ebitda: Currency<USD> = monthly_revenue - total_payroll - total_opex
   
-  constraint patient_visits_monthly > 0 visits
-  constraint collection_rate > 0.80
-  constraint monthly_ebitda > 0 USD
+  constraint patient_visits_monthly_constraint: patient_visits_monthly >= patient_visits_monthly { severity: warning }
+  constraint collection_rate_constraint: collection_rate > 0.80 { severity: warning }
+  constraint monthly_ebitda_constraint: monthly_ebitda > $0 { severity: warning }
 }

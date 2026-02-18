@@ -4,8 +4,8 @@
 model SaaSMarketingAutomationLeads {
   param total_customers: Count<Item> = 450
   param avg_leads_per_customer: Count<Item> = 25000
-  param base_platform_fee: Currency<USD> = 199.0 // minimum monthly fee
-  param price_per_1k_leads: Currency<USD> = 15.0 // additional cost per 1K leads
+  param base_platform_fee: Currency<USD> = $199.0 // minimum monthly fee
+  param price_per_1k_leads: Currency<USD> = $15.0 // additional cost per 1K leads
   
   // Customer segmentation by lead volume
   param smb_customers_pct: Fraction = 0.50 // < 10K leads
@@ -16,8 +16,8 @@ model SaaSMarketingAutomationLeads {
   param enterprise_avg_leads: Count<Item> = 120000
   
   // Email deliverability costs
-  param email_send_rate: Fraction = 4.0 // avg emails per lead/month
-  param cost_per_1k_emails: Currency<USD> = 0.50 // SendGrid/AWS SES pricing
+  param email_send_rate: Fraction = 4.0 // avg emails per lead
+  param cost_per_1k_emails: Currency<USD> = $0.50 // SendGrid/AWS SES pricing
   
   // Growth and retention
   param monthly_growth_rate: Fraction = 0.07
@@ -26,12 +26,12 @@ model SaaSMarketingAutomationLeads {
   
   // Operating costs
   param engineering_headcount: Count<Item> = 18
-  param cost_per_engineer: Currency<USD> = 14500.0
+  param cost_per_engineer: Currency<USD> = $14500.0
   param sales_marketing_headcount: Count<Item> = 12
-  param cost_per_sales_marketing: Currency<USD> = 10000.0
+  param cost_per_sales_marketing: Currency<USD> = $10000.0
   param customer_success_headcount: Count<Item> = 10
-  param cost_per_cs: Currency<USD> = 8500.0
-  param infrastructure_base: Currency<USD> = 12000.0 // servers, databases, monitoring
+  param cost_per_cs: Currency<USD> = $8500.0
+  param infrastructure_base: Currency<USD> = $12000.0 // servers, databases, monitoring
   
   // Calculate customer distribution
   var smb_customers: Count<Item> = total_customers * smb_customers_pct
@@ -39,8 +39,7 @@ model SaaSMarketingAutomationLeads {
   var enterprise_customers: Count<Item> = total_customers * enterprise_pct
   
   // Total lead volume
-  var total_leads: Count<Item> = (smb_customers * smb_avg_leads) +
-                           (midmarket_customers * midmarket_avg_leads) +
+  var total_leads: Count<Item> = (smb_customers * smb_avg_leads) + (midmarket_customers * midmarket_avg_leads) +
                            (enterprise_customers * enterprise_avg_leads)
   
   // Revenue calculation
@@ -71,7 +70,7 @@ model SaaSMarketingAutomationLeads {
   var platform_revenue_pct: Fraction = platform_fee_revenue / total_revenue
   var usage_revenue_pct: Fraction = usage_revenue / total_revenue
   
-  constraint healthy_gross_margin: gross_margin > 0.85
-  constraint profitable_operations: operating_margin > 0.15
-  constraint balanced_revenue_mix: usage_revenue_pct > 0.60
+  constraint healthy_gross_margin: gross_margin > 0.85 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.15 { severity: warning }
+  constraint balanced_revenue_mix: usage_revenue_pct > 0.60 { severity: warning }
 }

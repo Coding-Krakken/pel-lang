@@ -110,7 +110,8 @@ def test_compiler_main_success_writes_output(tmp_path: Path, monkeypatch: pytest
 @pytest.mark.unit
 def test_compiler_main_exits_1_on_compiler_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     src = tmp_path / "bad.pel"
-    _write_file(src, "model M { param x: Fraction = 0.1 }")
+    # Model with type mismatch: assigning Currency to Fraction without implicit conversion
+    _write_file(src, "model M { param x: Fraction = $10 }")
 
     monkeypatch.setattr("sys.argv", ["pel", str(src)])
     with pytest.raises(SystemExit) as ex:

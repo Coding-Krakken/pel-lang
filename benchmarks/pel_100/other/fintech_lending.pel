@@ -4,7 +4,7 @@
 model fintech_consumer_lending {
   param outstanding_loans: Count<Loan> = 10_000
   param avg_principal: Currency<USD> = $8_000
-  param avg_interest_rate: Rate per Year = 0.12/1y
+  param avg_interest_rate: Rate per Year = 0.12/1yr
   param default_rate_annual: Fraction = 0.02
   param loss_given_default: Fraction = 0.40
 

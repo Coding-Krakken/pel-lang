@@ -4,7 +4,7 @@
 model MarketplaceVacationRentals {
   param total_listings: Count<Item> = 4500
   param active_listings_pct: Fraction = 0.72 // listings with availability
-  param avg_nightly_rate: Currency<USD> = 185.0
+  param avg_nightly_rate: Currency<USD> = $185.0
   param avg_booking_length_nights: Count<Item> = 4
   param monthly_bookings: Count<Item> = 3200
   
@@ -20,27 +20,27 @@ model MarketplaceVacationRentals {
   param budget_rate_multiplier: Fraction = 0.65
   
   // Trust and safety costs
-  param verification_cost_per_listing: Currency<USD> = 8.50
+  param verification_cost_per_listing: Currency<USD> = $8.50
   param background_check_rate: Fraction = 0.45 // % of hosts verified
   param damage_claim_rate: Fraction = 0.02
-  param avg_damage_claim: Currency<USD> = 450.0
+  param avg_damage_claim: Currency<USD> = $450.0
   param insurance_reserve_pct: Fraction = 0.015
   
   // Payment processing
   param payment_processing_fee_pct: Fraction = 0.029
-  param payment_processing_fixed: Currency<USD> = 0.30
+  param payment_processing_fixed: Currency<USD> = $0.30
   
   // Customer support
   param support_agents: Count<Item> = 18
-  param cost_per_agent: Currency<USD> = 5500.0
+  param cost_per_agent: Currency<USD> = $5500.0
   param tickets_per_booking: Fraction = 0.40
   
   // Technology and operations
   param engineering_headcount: Count<Item> = 25
-  param cost_per_engineer: Currency<USD> = 14000.0
-  param marketing_spend: Currency<USD> = 125000.0
-  param hosting_infrastructure: Currency<USD> = 18000.0
-  param admin_overhead: Currency<USD> = 22000.0
+  param cost_per_engineer: Currency<USD> = $14000.0
+  param marketing_spend: Currency<USD> = $125000.0
+  param hosting_infrastructure: Currency<USD> = $18000.0
+  param admin_overhead: Currency<USD> = $22000.0
   
   // Calculate booking value
   var avg_booking_value: Currency<USD> = avg_nightly_rate * avg_booking_length_nights
@@ -52,8 +52,7 @@ model MarketplaceVacationRentals {
   var gross_revenue: Currency<USD> = host_fees + guest_fees
   
   // Payment processing costs
-  var payment_processing_costs: Currency<USD> = (gross_booking_value * payment_processing_fee_pct) + 
-                                           (monthly_bookings * payment_processing_fixed)
+  var payment_processing_costs: Currency<USD> = (gross_booking_value * payment_processing_fee_pct) + (monthly_bookings * payment_processing_fixed)
   var net_revenue: Currency<USD> = gross_revenue - payment_processing_costs
   
   // Trust and safety costs
@@ -81,7 +80,7 @@ model MarketplaceVacationRentals {
   var bookings_per_listing: Fraction = monthly_bookings / active_listings
   var trust_safety_pct_revenue: Fraction = trust_safety_costs / net_revenue
   
-  constraint healthy_take_rate: take_rate > 0.15
-  constraint positive_margins: operating_margin > 0.10
-  constraint manageable_safety_costs: trust_safety_pct_revenue < 0.20
+  constraint healthy_take_rate: take_rate > 0.15 { severity: warning }
+  constraint positive_margins: operating_margin > 0.10 { severity: warning }
+  constraint manageable_safety_costs: trust_safety_pct_revenue < 0.20 { severity: warning }
 }

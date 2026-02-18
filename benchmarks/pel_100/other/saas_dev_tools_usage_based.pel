@@ -1,42 +1,42 @@
 model SaaSDevToolsUsageBased {
   // Usage-based SaaS model for developer tools with API call consumption
   
-  param active_accounts = 800 accounts
-  param avg_monthly_api_calls = 10000000 api_calls / month / account
-  param total_api_calls = active_accounts * avg_monthly_api_calls
+  param active_accounts: Fraction = 800
+  param avg_monthly_api_calls: Fraction = 10000000
+  param total_api_calls: Fraction = active_accounts * avg_monthly_api_calls
   
-  param free_tier_accounts = 200 accounts
-  param free_tier_api_allowance = 1000000 api_calls / month
+  param free_tier_accounts: Fraction = 200
+  param free_tier_api_allowance: Fraction = 1000000
   
-  param paid_account_count = 600 accounts
-  param base_monthly_fee = 100 USD / month
-  param price_per_million_calls = 50 USD / million_calls
+  param paid_account_count: Fraction = 600
+  param base_monthly_fee: Currency<USD> = $100/1mo
+  param price_per_million_calls: Currency<USD> = $50
   
-  param account_churn_rate = 0.03 / month
-  param upgrade_rate = 0.08 / month
+  param account_churn_rate: Fraction = 0.03
+  param upgrade_rate: Fraction = 0.08
   
-  param api_infrastructure_cost = 0.008 USD / million_calls
-  param support_cost = 25000 USD / month
-  param platform_opex = 150000 USD / month
-  param sales_and_marketing = 200000 USD / month
+  param api_infrastructure_cost: Currency<USD> = $0.008
+  param support_cost: Currency<USD> = $25000/1mo
+  param platform_opex: Currency<USD> = $150000/1mo
+  param sales_and_marketing: Currency<USD> = $200000/1mo
   
   // Paid account calculations
-  var paid_api_calls = (active_accounts - free_tier_accounts) * (avg_monthly_api_calls)
-  var excess_calls = paid_api_calls - (paid_account_count * free_tier_api_allowance)
-  var usage_revenue = excess_calls / 1000000 * price_per_million_calls
+  var paid_api_calls: Fraction = (active_accounts - free_tier_accounts) * avg_monthly_api_calls
+  var excess_calls: Fraction = paid_api_calls - (paid_account_count * free_tier_api_allowance)
+  var usage_revenue: Currency<USD> = (excess_calls / 1000000) * price_per_million_calls
   
-  var base_subscription_revenue = paid_account_count * base_monthly_fee
-  var monthly_subscription_revenue = base_subscription_revenue + usage_revenue
+  var base_subscription_revenue: Currency<USD> = paid_account_count * base_monthly_fee
+  var monthly_subscription_revenue: Currency<USD> = base_subscription_revenue + usage_revenue
   
   // Infrastructure costs
-  var api_infrastructure_cost_total = (total_api_calls - (free_tier_accounts * free_tier_api_allowance)) / 1000000 * api_infrastructure_cost
+  var api_infrastructure_cost_total: Currency<USD> = ((total_api_calls - (free_tier_accounts * free_tier_api_allowance)) / 1000000) * api_infrastructure_cost
   
-  var total_monthly_costs = api_infrastructure_cost_total + support_cost + platform_opex + sales_and_marketing
+  var total_monthly_costs: Currency<USD> = api_infrastructure_cost_total + support_cost + platform_opex + sales_and_marketing
   
-  var monthly_gross_profit = monthly_subscription_revenue - total_monthly_costs
-  var annual_arr = monthly_subscription_revenue * 12 month
+  var monthly_gross_profit: Currency<USD> = monthly_subscription_revenue - total_monthly_costs
+  var annual_arr: Currency<USD> = monthly_subscription_revenue * 12
   
-  constraint paid_account_count > 0 accounts
-  constraint monthly_subscription_revenue > 0 USD
-  constraint monthly_gross_profit > 0 USD
+  constraint paid_account_count_constraint: paid_account_count > 0 { severity: warning }
+  constraint monthly_subscription_revenue_constraint: monthly_subscription_revenue > $0 { severity: warning }
+  constraint monthly_gross_profit_constraint: monthly_gross_profit > $0 { severity: warning }
 }

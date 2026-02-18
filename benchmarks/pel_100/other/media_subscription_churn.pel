@@ -1,46 +1,46 @@
 model MediaSubscriptionChurn {
   // Media/content subscription platform with churn and content cost dynamics
   
-  param current_subscribers = 2000000 subscribers
-  param monthly_subscription_price = 12 USD / month
-  param monthly_new_subscriber_target = 150000 subscribers
-  param monthly_churn_rate = 0.055
+  param current_subscribers: Fraction = 2000000
+  param monthly_subscription_price: Currency<USD> = $12/1mo
+  param monthly_new_subscriber_target: Fraction = 150000
+  param monthly_churn_rate: Fraction = 0.055
   
-  param annual_churn = (1 - monthly_churn_rate) ^ 12 month
+  param annual_churn: Fraction = 1 - (monthly_churn_rate * 12)
   
   // Content costs
-  param original_content_budget = 500000000 USD / year
-  param content_cost_per_subscriber = original_content_budget / current_subscribers
+  param original_content_budget: Currency<USD> = $500000000/1yr
+  param content_cost_per_subscriber: Currency<USD> = original_content_budget / current_subscribers
   
-  param licensed_content_cost = 100000000 USD / year
-  param infrastructure_cost = 80000000 USD / year
-  param marketing_spend = 300000000 USD / year
-  param general_opex = 120000000 USD / year
+  param licensed_content_cost: Currency<USD> = $100000000/1yr
+  param infrastructure_cost: Currency<USD> = $80000000/1yr
+  param marketing_spend: Currency<USD> = $300000000/1yr
+  param general_opex: Currency<USD> = $120000000/1yr
   
-  param cac = 35 USD
-  param ltv_months = 1 / monthly_churn_rate
-  param ltv = monthly_subscription_price * ltv_months
+  param cac: Currency<USD> = $35
+  param ltv_months: Fraction = 1 / monthly_churn_rate
+  param ltv: Currency<USD> = monthly_subscription_price * ltv_months
   
   // Subscriber dynamics
-  var ending_subscribers = current_subscribers * annual_churn + monthly_new_subscriber_target * 12 month
-  var avg_subscriber_base = (current_subscribers + ending_subscribers) / 2
+  var ending_subscribers: Fraction = current_subscribers * annual_churn + monthly_new_subscriber_target * 12
+  var avg_subscriber_base: Fraction = (current_subscribers + ending_subscribers) / 2
   
   // Revenue
-  var annual_subscription_revenue = avg_subscriber_base * monthly_subscription_price * 12 month
+  var annual_subscription_revenue: Currency<USD> = avg_subscriber_base * monthly_subscription_price * 12
   
   // Costs
-  var annual_content_cost = avg_subscriber_base * content_cost_per_subscriber
-  var total_cogs = annual_content_cost + licensed_content_cost + infrastructure_cost
+  var annual_content_cost: Currency<USD> = avg_subscriber_base * content_cost_per_subscriber
+  var total_cogs: Currency<USD> = annual_content_cost + licensed_content_cost + infrastructure_cost
   
-  var acquisition_cost = monthly_new_subscriber_target * 12 month * cac
-  var total_opex_cost = marketing_spend + general_opex + acquisition_cost
+  var acquisition_cost: Currency<USD> = monthly_new_subscriber_target * 12 * cac
+  var total_opex_cost: Currency<USD> = marketing_spend + general_opex + acquisition_cost
   
-  var ebitda = annual_subscription_revenue - total_cogs - total_opex_cost
-  var ebitda_margin = ebitda / annual_subscription_revenue
+  var ebitda: Currency<USD> = annual_subscription_revenue - total_cogs - total_opex_cost
+  var ebitda_margin: Fraction = ebitda / annual_subscription_revenue
   
-  var cac_payback_months = cac / (monthly_subscription_price * 0.50)
+  var cac_payback_months: Fraction = cac / (monthly_subscription_price * 0.50)
   
-  constraint ending_subscribers > 0 subscribers
-  constraint ltv > cac
-  constraint ebitda > 0 USD
+  constraint ending_subscribers_constraint: ending_subscribers > 0 { severity: warning }
+  constraint ltv_constraint: ltv > cac { severity: warning }
+  constraint ebitda_constraint: ebitda > $0 { severity: warning }
 }

@@ -1,0 +1,99 @@
+/*
+ * Example: FractionFromRatio Contract
+ * 
+ * Demonstrates: Quotient<Count, Count> → Fraction
+ * Use case: Success rates, conversion rates, churn rates
+ * 
+ * Semantic justification:
+ * - Dividing count by count creates a ratio (dimensionless number)
+ * - Business metrics treat these ratios as fractions (0.0-1.0 or percentages)
+ * - Contract: FractionFromRatio
+ */
+
+model Conversion_Funnel_Metrics {
+    // Top-of-funnel metrics
+    param website_visitors: Count<Visitor> = 10000
+    param trial_signups: Count<User> = 1500
+    param paid_conversions: Count<Customer> = 300
+    
+    // FractionFromRatio: trial signups / visitors → conversion rate
+    var visitor_to_trial_rate: Fraction = trial_signups / website_visitors
+    
+    // FractionFromRatio: paid conversions / trial signups → trial-to-paid rate
+    var trial_to_paid_rate: Fraction = paid_conversions / trial_signups
+    
+    // Overall conversion rate (visitors → customers)
+    var end_to_end_conversion_rate: Fraction = paid_conversions / website_visitors
+    
+    // Churn and retention metrics
+    param customers_start_of_month: Count<Customer> = 1200
+    param churned_customers: Count<Customer> = 60
+    param retained_customers: Count<Customer> = 1140
+    
+    // FractionFromRatio: churned / total → churn rate
+    var monthly_churn_rate: Fraction = churned_customers / customers_start_of_month
+    
+    // FractionFromRatio: retained / total → retention rate
+    var retention_rate: Fraction = retained_customers / customers_start_of_month
+    
+    // Success rate metrics
+    param total_transactions: Count<Transaction> = 5000
+    param successful_transactions: Count<Transaction> = 4850
+    param failed_transactions: Count<Transaction> = 150
+    
+    // FractionFromRatio: success / total → success rate
+    var transaction_success_rate: Fraction = successful_transactions / total_transactions
+    
+    // FractionFromRatio: failures / total → failure rate
+    var transaction_failure_rate: Fraction = failed_transactions / total_transactions
+    
+    // Marketing metrics
+    param emails_sent: Count<Email> = 50000
+    param emails_opened: Count<Email> = 12500
+    param emails_clicked: Count<Email> = 2500
+    
+    // FractionFromRatio: opens / sent → open rate
+    var email_open_rate: Fraction = emails_opened / emails_sent
+    
+    // FractionFromRatio: clicks / sent → click rate
+    var email_click_rate: Fraction = emails_clicked / emails_sent
+    
+    // FractionFromRatio: clicks / opens → click-through rate (of opened)
+    var click_through_rate: Fraction = emails_clicked / emails_opened
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. visitor_to_trial_rate = trial_signups / website_visitors
+ *    - From: Quotient<Count<User>, Count<Visitor>>
+ *    - To: Fraction
+ *    - Contract: FractionFromRatio
+ *    - Justification: Conversion rate is a meaningful business fraction
+ * 
+ * 2. monthly_churn_rate = churned_customers / customers_start_of_month
+ *    - From: Quotient<Count<Customer>, Count<Customer>>
+ *    - To: Fraction
+ *    - Contract: FractionFromRatio
+ *    - Justification: Churn is expressed as percentage (fraction)
+ * 
+ * 3. transaction_success_rate = successful_transactions / total_transactions
+ *    - From: Quotient<Count<Transaction>, Count<Transaction>>
+ *    - To: Fraction
+ *    - Contract: FractionFromRatio
+ *    - Justification: Success rate is a quality metric (0.0-1.0)
+ * 
+ * 4. email_open_rate = emails_opened / emails_sent
+ *    - From: Quotient<Count<Email>, Count<Email>>
+ *    - To: Fraction
+ *    - Contract: FractionFromRatio
+ *    - Justification: Email engagement metric (percentage)
+ * 
+ * Key insight: FractionFromRatio is for converting count-based ratios into
+ * business-meaningful percentages. These are semantically different from
+ * raw quotients because:
+ * - They have business meaning (success rate, churn rate)
+ * - They're typically bounded [0.0, 1.0]
+ * - They're used in calculations with other fractions
+ * - They're presented as percentages to users
+ */

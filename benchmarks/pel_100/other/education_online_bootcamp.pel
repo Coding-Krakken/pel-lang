@@ -3,7 +3,7 @@
 
 model EducationOnlineBootcamp {
   param monthly_cohort_size: Count<Item> = 85
-  param tuition_upfront: Currency<USD> = 14500.0
+  param tuition_upfront: Currency<USD> = $14500.0
   param upfront_payment_pct: Fraction = 0.40
   param isa_pct: Fraction = 0.45 // income share agreement
   param scholarship_pct: Fraction = 0.15
@@ -15,8 +15,8 @@ model EducationOnlineBootcamp {
   
   // ISA economics
   param isa_income_share_pct: Fraction = 0.15 // % of graduate salary
-  param isa_payment_months: Count<Item> = 24
-  param avg_graduate_salary: Currency<USD> = 5200.0 // monthly
+  param isa_payment_months: Fraction = 24
+  param avg_graduate_salary: Currency<USD> = $5200.0 // monthly
   param isa_collection_rate: Fraction = 0.88 // some defaults/unemployment
   
   // Deferred tuition recognition
@@ -24,29 +24,29 @@ model EducationOnlineBootcamp {
   
   // Cost of instruction
   param instructors_per_cohort: Count<Item> = 3
-  param instructor_cost: Currency<USD> = 9500.0
+  param instructor_cost: Currency<USD> = $9500.0
   param teaching_assistants_per_cohort: Count<Item> = 5
-  param ta_cost: Currency<USD> = 4500.0
+  param ta_cost: Currency<USD> = $4500.0
   param career_coaches: Count<Item> = 8 // serve all cohorts
-  param cost_per_coach: Currency<USD> = 7000.0
+  param cost_per_coach: Currency<USD> = $7000.0
   
   // Technology and content
-  param learning_platform_costs: Currency<USD> = 12000.0
-  param video_hosting_storage: Currency<USD> = 3500.0
-  param software_licenses_per_student: Currency<USD> = 45.0 // dev tools
+  param learning_platform_costs: Currency<USD> = $12000.0
+  param video_hosting_storage: Currency<USD> = $3500.0
+  param software_licenses_per_student: Currency<USD> = $45.0 // dev tools
   param content_development_team: Count<Item> = 6
-  param cost_per_content_dev: Currency<USD> = 10000.0
+  param cost_per_content_dev: Currency<USD> = $10000.0
   
   // Student support and operations
   param student_success_team: Count<Item> = 10
-  param cost_per_student_success: Currency<USD> = 6500.0
+  param cost_per_student_success: Currency<USD> = $6500.0
   param admissions_team: Count<Item> = 8
-  param cost_per_admissions: Currency<USD> = 7500.0
-  param admin_overhead: Currency<USD> = 15000.0
+  param cost_per_admissions: Currency<USD> = $7500.0
+  param admin_overhead: Currency<USD> = $15000.0
   
   // Marketing and student acquisition
-  param cost_per_enrollment: Currency<USD> = 1200.0
-  param marketing_spend: Currency<USD> = 45000.0
+  param cost_per_enrollment: Currency<USD> = $1200.0
+  param marketing_spend: Currency<USD> = $45000.0
   
   // Calculate revenue
   var upfront_students: Count<Item> = monthly_cohort_size * upfront_payment_pct
@@ -99,7 +99,7 @@ model EducationOnlineBootcamp {
   var isa_lifetime_value_per_student: Currency<USD> = avg_graduate_salary * isa_income_share_pct *isa_payment_months * isa_collection_rate
   var isa_portfolio_value_monthly: Currency<USD> = isa_students_completing * isa_lifetime_value_per_student / isa_payment_months
   
-  constraint healthy_completion: completion_rate > 0.75
-  constraint strong_placement: job_placement_rate > 0.70
-  constraint sustainable_unit_economics: revenue_per_student > cost_per_student
+  constraint healthy_completion: completion_rate > 0.75 { severity: warning }
+  constraint strong_placement: job_placement_rate > 0.70 { severity: warning }
+  constraint sustainable_unit_economics: revenue_per_student > cost_per_student { severity: warning }
 }

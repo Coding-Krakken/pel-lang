@@ -56,7 +56,7 @@ model marketplace_two_sided_bench {
   // Platform costs
   param monthly_opex: Currency<USD> = $150_000 {
     source: "budget",
-    method: "assumption ",
+    method: "assumption",
     confidence: 0.80
   }
   
@@ -81,11 +81,11 @@ model marketplace_two_sided_bench {
   
   constraint liquidity: liquidity_ratio >= 10.0 {
     severity: warning,
-    message: "Need at least 10 buyers per seller for good liquidity"
+    message: "Need at least 10 per seller for good liquidity"
   }
   
   constraint gmv_growth: gmv >= $300_000 {
     severity: warning,
-    message: "GMV below $300K/month target"
+    message: "GMV below $300K target"
   }
 }

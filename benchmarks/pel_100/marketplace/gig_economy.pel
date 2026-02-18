@@ -11,7 +11,9 @@ model marketplace_gig_economy {
   var platform_revenue: Currency<USD> = monthly_gmv * take_rate
   var revenue_per_worker: Currency<USD> = monthly_gmv / active_workers
 
-  constraint liquidity_ratio: Fraction = (daily_tasks * 7) / active_workers {
+  var liquidity_ratio: Fraction = (daily_tasks * 7) / active_workers
+  
+  constraint liquidity_ratio_low: liquidity_ratio >= 0.5 {
     severity: warning,
     message: "Weekly tasks per worker too low"
   }

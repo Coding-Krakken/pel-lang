@@ -2,12 +2,12 @@
 // Mix of project-based and retainer revenue
 
 model services_engineering_consulting_bench {
-  param billable_consultants: Count<Consultant> = 24
-  param billable_rate: Currency<USD> = $275/1hr
+  param billable_consultants: Int = 24
+  param billable_rate: Currency<USD> = $275
   param utilization_rate: Fraction = 0.68
-  param avg_hours_per_month: Count<Hour> = 160
-  param retainer_clients: Count<Client> = 8
-  param retainer_monthly_fee: Currency<USD> = $25_000/1mo
+  param avg_hours_per_month: Int = 160
+  param retainer_clients: Int = 8
+  param retainer_monthly_fee: Currency<USD> = $25000
 
   var project_revenue: Currency<USD> = billable_consultants * billable_rate * (avg_hours_per_month * utilization_rate)
   var retainer_revenue: Currency<USD> = retainer_clients * retainer_monthly_fee

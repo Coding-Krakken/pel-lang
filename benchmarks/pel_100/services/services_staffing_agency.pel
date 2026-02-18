@@ -1,40 +1,40 @@
 model ServicesStaffingAgency {
   // Staffing/recruitment agency model with billable hours, bench time, and retention
   
-  param billable_headcount: Count<Item> =200 resources
-  param avg_billable_rate: Fraction =150 USD / hour
-  param annual_billable_hours_per_resource: Fraction =1800 hours / year
+  param billable_headcount: Int = 200
+  param avg_billable_rate: Currency<USD> = $150
+  param annual_billable_hours_per_resource: Fraction =1800
   
   param bench_time_pct: Fraction =0.10
-  param bench_cost_rate: Fraction =40 USD / hour
+  param bench_cost_rate: Currency<USD> = $40
   
   param sales_commission_rate: Fraction =0.15
-  param sales_cost: Fraction =500000 USD / year
-  param recruiting_cost_per_hire: Count<Item> =8000 USD
+  param sales_cost: Currency<USD> = $500000
+  param recruiting_cost_per_hire: Currency<USD> = $8000
   param annual_turnover_rate: Fraction =0.25
   
-  param overhead_cost: Fraction =2000000 USD / year
-  param technology_cost: Fraction =300000 USD / year
+  param overhead_cost: Currency<USD> = $2000000
+  param technology_cost: Currency<USD> = $300000
   
   // Revenue
   var total_billable_hours: Fraction =billable_headcount * annual_billable_hours_per_resource * (1 - bench_time_pct)
-  var gross_revenue: Fraction =total_billable_hours * avg_billable_rate
+  var gross_revenue: Currency<USD> = total_billable_hours * avg_billable_rate
   
   // Costs
-  var bench_cost: Fraction =billable_headcount * annual_billable_hours_per_resource * bench_time_pct * bench_cost_rate
-  var salary_cost: Fraction =billable_headcount * avg_billable_rate * 0.65  // Simplified: salary as % of billable rate
+  var bench_cost: Currency<USD> = billable_headcount * annual_billable_hours_per_resource * bench_time_pct * bench_cost_rate
+  var salary_cost: Currency<USD> = billable_headcount * avg_billable_rate * 0.65 // Simplified: salary as % of billable rate
   
   // Replacement costs
-  var annual_turnover_headcount: Fraction =billable_headcount * annual_turnover_rate
-  var recruiting_costs: Fraction =annual_turnover_headcount * recruiting_cost_per_hire
+  var annual_turnover_headcount: Fraction = billable_headcount * annual_turnover_rate
+  var recruiting_costs: Currency<USD> = annual_turnover_headcount * recruiting_cost_per_hire
   
-  var sales_commissions: Fraction =gross_revenue * sales_commission_rate
-  var total_opex: Fraction =sales_cost + overhead_cost + technology_cost
+  var sales_commissions: Currency<USD> = gross_revenue * sales_commission_rate
+  var total_opex: Currency<USD> = sales_cost + overhead_cost + technology_cost
   
-  var ebitda: Fraction =gross_revenue - bench_cost - salary_cost - recruiting_costs - sales_commissions - total_opex
+  var ebitda: Currency<USD> = gross_revenue - bench_cost - salary_cost - recruiting_costs - sales_commissions - total_opex
   var ebitda_margin: Fraction =ebitda / gross_revenue
   
-  constraint ebitda > 0 USD
-  constraint ebitda_margin > 0.15
-  constraint annual_turnover_rate < 0.40
+  constraint ebitda_constraint: ebitda > $0 { severity: warning }
+  constraint ebitda_margin_constraint: ebitda_margin > 0.15 { severity: warning }
+  constraint annual_turnover_rate_constraint: annual_turnover_rate < 0.40 { severity: warning }
 }

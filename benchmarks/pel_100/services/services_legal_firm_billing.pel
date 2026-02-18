@@ -8,12 +8,12 @@ model ServicesLegalFirmBilling {
   param junior_associate_count: Count<Item> = 10
   
   // Billing rates by level
-  param partner_hourly_rate: Currency<USD> = 650.0
-  param senior_associate_rate: Currency<USD> = 425.0
-  param junior_associate_rate: Currency<USD> = 275.0
+  param partner_hourly_rate: Currency<USD> = $650.0
+  param senior_associate_rate: Currency<USD> = $425.0
+  param junior_associate_rate: Currency<USD> = $275.0
   
   // Utilization targets
-  param partner_billable_hours: Count<Item> = 140 // per month
+  param partner_billable_hours: Count<Item> = 140 //
   param senior_associate_billable_hours: Count<Item> = 165
   param junior_associate_billable_hours: Count<Item> = 175
   param utilization_achievement: Fraction = 0.92 // actual vs target
@@ -22,15 +22,15 @@ model ServicesLegalFirmBilling {
   param realization_rate: Fraction = 0.88 // write-offs, discounts
   
   // Compensation
-  param partner_compensation: Currency<USD> = 45000.0 // per month
-  param senior_associate_compensation: Currency<USD> = 18000.0
-  param junior_associate_compensation: Currency<USD> = 11000.0
+  param partner_compensation: Currency<USD> = $45000.0 //
+  param senior_associate_compensation: Currency<USD> = $18000.0
+  param junior_associate_compensation: Currency<USD> = $11000.0
   
   // Support staff
   param paralegals_count: Count<Item> = 8
-  param cost_per_paralegal: Currency<USD> = 6500.0
+  param cost_per_paralegal: Currency<USD> = $6500.0
   param admin_staff_count: Count<Item> = 6
-  param cost_per_admin: Currency<USD> = 5000.0
+  param cost_per_admin: Currency<USD> = $5000.0
   
   // Practice area mix
   param litigation_pct: Fraction = 0.40
@@ -38,11 +38,11 @@ model ServicesLegalFirmBilling {
   param real_estate_pct: Fraction = 0.25
   
   // Operating expenses
-  param office_lease: Currency<USD> = 35000.0
-  param legal_research_subscriptions: Currency<USD> = 8500.0
-  param insurance_malpractice: Currency<USD> = 12000.0
-  param marketing_bd: Currency<USD> = 15000.0
-  param technology_costs: Currency<USD> = 6000.0
+  param office_lease: Currency<USD> = $35000.0
+  param legal_research_subscriptions: Currency<USD> = $8500.0
+  param insurance_malpractice: Currency<USD> = $12000.0
+  param marketing_bd: Currency<USD> = $15000.0
+  param technology_costs: Currency<USD> = $6000.0
   
   // Calculate billable hours and revenue
   var partner_hours: Count<Item> = partner_count * partner_billable_hours * utilization_achievement
@@ -83,7 +83,7 @@ model ServicesLegalFirmBilling {
   var profit_per_partner: Currency<USD> = net_income / partner_count
   var compensation_ratio: Fraction = total_attorney_compensation / net_revenue
   
-  constraint healthy_realization: realization_rate > 0.85
-  constraint profitable_practice: operating_margin > 0.25
-  constraint sustainable_leverage: leverage_ratio > 2.5
+  constraint healthy_realization: realization_rate > 0.85 { severity: warning }
+  constraint profitable_practice: operating_margin > 0.25 { severity: warning }
+  constraint sustainable_leverage: leverage_ratio > 2.5 { severity: warning }
 }

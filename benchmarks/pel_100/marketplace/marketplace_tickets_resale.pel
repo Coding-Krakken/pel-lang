@@ -3,7 +3,7 @@
 
 model MarketplaceTicketsResale {
   param monthly_ticket_sales: Count<Item> = 28000
-  param avg_ticket_price: Currency<USD> = 125.0
+  param avg_ticket_price: Currency<USD> = $125.0
   param buyer_service_fee_pct: Fraction = 0.18
   param seller_service_fee_pct: Fraction = 0.10
   
@@ -20,33 +20,33 @@ model MarketplaceTicketsResale {
   param avg_markdown_below: Fraction = 0.25
   
   // Fraud prevention and authentication
-  param fraud_detection_cost_per_ticket: Currency<USD> = 0.85
-  param transfer_verification_cost: Currency<USD> = 0.45
+  param fraud_detection_cost_per_ticket: Currency<USD> = $0.85
+  param transfer_verification_cost: Currency<USD> = $0.45
   param chargebacks_rate: Fraction = 0.008
-  param avg_chargeback_amount: Currency<USD> = 180.0
+  param avg_chargeback_amount: Currency<USD> = $180.0
   
   // Seller tools and features
   param instant_payout_adoption: Fraction = 0.40
   param instant_payout_fee_pct: Fraction = 0.03 // additional fee for immediate payment
-  param listing_optimization_fee: Currency<USD> = 2.50 // premium listing placement
+  param listing_optimization_fee: Currency<USD> = $2.50 // premium listing placement
   param premium_listing_adoption: Fraction = 0.15
   
   // Payment processing
   param payment_processing_pct: Fraction = 0.029
-  param payment_processing_fixed: Currency<USD> = 0.30
+  param payment_processing_fixed: Currency<USD> = $0.30
   
   // Customer service
   param support_agents: Count<Item> = 22
-  param cost_per_agent: Currency<USD> = 5800.0
+  param cost_per_agent: Currency<USD> = $5800.0
   param high_touch_events_pct: Fraction = 0.08 // events needing extra support
-  param high_touch_support_cost: Currency<USD> = 12.0
+  param high_touch_support_cost: Currency<USD> = $12.0
   
   // Technology and operations
   param engineering_headcount: Count<Item> = 18
-  param cost_per_engineer: Currency<USD> = 13500.0
-  param marketing_partnerships: Currency<USD> = 85000.0
-  param infrastructure_costs: Currency<USD> = 15000.0
-  param legal_compliance: Currency<USD> = 8500.0 // ticket resale regulations
+  param cost_per_engineer: Currency<USD> = $13500.0
+  param marketing_partnerships: Currency<USD> = $85000.0
+  param infrastructure_costs: Currency<USD> = $15000.0
+  param legal_compliance: Currency<USD> = $8500.0 // ticket resale regulations
   
   // Calculate GMV and revenue
   var gross_merchandise_value: Currency<USD> = monthly_ticket_sales * avg_ticket_price
@@ -62,8 +62,7 @@ model MarketplaceTicketsResale {
   var gross_revenue: Currency<USD> = buyer_fees + seller_fees + instant_payout_revenue + premium_listing_revenue
   
   // Payment processing costs
-  var payment_processing_costs: Currency<USD> = (gross_merchandise_value * payment_processing_pct) + 
-                                           (monthly_ticket_sales * payment_processing_fixed)
+  var payment_processing_costs: Currency<USD> = (gross_merchandise_value * payment_processing_pct) + (monthly_ticket_sales * payment_processing_fixed)
   
   // Fraud prevention and chargebacks
   var fraud_detection_costs: Currency<USD> = monthly_ticket_sales * (fraud_detection_cost_per_ticket + transfer_verification_cost)
@@ -94,7 +93,7 @@ model MarketplaceTicketsResale {
   var vas_revenue_pct: Fraction = (instant_payout_revenue + premium_listing_revenue) / gross_revenue
   var fraud_cost_pct: Fraction = fraud_costs / gross_revenue
   
-  constraint healthy_take_rate: blended_take_rate > 0.25
-  constraint controlled_fraud: fraud_cost_pct < 0.08
-  constraint profitable_operations: operating_margin > 0.15
+  constraint healthy_take_rate: blended_take_rate > 0.25 { severity: warning }
+  constraint controlled_fraud: fraud_cost_pct < 0.08 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.15 { severity: warning }
 }
