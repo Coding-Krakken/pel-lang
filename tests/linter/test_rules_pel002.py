@@ -7,9 +7,8 @@
 
 """Linter rule tests - PEL002 (Unreferenced Variable)."""
 
-import pytest
-from linter.linter import PELLinter
 from linter.config import LinterConfig
+from linter.linter import PELLinter
 
 
 class TestPEL002UnreferencedVar:
@@ -24,7 +23,7 @@ class TestPEL002UnreferencedVar:
         config = LinterConfig(enabled_rules=["PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel002_violations = [v for v in violations if v.code == "PEL002"]
         assert len(pel002_violations) >= 1
         assert any("unused" in v.message.lower() for v in pel002_violations)
@@ -38,7 +37,7 @@ class TestPEL002UnreferencedVar:
         config = LinterConfig(enabled_rules=["PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # base is used, but result might be unreferenced
         base_violations = [v for v in violations if v.code == "PEL002" and "base" in v.message.lower()]
         assert len(base_violations) == 0
@@ -51,7 +50,7 @@ class TestPEL002UnreferencedVar:
         config = LinterConfig(enabled_rules=["PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel002_violations = [v for v in violations if v.code == "PEL002" and "_temp" in v.message]
         assert len(pel002_violations) == 0
 
@@ -65,10 +64,10 @@ class TestPEL002UnreferencedVar:
         config = LinterConfig(enabled_rules=["PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # a and b should not be flagged as unused
         a_violations = [v for v in violations if v.code == "PEL002" and " a " in v.message.lower() or "'a'" in v.message.lower()]
         b_violations = [v for v in violations if v.code == "PEL002" and " b " in v.message.lower() or "'b'" in v.message.lower()]
-        
+
         assert len(a_violations) == 0
         assert len(b_violations) == 0

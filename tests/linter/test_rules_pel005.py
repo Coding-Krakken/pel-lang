@@ -7,9 +7,8 @@
 
 """Linter rule tests - PEL005 (Circular Dependency)."""
 
-import pytest
-from linter.linter import PELLinter
 from linter.config import LinterConfig
+from linter.linter import PELLinter
 
 
 class TestPEL005CircularDependency:
@@ -26,7 +25,7 @@ class TestPEL005CircularDependency:
         config = LinterConfig(enabled_rules=["PEL005"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel005_violations = [v for v in violations if v.code == "PEL005"]
         assert len(pel005_violations) >= 1
         assert "circular" in pel005_violations[0].message.lower()
@@ -41,7 +40,7 @@ class TestPEL005CircularDependency:
         config = LinterConfig(enabled_rules=["PEL005"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel005_violations = [v for v in violations if v.code == "PEL005"]
         assert len(pel005_violations) == 0
 
@@ -58,7 +57,7 @@ class TestPEL005CircularDependency:
         config = LinterConfig(enabled_rules=["PEL005"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel005_violations = [v for v in violations if v.code == "PEL005"]
         assert len(pel005_violations) >= 1
 
@@ -71,9 +70,8 @@ class TestPEL005CircularDependency:
 }"""
         config = LinterConfig(enabled_rules=["PEL005"])
         linter = PELLinter(config=config)
-        violations = linter.lint_string(source)
-        
+        linter.lint_string(source)
+
         # Timeseries self-reference should be allowed
-        pel005_violations = [v for v in violations if v.code == "PEL005"]
         # Should be 0 or handled specially
         assert True  # This is expected behavior

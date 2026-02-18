@@ -7,9 +7,8 @@
 
 """Linter rule tests - PEL010 (Naming Conventions)."""
 
-import pytest
-from linter.linter import PELLinter
 from linter.config import LinterConfig
+from linter.linter import PELLinter
 
 
 class TestPEL010NamingConventions:
@@ -23,7 +22,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         model_violations = [v for v in pel010_violations if "model" in v.message.lower() and "pascalcase" in v.message.lower()]
         assert len(model_violations) >= 1
@@ -36,7 +35,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         model_violations = [v for v in pel010_violations if "TestModel" in v.message]
         assert len(model_violations) == 0
@@ -49,7 +48,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         param_violations = [v for v in pel010_violations if "parameter" in v.message.lower() or "InvalidName" in v.message]
         assert len(param_violations) >= 1
@@ -63,7 +62,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         param_violations = [v for v in pel010_violations if "parameter" in v.message.lower()]
         assert len(param_violations) == 0
@@ -76,7 +75,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         var_violations = [v for v in pel010_violations if "variable" in v.message.lower() or "CamelCaseVar" in v.message]
         assert len(var_violations) >= 1
@@ -90,7 +89,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         var_violations = [v for v in pel010_violations if "my_variable" in v.message or "another_var" in v.message]
         assert len(var_violations) == 0
@@ -103,7 +102,7 @@ class TestPEL010NamingConventions:
         config = LinterConfig(enabled_rules=["PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel010_violations = [v for v in violations if v.code == "PEL010"]
         # Should have violations with info severity
         assert all(v.severity in ["info", "warning"] for v in pel010_violations)

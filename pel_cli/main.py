@@ -10,17 +10,17 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
-import difflib
 
+from compiler.ir_generator import IRGenerator
 from compiler.lexer import Lexer
 from compiler.parser import Parser
 from compiler.provenance_checker import ProvenanceChecker
 from compiler.typechecker import TypeChecker
-from compiler.ir_generator import IRGenerator
 from formatter.formatter import PELFormatter
 from linter.config import LinterConfig
 from linter.linter import PELLinter
@@ -61,7 +61,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
         print("  [3/5] Type checking...")
         type_checker = TypeChecker()
-        typed_ast = type_checker.check_model(ast)
+        type_checker.check_model(ast)
 
         if type_checker.has_errors():
             print("        Type errors found:")

@@ -7,7 +7,6 @@
 
 """Formatter comment handling tests."""
 
-import pytest
 from formatter.formatter import PELFormatter
 
 
@@ -19,7 +18,7 @@ class TestCommentHandling:
         source = "// This is a comment\nmodel Test { param x: Int = 10 }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "// This is a comment" in result.formatted
 
     def test_inline_comment_preserved(self):
@@ -27,7 +26,7 @@ class TestCommentHandling:
         source = "model Test { param x: Int = 10 // end of line }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "// end of line" in result.formatted
 
     def test_multiple_comments(self):
@@ -40,7 +39,7 @@ model Test {
 }"""
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "// Comment 1" in result.formatted
         assert "// Comment 2" in result.formatted
         assert "// Comment 3" in result.formatted
@@ -54,7 +53,7 @@ model Test {
 }"""
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "// Just a comment" in result.formatted
 
     def test_comment_indentation(self):
@@ -65,9 +64,9 @@ param x: Int = 10
 }"""
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         lines = result.formatted.split('\n')
-        comment_line = [l for l in lines if 'Comment should be indented' in l][0]
+        comment_line = [line for line in lines if 'Comment should be indented' in line][0]
         # Comment should be indented
         assert len(comment_line) - len(comment_line.lstrip()) >= 4
 
@@ -76,7 +75,7 @@ param x: Int = 10
         source = "model Test { param x: Int = 10 // TODO: fix this! @#$% }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "// TODO: fix this! @#$%" in result.formatted
 
     def test_comment_in_string_not_treated_as_comment(self):
@@ -84,7 +83,7 @@ param x: Int = 10
         source = 'model Test { param url: String = "http://example.com" }'
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert '"http://example.com"' in result.formatted
         # Should not split the string
         assert 'http:' in result.formatted and 'example.com' in result.formatted

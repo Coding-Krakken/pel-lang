@@ -7,13 +7,11 @@
 
 """Linter integration tests."""
 
-import pytest
-from pathlib import Path
 import tempfile
-from linter.linter import PELLinter
+from pathlib import Path
+
 from linter.config import LinterConfig
-from linter.reporter import render_text, render_json
-import json
+from linter.linter import PELLinter
 
 
 class TestLinterIntegration:
@@ -28,7 +26,7 @@ class TestLinterIntegration:
         config = LinterConfig(enabled_rules=["PEL001", "PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Should have at least one violation
         assert len(violations) >= 1
 
@@ -40,12 +38,12 @@ class TestLinterIntegration:
     var result = value * 2
 }""")
             temp_path = f.name
-        
+
         try:
             config = LinterConfig(enabled_rules=["PEL001", "PEL002", "PEL008"])
             linter = PELLinter(config=config)
             violations = linter.lint_file(temp_path)
-            
+
             # Should be able to lint file
             assert isinstance(violations, list)
         finally:
@@ -60,7 +58,7 @@ class TestLinterIntegration:
         config = LinterConfig(enabled_rules=["PEL001", "PEL002", "PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Should have violations from multiple rules
         rule_codes = {v.code for v in violations}
         assert "PEL010" in rule_codes  # Naming violations
@@ -78,13 +76,12 @@ class TestLinterIntegration:
         # Set different severities
         config.rule_severity["PEL005"] = "error"
         config.rule_severity["PEL010"] = "info"
-        
+
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Errors should come before info
         if violations:
-            severities = [v.severity for v in violations]
             # Errors should generally come first
             assert True  # Sorting is working
 
@@ -97,7 +94,7 @@ class TestLinterIntegration:
         config = LinterConfig(enabled_rules=["PEL001", "PEL002", "PEL010"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Clean code should have minimal or no violations
         critical_violations = [v for v in violations if v.severity == "error"]
         assert len(critical_violations) == 0
@@ -108,7 +105,7 @@ class TestLinterIntegration:
         config = LinterConfig(enabled_rules=["PEL001", "PEL002"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Should not crash, returns empty or partial violations
         assert isinstance(violations, list)
 
@@ -120,7 +117,7 @@ class TestLinterIntegration:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         if violations:
             # Violation should have location info
             assert violations[0].line > 0

@@ -7,10 +7,10 @@
 
 """Linter configuration tests."""
 
-import pytest
-from pathlib import Path
 import tempfile
-from linter.config import LinterConfig, load_linter_config, find_linter_config
+from pathlib import Path
+
+from linter.config import LinterConfig, find_linter_config, load_linter_config
 
 
 class TestLinterConfig:
@@ -19,7 +19,7 @@ class TestLinterConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = LinterConfig()
-        
+
         assert "PEL001" in config.enabled_rules
         assert "PEL002" in config.enabled_rules
         assert config.line_length == 100
@@ -28,7 +28,7 @@ class TestLinterConfig:
     def test_custom_enabled_rules(self):
         """Test custom enabled rules."""
         config = LinterConfig(enabled_rules=["PEL001", "PEL010"])
-        
+
         assert len(config.enabled_rules) == 2
         assert "PEL001" in config.enabled_rules
         assert "PEL010" in config.enabled_rules
@@ -37,14 +37,14 @@ class TestLinterConfig:
         """Test rule severity overrides."""
         config = LinterConfig()
         config.rule_severity["PEL010"] = "error"
-        
+
         assert config.rule_severity["PEL010"] == "error"
 
     def test_load_config_no_file(self):
         """Test loading config when no .pellint.toml exists."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config = load_linter_config(Path(tmpdir))
-            
+
             # Should return defaults
             assert "PEL001" in config.enabled_rules
 
@@ -61,7 +61,7 @@ enabled_rules = ["PEL001", "PEL010"]
 severity = "error"
 """)
             config = load_linter_config(Path(tmpdir))
-            
+
             assert config.line_length == 120
             assert "PEL001" in config.enabled_rules
             assert "PEL010" in config.enabled_rules
@@ -73,10 +73,10 @@ severity = "error"
             parent = Path(tmpdir)
             child = parent / "subdir"
             child.mkdir()
-            
+
             config_path = parent / ".pellint.toml"
             config_path.write_text("[linter]\nline_length = 88")
-            
+
             found = find_linter_config(child)
             assert found == config_path
 
@@ -95,7 +95,7 @@ severity = "error"
 exclude_paths = ["tests/**", "*.generated.pel"]
 """)
             config = load_linter_config(Path(tmpdir))
-            
+
             assert "tests/**" in config.exclude_paths
             assert "*.generated.pel" in config.exclude_paths
 
@@ -108,7 +108,7 @@ exclude_paths = ["tests/**", "*.generated.pel"]
 line_length = 120
 """)
             config = load_linter_config(Path(tmpdir))
-            
+
             # Should have custom line_length
             assert config.line_length == 120
             # Should have default enabled_rules

@@ -9,8 +9,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from compiler.ast_nodes import (
     ArrayLiteral,
@@ -19,8 +19,8 @@ from compiler.ast_nodes import (
     BlockExpr,
     Distribution,
     Expression,
-    FunctionCall,
     ForStmt,
+    FunctionCall,
     IfStmt,
     IfThenElse,
     Indexing,
@@ -119,8 +119,8 @@ def _collect_statement_uses(statements: Iterable[Statement], uses: set[str], bou
             loop_bound = bound | {stmt.var_name}
             _collect_statement_uses(stmt.body, uses, loop_bound)
         else:
-            if hasattr(stmt, "value") and isinstance(getattr(stmt, "value"), Expression):
-                _collect_expression_uses(getattr(stmt, "value"), uses, bound)
+            if hasattr(stmt, "value") and isinstance(stmt.value, Expression):
+                _collect_expression_uses(stmt.value, uses, bound)
 
 
 def _collect_model_uses(model: Model) -> set[str]:

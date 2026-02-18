@@ -7,9 +7,8 @@
 
 """Linter rule tests - PEL001 (Unused Parameter)."""
 
-import pytest
-from linter.linter import PELLinter
 from linter.config import LinterConfig
+from linter.linter import PELLinter
 
 
 class TestPEL001UnusedParam:
@@ -24,7 +23,7 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         # Should detect unused parameter
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 1
@@ -39,7 +38,7 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 0
 
@@ -52,7 +51,7 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 0
 
@@ -67,7 +66,7 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 2
 
@@ -81,7 +80,7 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 0
 
@@ -95,6 +94,6 @@ class TestPEL001UnusedParam:
         config = LinterConfig(enabled_rules=["PEL001"])
         linter = PELLinter(config=config)
         violations = linter.lint_string(source)
-        
+
         pel001_violations = [v for v in violations if v.code == "PEL001"]
         assert len(pel001_violations) == 0

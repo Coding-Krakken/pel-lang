@@ -17,7 +17,7 @@ if compile_fail:
         print(f"  {m['category']}/{m['model']}")
 else:
     print("\n✓ All models compiling!")
-    
+
 # Check run failures
 run_fail = [m for m in data if m['compile_success'] and not m['run_success']]
 if run_fail:

@@ -7,8 +7,7 @@
 
 """Basic formatter functionality tests."""
 
-import pytest
-from formatter.formatter import PELFormatter, FormatResult
+from formatter.formatter import FormatResult, PELFormatter
 
 
 class TestBasicFormatting:
@@ -31,7 +30,7 @@ class TestBasicFormatting:
         source = "model    Test   {   param x: Int=10   }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert isinstance(result, FormatResult)
         assert result.changed
         assert "model Test" in result.formatted
@@ -46,7 +45,7 @@ class TestBasicFormatting:
         formatter = PELFormatter()
         result = formatter.format_string(source)
         # First format might change it
-        
+
         # Format again - should be idempotent
         result2 = formatter.format_string(result.formatted)
         assert not result2.changed
@@ -56,7 +55,7 @@ class TestBasicFormatting:
         source = "model Test { var x=1+2*3-4/5 }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert " = " in result.formatted
         assert " + " in result.formatted
         assert " * " in result.formatted
@@ -68,7 +67,7 @@ class TestBasicFormatting:
         source = "model Test { var arr=[1,2,3,4] }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "1, 2, 3, 4" in result.formatted
 
     def test_brace_spacing(self):
@@ -76,7 +75,7 @@ class TestBasicFormatting:
         source = "model Test{param x: Int=10}"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "model Test {" in result.formatted or "Test {" in result.formatted
 
     def test_indentation_single_level(self):
@@ -86,10 +85,10 @@ param x: Int = 10
 }"""
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         lines = result.formatted.split('\n')
         # Find the param line
-        param_line = [l for l in lines if 'param' in l][0]
+        param_line = [line for line in lines if 'param' in line][0]
         assert param_line.startswith('    ') or param_line.startswith('\t')
 
     def test_indentation_nested_braces(self):
@@ -102,7 +101,7 @@ severity: fatal
 }"""
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         # Basic indentation check - constraint contents should be indented
         lines = result.formatted.split('\n')
         # Check that result has some indentation (formatter might not fully support constraints yet)
@@ -113,7 +112,7 @@ severity: fatal
         source = 'model Test { param msg: String = "hello  world" }'
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         # String should keep internal spacing
         assert '"hello  world"' in result.formatted
 
@@ -122,21 +121,21 @@ severity: fatal
         source = "model Test { param msg: String = 'test  value' }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert "'test  value'" in result.formatted
 
     def test_empty_file(self):
         """Test formatting empty file."""
         formatter = PELFormatter()
         result = formatter.format_string("")
-        
+
         assert result.formatted == "" or result.formatted == "\n"
 
     def test_whitespace_only_file(self):
         """Test formatting file with only whitespace."""
         formatter = PELFormatter()
         result = formatter.format_string("   \n  \n   ")
-        
+
         # Should normalize to minimal whitespace
         assert len(result.formatted.strip()) == 0
 
@@ -145,7 +144,7 @@ severity: fatal
         source = "model Test { param x: Int = 10 }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         # Should end with newline if config says so
         if formatter.config.ensure_final_newline:
             assert result.formatted.endswith('\n')
@@ -155,7 +154,7 @@ severity: fatal
         source = "model Test { param x: Int = 10 }\n"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert result.formatted.endswith('\n')
 
     def test_comparison_operators(self):
@@ -163,7 +162,7 @@ severity: fatal
         source = "model Test { var x=a==b&&c!=d||e<=f&&g>=h }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert " == " in result.formatted
         assert " != " in result.formatted
         assert " && " in result.formatted
@@ -176,7 +175,7 @@ severity: fatal
         source = "model Test { param x: Int=10 }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         assert ": Number" in result.formatted or ": Int" in result.formatted
 
     def test_arrow_spacing(self):
@@ -184,6 +183,6 @@ severity: fatal
         source = "model Test { var rate: Rate per Month=0.10/1mo }"
         formatter = PELFormatter()
         result = formatter.format_string(source)
-        
+
         # Should have proper spacing around operators
         assert " per " in result.formatted or "per" in result.formatted

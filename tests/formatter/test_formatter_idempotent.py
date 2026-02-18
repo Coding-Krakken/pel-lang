@@ -7,7 +7,6 @@
 
 """Formatter idempotency tests."""
 
-import pytest
 from formatter.formatter import PELFormatter
 
 
@@ -18,10 +17,10 @@ class TestIdempotency:
         """Test idempotency on simple model."""
         source = "model Test { param x: Int = 10 }"
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted
         assert not second.changed
 
@@ -34,11 +33,11 @@ class TestIdempotency:
     revenue[t+1] = revenue[t] * 1.1
 }"""
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
         third = formatter.format_string(second.formatted)
-        
+
         assert first.formatted == second.formatted == third.formatted
 
     def test_idempotent_with_comments(self):
@@ -49,10 +48,10 @@ model Test {
     param x: Int = 10  // Inline comment
 }"""
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted
         assert "// Model comment" in first.formatted
         assert "// Parameter comment" in first.formatted
@@ -62,20 +61,20 @@ model Test {
         """Test idempotency with various operators."""
         source = "model Test { var result = (a + b) * c - d / e }"
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted
 
     def test_idempotent_arrays(self):
         """Test idempotency with arrays."""
         source = "model Test { var arr = [1, 2, 3, 4, 5] }"
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted
 
     def test_idempotent_multiple_statements(self):
@@ -87,10 +86,10 @@ model Test {
     var d = c * 2
 }"""
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted
 
     def test_idempotent_blank_lines(self):
@@ -102,8 +101,8 @@ model Test {
     var y = x * 2
 }"""
         formatter = PELFormatter()
-        
+
         first = formatter.format_string(source)
         second = formatter.format_string(first.formatted)
-        
+
         assert first.formatted == second.formatted

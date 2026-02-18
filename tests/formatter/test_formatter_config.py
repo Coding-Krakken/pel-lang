@@ -7,10 +7,10 @@
 
 """Formatter configuration tests."""
 
-import pytest
-from pathlib import Path
 import tempfile
-from formatter.config import FormatterConfig, load_formatter_config, find_formatter_config
+from pathlib import Path
+
+from formatter.config import FormatterConfig, find_formatter_config, load_formatter_config
 
 
 class TestFormatterConfig:
@@ -71,10 +71,10 @@ ensure_final_newline = false
             parent = Path(tmpdir)
             child = parent / "subdir"
             child.mkdir()
-            
+
             config_path = parent / ".pelformat.toml"
             config_path.write_text("[format]\nline_length = 88")
-            
+
             found = find_formatter_config(child)
             assert found == config_path
 
