@@ -166,6 +166,8 @@ omit = [
     "*/.venv/*",
     "compiler/*_old.py",
     "*/compiler/*_old.py",
+    "pel_cli/main.py",  # CLI entry point, not unit-testable
+    "lsp/test_lsp.py",  # Test file in lsp package
 ]
 
 [tool.coverage.report]
