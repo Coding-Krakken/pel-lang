@@ -10,13 +10,15 @@ Note: Semantic contracts are currently "documented, not enforced" (Phase 1 desig
 Error message enhancements will come when contracts are integrated into type checking (future phase).
 """
 
-import pytest
 from pathlib import Path
-from compiler.typechecker import TypeChecker
-from compiler.parser import Parser
-from compiler.lexer import Lexer
+
+import pytest
+
 from compiler.compiler import PELCompiler
 from compiler.errors import CompilerError
+from compiler.lexer import Lexer
+from compiler.parser import Parser
+from compiler.typechecker import TypeChecker
 
 
 class TestContractReportGeneration:
@@ -29,20 +31,20 @@ class TestContractReportGeneration:
     param customers: Count<Customer> = 100
     var price: Currency<USD> = revenue / customers
 }"""
-       
+
         lexer = Lexer(source)
         parser = Parser(lexer.tokenize())
         model = parser.parse_model()
-        
+
         typechecker = TypeChecker()
         # Check model to populate type information
         try:
             typechecker.check_model(model)
-        except:
+        except CompilerError:
             pass  # May have type errors
-        
+
         report = typechecker.generate_contract_report(model)
-        
+
         assert report is not None
         assert isinstance(report, str)
         assert len(report) > 0
@@ -52,22 +54,22 @@ class TestContractReportGeneration:
         source = """model TestModel {
     param revenue: Currency<USD> = $100000
     param customers: Count<Customer> = 100
-    
+
     // @contract RevenuePerUnit_to_Price
     // Justification: Average revenue per customer
     var price: Currency<USD> = revenue / customers
 }"""
-        
+
         lexer = Lexer(source)
         parser = Parser(lexer.tokenize())
         model = parser.parse_model()
-        
+
         typechecker = TypeChecker()
         # Should compile successfully with contract
         typechecker.check_model(model)
-        
+
         report = typechecker.generate_contract_report(model)
-        
+
         # Report should mention the variable or contract
         assert "price" in report or "contract" in report.lower()
 
@@ -76,15 +78,15 @@ class TestContractReportGeneration:
         source = """model EmptyModel {
     param value: Currency<USD> = $1000
 }"""
-        
+
         lexer = Lexer(source)
         parser = Parser(lexer.tokenize())
         model = parser.parse_model()
-        
+
         typechecker = TypeChecker()
         typechecker.check_model(model)
         report = typechecker.generate_contract_report(model)
-        
+
         # Should handle empty case gracefully
         assert report is not None
         assert isinstance(report, str)
@@ -108,7 +110,7 @@ class TestCLIContractReport:
     param customers: Count<Customer> = 100
     var price: Currency<USD> = revenue / customers
 }""")
-        
+
         compiler = PELCompiler()
         report = compiler.analyze_contracts(test_file)
         assert report is not None
@@ -118,8 +120,8 @@ class TestCLIContractReport:
     def test_analyze_contracts_with_nonexistent_file(self):
         """Test contract analysis with nonexistent file."""
         compiler = PELCompiler()
-        
-        with pytest.raises(Exception):
+
+        with pytest.raises((FileNotFoundError, OSError)):
             compiler.analyze_contracts(Path("/nonexistent/file.pel"))
 
     def test_analyze_contracts_returns_markdown(self, tmp_path):
@@ -128,7 +130,7 @@ class TestCLIContractReport:
         test_file.write_text("""model TestModel {
     param value: Currency<USD> = $1000
 }""")
-        
+
         compiler = PELCompiler()
         report = compiler.analyze_contracts(test_file)
         # Should be markdown format (contains headers or lists)
@@ -145,16 +147,16 @@ class TestPhase2BackwardsCompatibility:
         source = """model BackwardsCompatTest {
     param revenue: Currency<USD> = $100000
     param customers: Count<Customer> = 100
-    
+
     // @contract RevenuePerUnit_to_Price
     // Justification: Unit pricing
     var price: Currency<USD> = revenue / customers
 }"""
-        
+
         lexer = Lexer(source)
         parser = Parser(lexer.tokenize())
         model = parser.parse_model()
-        
+
         typechecker = TypeChecker()
         # Should compile without errors
         typechecker.check_model(model)
@@ -162,12 +164,12 @@ class TestPhase2BackwardsCompatibility:
     def test_phase1_tests_still_pass(self):
         """Verify Phase 1 contract matching still works."""
         from compiler.semantic_contracts import SemanticContracts
-        
+
         contracts = SemanticContracts.find_conversions(
             "Quotient<Currency, Count>",
             "Currency"
         )
-        
+
         assert len(contracts) > 0
         assert any(c.name == "RevenuePerUnit_to_Price" for c in contracts)
 

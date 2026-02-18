@@ -13,8 +13,8 @@ Key Principles:
 """
 
 from dataclasses import dataclass, field
-from typing import Set, Tuple, Optional, Dict, Any
 from enum import Enum
+from typing import Any
 
 
 class ConversionReason(Enum):
@@ -35,10 +35,10 @@ class ValidConversion:
     source_type: str
     target_type: str
     reason: ConversionReason
-    requires_condition: Optional[str] = None
+    requires_condition: str | None = None
     documentation: str = ""
     examples: list = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
 
     def __str__(self):
         return f"{self.source_type} → {self.target_type} ({self.reason.value})"
@@ -48,12 +48,12 @@ class ValidConversion:
 class SemanticContract:
     """
     A semantic contract defines valid type conversions with explicit justification.
-    
+
     Contracts serve as a bridge between:
     1. Type System (what's dimensionally valid)
     2. Domain Knowledge (what makes semantic sense)
     3. User Intent (why this conversion is appropriate)
-    
+
     Attributes:
         name: Unique identifier for this contract (e.g., "RevenuePerUnit_to_Price")
         source_type: Origin type pattern (e.g., "Quotient<Currency, Count>")
@@ -69,7 +69,7 @@ class SemanticContract:
     target_type: str
     reason: ConversionReason
     description: str
-    constraints: Dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
     examples: list = field(default_factory=list)
     references: list = field(default_factory=list)
 
@@ -89,10 +89,10 @@ class SemanticContract:
             return actual.startswith(base_pattern + "<")
         return False
 
-    def validate_conversion(self, context: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    def validate_conversion(self, context: dict[str, Any]) -> tuple[bool, str | None]:
         """
         Validate that conversion constraints are satisfied in the given context.
-        
+
         Returns:
             (is_valid, error_message)
         """
@@ -117,22 +117,22 @@ class SemanticContract:
 
 class SemanticContracts:
     """Global registry of semantic contracts for the PEL language."""
-    
+
     # Storage for all registered contracts
-    _contracts: Dict[str, SemanticContract] = {}
-    
+    _contracts: dict[str, SemanticContract] = {}
+
     @classmethod
     def register(cls, contract: SemanticContract) -> None:
         """Register a new semantic contract."""
         if contract.name in cls._contracts:
             raise ValueError(f"Contract '{contract.name}' is already registered")
         cls._contracts[contract.name] = contract
-    
+
     @classmethod
-    def get(cls, name: str) -> Optional[SemanticContract]:
+    def get(cls, name: str) -> SemanticContract | None:
         """Retrieve a contract by name."""
         return cls._contracts.get(name)
-    
+
     @classmethod
     def find_conversions(cls, source_type: str, target_type: str) -> list:
         """Find all contracts that allow conversion from source to target type."""
@@ -141,19 +141,19 @@ class SemanticContracts:
             if contract.matches(source_type, target_type):
                 matches.append(contract)
         return matches
-    
+
     @classmethod
     def all_contracts(cls) -> list:
         """Get all registered contracts."""
         return list(cls._contracts.values())
-    
+
     @classmethod
     def describe_conversions(cls, target_type: str) -> str:
         """Generate human-readable description of how to convert TO a target type."""
         contracts = [c for c in cls._contracts.values() if c.target_type == target_type]
         if not contracts:
             return f"No conversion contracts available for {target_type}"
-        
+
         description = f"\nValid conversions to {target_type}:\n"
         for contract in contracts:
             description += f"  • {contract.source_type} → {target_type}\n"

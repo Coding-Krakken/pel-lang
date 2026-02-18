@@ -20,12 +20,11 @@ from typing import Any, Optional
 from compiler.ast_nodes import *
 from compiler.errors import (
     CompilerError,
-    ConstraintError,
     TypeError,
+    constraint_violation,
     dimensional_mismatch,
     type_mismatch,
     undefined_variable,
-    constraint_violation,
 )
 from compiler.semantic_contracts import SemanticContracts
 
@@ -311,7 +310,7 @@ class TypeChecker:
         for param in model.params:
             param_type = self.ast_type_to_pel_type(param.type_annotation)
             self.env.bind(param.name, param_type)
-            
+
             # Store static literal values for constraint checking
             # Accept Literal, UnaryOp (for negation), and simple binary operations
             if isinstance(param.value, (Literal, UnaryOp, BinaryOp)):
@@ -367,7 +366,7 @@ class TypeChecker:
             condition_type = self.infer_expression(constraint.condition)
             if condition_type.type_kind != "Boolean":
                 self.errors.append(self.create_enhanced_type_error(PELType.boolean(), condition_type))
-        
+
         # Phase 3.1: Evaluate static constraints (constraints involving only parameters with literal values)
         for constraint in model.constraints:
             try:
@@ -389,7 +388,7 @@ class TypeChecker:
                                 location
                             )
                         )
-            except (AttributeError, KeyError, ValueError, ZeroDivisionError) as e:
+            except (AttributeError, KeyError, ValueError, ZeroDivisionError):
                 # If evaluation fails (e.g., references non-static values, division by zero), skip static check
                 # Log the exception for debugging if needed
                 pass
@@ -859,23 +858,23 @@ class TypeChecker:
 
     def types_compatible(self, t1: PELType, t2: PELType) -> bool:
         """Check if two types are compatible.
-        
+
         Design Note: This method implements PRAGMATIC type compatibility rules for Phase 1.
         These rules allow broad implicit conversions to support existing PEL models and
-        provide backward compatibility. 
-        
+        provide backward compatibility.
+
         Semantic contracts (Phase 2+) provide the VALIDATION and DOCUMENTATION layer
         that ensures these conversions are domain-appropriate. When types_compatible()
-        returns True but a conversion fails, enhanced error messages (via 
+        returns True but a conversion fails, enhanced error messages (via
         create_enhanced_type_error) suggest applicable semantic contracts to guide users.
-        
+
         Future phases will integrate semantic contract enforcement directly into this
         method, tightening these rules while maintaining upgrade paths for existing code.
         """
         # Allow Int literals to be implicitly coerced to Count types
         if t1.type_kind == "Count" and t2.type_kind == "Int":
             return True
-        
+
         # Allow Int literals to be coerced to dimensionless types like Fraction
         if t1.dimension.units == {} and t2.type_kind == "Int":
             return True
@@ -978,19 +977,19 @@ class TypeChecker:
     ) -> CompilerError:
         """
         Create an enhanced type error with semantic contract guidance.
-        
+
         This wraps the standard type_mismatch error with additional hints about
         applicable semantic contracts that might justify the conversion.
         """
         # Get basic error
         error = type_mismatch(str(expected_type), str(got_type), location)
-        
+
         # Add semantic contract hint if applicable
         hint = self.suggest_semantic_contract(got_type, expected_type)
         if hint:
             # Enhance the error with contract guidance
             error.hint = hint if not error.hint else f"{error.hint}\n       {hint}"
-        
+
         return error
 
     # ==================================================================
@@ -1002,14 +1001,14 @@ class TypeChecker:
     ) -> list:
         """
         Find all semantic contracts that could justify a type conversion.
-        
+
         Returns a list of applicable contracts with reasoning.
         """
         source_str = str(source_type)
         target_str = str(target_type)
-        
+
         applicable = SemanticContracts.find_conversions(source_str, target_str)
-        
+
         return applicable
 
     def document_conversion_justification(
@@ -1018,12 +1017,12 @@ class TypeChecker:
         """
         Generate a human-readable explanation of why a type conversion is valid,
         using semantic contracts to justify the conversion.
-        
+
         This helps users understand the domain logic behind type coercions and
         guides them toward explicitly documenting their conversion intent.
         """
         contracts = self.find_applicable_contracts(source_type, target_type)
-        
+
         if not contracts:
             # No contracts found; explain the pragmatic coercion
             return (
@@ -1031,7 +1030,7 @@ class TypeChecker:
                 f"This conversion is currently allowed due to pragmatic type compatibility rules. "
                 f"Consider documenting your intent with a semantic contract."
             )
-        
+
         explanation = f"Valid conversion from {source_type} to {target_type}:\n"
         for idx, contract in enumerate(contracts, 1):
             explanation += f"\n{idx}. {contract.name}\n"
@@ -1039,10 +1038,10 @@ class TypeChecker:
             if contract.description:
                 explanation += f"   {contract.description}\n"
             if contract.examples:
-                explanation += f"   Examples:\n"
+                explanation += "   Examples:\n"
                 for example in contract.examples[:2]:  # Show first 2 examples
                     explanation += f"     - {example}\n"
-        
+
         return explanation
 
     def validate_conversion_with_contract(
@@ -1050,29 +1049,29 @@ class TypeChecker:
     ) -> tuple[bool, str | None]:
         """
         Validate that a type conversion is justified by semantic contracts.
-        
+
         Args:
             source_type: The source PEL type
             target_type: The target PEL type
             context: Additional context for constraint validation
-            
+
         Returns:
             (is_valid, error_message)
         """
         if context is None:
             context = {}
-            
+
         contracts = self.find_applicable_contracts(source_type, target_type)
-        
+
         if not contracts:
             return False, f"No semantic contract found to justify {source_type} → {target_type}"
-        
+
         # Try to validate with each applicable contract
         for contract in contracts:
             is_valid, error = contract.validate_conversion(context)
             if is_valid:
                 return True, None
-        
+
         # No contract satisfied the constraints
         return False, f"Conversion from {source_type} to {target_type} failed contract validation"
 
@@ -1081,14 +1080,14 @@ class TypeChecker:
     ) -> str | None:
         """
         Generate a helpful hint suggesting applicable semantic contracts for a type error.
-        
+
         Returns a hint string to add to the error message, or None if no contracts apply.
         """
         contracts = self.find_applicable_contracts(source_type, target_type)
-        
+
         if not contracts:
             return None
-        
+
         if len(contracts) == 1:
             contract = contracts[0]
             hint = f"This conversion might be valid using semantic contract '{contract.name}'.\n"
@@ -1099,19 +1098,19 @@ class TypeChecker:
             return hint
         else:
             names = ', '.join(c.name for c in contracts)
-            hint = f"This conversion might be valid using one of these semantic contracts:\n"
+            hint = "This conversion might be valid using one of these semantic contracts:\n"
             hint += f"       {names}\n"
-            hint += f"       See: spec/semantic_contracts_guide.md for details"
+            hint += "       See: spec/semantic_contracts_guide.md for details"
             return hint
 
     def _evaluate_static_expression(self, expr: Expression) -> Any:
         """
         Evaluate an expression statically (at compile time).
-        
-        Returns the evaluated value if the expression involves only literals and 
+
+        Returns the evaluated value if the expression involves only literals and
         parameters with literal values. Returns None if the expression cannot be
         statically evaluated.
-        
+
         Used for compile-time constraint checking.
         """
         # Literal values
@@ -1130,7 +1129,7 @@ class TypeChecker:
             elif expr.literal_type == "boolean":
                 return expr.value
             return None
-        
+
         # Variable references (look up parameter values)
         if isinstance(expr, Variable):
             # Look up in static_values (parameters with literal values)
@@ -1138,13 +1137,13 @@ class TypeChecker:
                 # Recursively evaluate the stored literal
                 return self._evaluate_static_expression(self.static_values[expr.name])
             return None
-        
+
         # Unary operations
         if isinstance(expr, UnaryOp):
             operand_val = self._evaluate_static_expression(expr.operand)
             if operand_val is None:
                 return None
-            
+
             op = expr.operator
             if op == '-':
                 return -operand_val
@@ -1153,15 +1152,15 @@ class TypeChecker:
             elif op == 'not':
                 return not operand_val
             return None
-        
+
         # Binary operations
         if isinstance(expr, BinaryOp):
             left_val = self._evaluate_static_expression(expr.left)
             right_val = self._evaluate_static_expression(expr.right)
-            
+
             if left_val is None or right_val is None:
                 return None
-            
+
             op = expr.operator
             if op == '+':
                 return left_val + right_val
@@ -1188,37 +1187,37 @@ class TypeChecker:
             elif op == 'or':
                 return left_val or right_val
             return None
-        
+
         # Other expression types
         return None
 
     def generate_contract_report(self, model: Model) -> str:
         """
         Generate a semantic contract analysis report for a model.
-        
+
         This report shows:
         - All type conversions in the model
         - Which semantic contracts justify each conversion
         - Variables that might benefit from semantic contract documentation
-        
+
         Returns a formatted report string.
         """
         report = ["# Semantic Contract Analysis Report\n"]
         report.append(f"Model: {getattr(model, 'name', 'unnamed')}\n")
         report.append("=" * 60 + "\n\n")
-        
+
         conversions_found = []
-        
+
         # Analyze variables for type conversions
         for var in model.vars:
             if var.type_annotation and var.value:
                 var_type = self.ast_type_to_pel_type(var.type_annotation)
                 value_type = self.infer_expression(var.value)
-                
+
                 # Check if there's a type conversion happening
                 if str(var_type) != str(value_type):
                     contracts = self.find_applicable_contracts(value_type, var_type)
-                    
+
                     conversion_info = {
                         'variable': var.name,
                         'from_type': str(value_type),
@@ -1227,52 +1226,52 @@ class TypeChecker:
                         'is_compatible': self.types_compatible(var_type, value_type)
                     }
                     conversions_found.append(conversion_info)
-        
+
         # Report conversions
         if conversions_found:
             report.append("## Type Conversions Detected\n\n")
-            
+
             justified = [c for c in conversions_found if c['contracts']]
             unjustified = [c for c in conversions_found if not c['contracts']]
-            
+
             if justified:
                 report.append(f"### Justified Conversions ({len(justified)})\n\n")
                 for conv in justified:
                     report.append(f"**Variable: `{conv['variable']}`**\n")
                     report.append(f"  - Conversion: `{conv['from_type']}` → `{conv['to_type']}`\n")
                     report.append(f"  - Compatible: {'✓' if conv['is_compatible'] else '✗'}\n")
-                    report.append(f"  - Contracts:\n")
+                    report.append("  - Contracts:\n")
                     for contract in conv['contracts']:
                         report.append(f"    - {contract.name} ({contract.reason.value})\n")
                     report.append("\n")
-            
+
             if unjustified:
                 report.append(f"### Unjustified Conversions ({len(unjustified)})\n\n")
                 for conv in unjustified:
                     report.append(f"**Variable: `{conv['variable']}`**\n")
                     report.append(f"  - Conversion: `{conv['from_type']}` → `{conv['to_type']}`\n")
                     report.append(f"  - Compatible: {'✓' if conv['is_compatible'] else '✗'}\n")
-                    report.append(f"  - ⚠️  NO SEMANTIC CONTRACT FOUND\n")
-                    report.append(f"  - Recommendation: Verify this conversion is correct\n")
+                    report.append("  - ⚠️  NO SEMANTIC CONTRACT FOUND\n")
+                    report.append("  - Recommendation: Verify this conversion is correct\n")
                     report.append("\n")
         else:
             report.append("No type conversions detected.\n\n")
-        
+
         # Summary
         report.append("\n## Summary\n\n")
         total = len(conversions_found)
         justified_count = len([c for c in conversions_found if c['contracts']])
         unjustified_count = total - justified_count
-        
+
         report.append(f"- Total conversions: {total}\n")
         report.append(f"- Justified by contracts: {justified_count}\n")
         report.append(f"- Missing contract justification: {unjustified_count}\n")
-        
+
         if unjustified_count > 0:
             report.append(f"\n⚠️  {unjustified_count} conversion(s) lack semantic justification.\n")
             report.append("   Consider adding contracts or reviewing model logic.\n")
         elif total > 0:
-            report.append(f"\n✓ All conversions are justified by semantic contracts.\n")
-        
+            report.append("\n✓ All conversions are justified by semantic contracts.\n")
+
         return "".join(report)
 

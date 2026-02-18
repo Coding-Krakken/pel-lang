@@ -81,7 +81,7 @@ class PELCompiler:
         report = type_checker.generate_contract_report(ast)
 
         if self.verbose:
-            print(f"✓ Analysis complete\n")
+            print("✓ Analysis complete\n")
 
         return report
 
@@ -166,7 +166,7 @@ Examples:
     parser.add_argument('source', type=Path, help='Source .pel file')
     parser.add_argument('-o', '--output', type=Path, help='Output .ir.json file')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
-    parser.add_argument('--contract-report', action='store_true', 
+    parser.add_argument('--contract-report', action='store_true',
                         help='Generate semantic contract analysis report instead of compiling')
     parser.add_argument('--version', action='version', version='pel-compiler 0.1.0')
 
@@ -184,7 +184,7 @@ Examples:
     # Compile or analyze
     try:
         compiler = PELCompiler(verbose=args.verbose)
-        
+
         if args.contract_report:
             # Generate contract analysis report
             report = compiler.analyze_contracts(args.source)

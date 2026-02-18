@@ -5,7 +5,6 @@ import pytest
 from compiler.lexer import Lexer
 from compiler.parser import Parser
 
-
 BENCH_DIR = Path(__file__).parent.parent / "benchmarks" / "pel_100"
 
 

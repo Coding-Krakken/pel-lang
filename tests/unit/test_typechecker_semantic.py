@@ -6,11 +6,12 @@ conversions, validate them, and provide guidance to users.
 """
 
 import pytest
-from compiler.typechecker import TypeChecker, PELType
+
 from compiler.semantic_contracts import (
-    SemanticContracts,
     ConversionReason,
+    SemanticContracts,
 )
+from compiler.typechecker import PELType, TypeChecker
 
 
 class TestTypeCheckerContractIntegration:
@@ -75,7 +76,7 @@ class TestTypeCheckerContractIntegration:
             "Quotient<Currency, Count>", "Currency"
         )
         assert len(contracts) > 0
-        
+
         # Just verify the method works and returns a string
         description = SemanticContracts.describe_conversions("Currency")
         assert isinstance(description, str)
@@ -85,12 +86,12 @@ class TestTypeCheckerContractIntegration:
         """Test validating a conversion with appropriate context."""
         contract = SemanticContracts.get("RevenuePerUnit_to_Price")
         assert contract is not None
-        
+
         context = {
             "numerator_dimension": "Currency",
             "denominator_type": "Count",
         }
-        
+
         is_valid, error = contract.validate_conversion(context)
         assert is_valid is True
         assert error is None
@@ -138,7 +139,7 @@ class TestContractCoverageIntegration:
         """Test that all built-in contracts are discoverable through the system."""
         all_contracts = SemanticContracts.all_contracts()
         assert len(all_contracts) >= 7
-        
+
         # Verify names
         names = [c.name for c in all_contracts]
         expected = [

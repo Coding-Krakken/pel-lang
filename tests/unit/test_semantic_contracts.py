@@ -7,18 +7,19 @@ assumptions that justify conversions.
 """
 
 import pytest
+
 from compiler.semantic_contracts import (
-    SemanticContract,
-    SemanticContracts,
-    ConversionReason,
-    ValidConversion,
-    REVENUE_PER_UNIT_TO_PRICE,
-    RATE_NORMALIZATION,
-    FRACTION_FROM_RATIO,
     AVERAGE_FROM_TOTAL,
     COUNT_AGGREGATION,
-    QUOTIENT_NORMALIZATION,
+    FRACTION_FROM_RATIO,
     IDENTITY_WITH_SCALARS,
+    QUOTIENT_NORMALIZATION,
+    RATE_NORMALIZATION,
+    REVENUE_PER_UNIT_TO_PRICE,
+    ConversionReason,
+    SemanticContract,
+    SemanticContracts,
+    ValidConversion,
 )
 
 
@@ -63,7 +64,7 @@ class TestSemanticContract:
     def test_contract_validate_with_constraints(self):
         """Test constraint validation in contracts."""
         contract = REVENUE_PER_UNIT_TO_PRICE
-        
+
         # Valid context
         valid_context = {
             "numerator_dimension": "Currency",
@@ -260,19 +261,19 @@ class TestSemanticContractEdgeCases:
             "Quotient<Currency, Count>",
             "Quotient<Currency, Count>"
         )
-        
+
         # Wildcard match
         assert SemanticContract._pattern_matches(
             "Quotient<Currency, Duration>",
             "Quotient<*>"
         )
-        
+
         # No match
         assert not SemanticContract._pattern_matches(
             "Currency",
             "Count"
         )
-        
+
         assert not SemanticContract._pattern_matches(
             "Currency",
             "Quotient<*>"
