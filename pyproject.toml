@@ -79,10 +79,12 @@ Issues = "https://github.com/pel-lang/pel/issues"
 "Commercial License" = "https://github.com/pel-lang/pel/blob/main/COMMERCIAL-LICENSE.md"
 
 [project.scripts]
-pel = "runtime.runtime:main"
+pel = "pel_cli.main:main"
+pelformat = "pel_cli.main:main"
+pellint = "pel_cli.main:main"
 
 [tool.setuptools]
-packages = ["compiler", "runtime", "stdlib", "lsp"]
+packages = ["compiler", "runtime", "stdlib", "lsp", "formatter", "linter", "pel_cli"]
 include-package-data = true
 
 [tool.setuptools.package-data]

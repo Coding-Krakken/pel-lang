@@ -25,10 +25,25 @@ jobs:
           pip install -e .[lsp]
       
       - name: Run ruff
-        run: ruff check compiler/ runtime/ lsp/ tests/ --extend-exclude .github/prompts
+        run: ruff check compiler/ runtime/ lsp/ formatter/ linter/ pel_cli/ tests/ --extend-exclude .github/prompts
       
       - name: Run mypy
-        run: mypy -p compiler -p runtime --exclude "^\.github/prompts/"
+        run: mypy -p compiler -p runtime -p lsp -p formatter -p linter -p pel_cli --exclude "^\.github/prompts/"
+      
+      - name: Check code formatting
+        run: |
+          python -m pel_cli.main format . --check || {
+            echo "❌ Code formatting check failed"
+            echo "Run 'pel format .' or 'python -m pel_cli.main format .' to fix formatting"
+            exit 1
+          }
+      
+      - name: Run PEL linter
+        run: |
+          python -m pel_cli.main lint examples/ --severity error || {
+            echo "❌ Linter found errors"
+            exit 1
+          }
 
   test:
     runs-on: ubuntu-latest
@@ -52,7 +67,7 @@ jobs:
           pip install -e .[dev,lsp]
       
       - name: Run tests
-        run: pytest tests/ -v --cov=compiler --cov=runtime --cov=lsp --cov-report=term --cov-report=xml --cov-fail-under=80
+        run: pytest tests/ -v --cov=compiler --cov=runtime --cov=lsp --cov=formatter --cov=linter --cov=pel_cli --cov-report=term --cov-report=xml --cov-fail-under=80
       
       - name: Check coverage threshold
         run: |
@@ -80,7 +95,7 @@ jobs:
         run: pip install bandit[toml]
       
       - name: Run security scan
-        run: bandit -r compiler/ runtime/ -c pyproject.toml -x .github/prompts || true
+        run: bandit -r compiler/ runtime/ lsp/ formatter/ linter/ pel_cli/ -c pyproject.toml -x .github/prompts || true
 
   build:
     runs-on: ubuntu-latest

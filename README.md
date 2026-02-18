@@ -51,7 +51,7 @@ Models ingest real data, fit distributions, detect drift, and recommend what to 
 Standard IR (Intermediate Representation) with conformance tests guarantees identical results across compliant runtimes. Model hash + seed = deterministic output.
 
 ### 9. **Language-Grade Tooling**
-LSP server, formatter, linter, test runner, package manager, dependency visualizer—treat business models like production code.
+Formatter (`pel format`), linter (`pel lint`), type checker, provenance validator, and IR compiler—treat business models like production code. LSP server, test runner, package manager, and dependency visualizer are planned for future releases.
 
 ### 10. **Benchmarked & Proven**
 Public benchmark suites measure expressiveness, correctness, auditability, tail-risk accuracy, and developer experience.
@@ -282,6 +282,15 @@ Output includes:
 - Time series results (with confidence intervals if Monte Carlo)
 - Sensitivity ranking (which parameters matter most)
 - Model hash and reproducibility artifacts
+
+### Code Quality
+
+```bash
+pel format hello_economics.pel --check
+pel lint hello_economics.pel
+```
+
+See the style guide at [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md).
 
 ---
 

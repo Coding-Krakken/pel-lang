@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright 2026 PEL Project Contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
@@ -6,11 +5,10 @@
 # PEL is dual-licensed under AGPL-3.0 and a commercial license.
 # See LICENSE and COMMERCIAL-LICENSE.md for details.
 
-"""PEL CLI wrapper (developer convenience)."""
+"""PEL linter package."""
 
-import sys
+from linter.config import LinterConfig, load_linter_config
+from linter.linter import PELLinter
 
-from pel_cli.main import main
-
-if __name__ == "__main__":
-    sys.exit(main())
+__all__ = ["LinterConfig", "PELLinter", "load_linter_config"]
+__version__ = "0.2.0"
