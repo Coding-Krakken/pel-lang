@@ -39,7 +39,10 @@ test:
 	pytest tests/ -v
 
 coverage:
-	pytest tests/ --cov=compiler --cov=runtime --cov-report=html --cov-report=term
+	pytest tests/ --cov=compiler --cov=runtime --cov-report=html --cov-report=term --cov-fail-under=80
+	@echo ""
+	@echo "✅ Coverage threshold (80%) met!"
+	@echo "📊 Full report: htmlcov/index.html"
 
 security:
 	bandit -r compiler/ runtime/ -c pyproject.toml || true
