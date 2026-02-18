@@ -25,6 +25,7 @@ from compiler.errors import (
     dimensional_mismatch,
     type_mismatch,
     undefined_variable,
+    constraint_violation,
 )
 from compiler.semantic_contracts import SemanticContracts
 
@@ -374,19 +375,23 @@ class TypeChecker:
                 result = self._evaluate_static_expression(constraint.condition)
                 if result is not None and not result:
                     # Constraint is violated
-                    severity = constraint.severity if hasattr(constraint, 'severity') else "warning"
+                    severity = constraint.severity
                     if severity == "fatal":
-                        # Raise constraint error for fatal constraint violations
-                        from compiler.errors import constraint_violation
-                        raise constraint_violation(
-                            constraint.name,
-                            getattr(constraint, 'message', 'Constraint violated')
+                        # Record constraint error for fatal constraint violations
+                        location = None
+                        if getattr(constraint, "line", None) is not None and getattr(constraint, "column", None) is not None:
+                            from compiler.ast_nodes import SourceLocation
+                            location = SourceLocation(line=constraint.line, column=constraint.column)
+                        self.errors.append(
+                            constraint_violation(
+                                constraint.name,
+                                getattr(constraint, 'message', 'Constraint violated'),
+                                location
+                            )
                         )
-            except ConstraintError:
-                # Re-raise constraint errors
-                raise
-            except Exception:
-                # If evaluation fails (e.g., references non-static values), skip static check
+            except (AttributeError, KeyError, ValueError, ZeroDivisionError) as e:
+                # If evaluation fails (e.g., references non-static values, division by zero), skip static check
+                # Log the exception for debugging if needed
                 pass
 
         # Phase 3.5: Type check top-level statements (assignments, etc.)
@@ -1112,10 +1117,9 @@ class TypeChecker:
         # Literal values
         if isinstance(expr, Literal):
             if expr.literal_type in ("currency", "rate", "duration"):
-                # Extract numeric value from currency  literals like "$100", "$100.50/1mo"
+                # Extract numeric value from currency literals like "$100", "$100.50/1mo"
                 value_str = str(expr.value)
                 # Remove currency symbols ($, £, €, etc.) and extract number
-                import re
                 # Match optional sign, then digits with optional decimal point
                 match = re.search(r'([+-]?[\d.]+)', value_str)
                 if match:
