@@ -217,6 +217,29 @@ def cmd_check(args):
         return 1
 
 
+def cmd_lsp(args):
+    """Start the Language Server Protocol server for IDE integration."""
+    try:
+        from lsp.server import start
+        print("Starting PEL Language Server...")
+        print("Use Ctrl+C to stop")
+        start()
+        return 0
+    except ImportError as e:
+        print(f"Error: LSP dependencies not installed.")
+        print(f"Install with: pip install -e '.[lsp]'")
+        return 1
+    except KeyboardInterrupt:
+        print("\nShutting down LSP server...")
+        return 0
+    except Exception as e:
+        print(f"\n✗ LSP server failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='PEL - Programmable Economic Language',
@@ -226,6 +249,7 @@ Examples:
   pel compile model.pel -o model.ir.json
   pel run model.ir.json --mode monte_carlo --runs 10000
   pel check model.pel
+  pel lsp
                 
 For more information: https://spec.pel-lang.org
         '''
@@ -255,6 +279,9 @@ For more information: https://spec.pel-lang.org
     check_parser = subparsers.add_parser('check', help='Validate model without compiling')
     check_parser.add_argument('source', type=str, help='Source .pel file')
     
+    # LSP command
+    lsp_parser = subparsers.add_parser('lsp', help='Start Language Server for IDE integration')
+    
     args = parser.parse_args()
     
     # Dispatch
@@ -264,6 +291,8 @@ For more information: https://spec.pel-lang.org
         return cmd_run(args)
     elif args.command == 'check':
         return cmd_check(args)
+    elif args.command == 'lsp':
+        return cmd_lsp(args)
     else:
         parser.print_help()
         return 1
