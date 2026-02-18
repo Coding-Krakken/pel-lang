@@ -1,16 +1,36 @@
-import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, window } from 'vscode';
 import {
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
 } from 'vscode-languageclient/node';
+import { execSync } from 'child_process';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+/**
+ * Check if a command is available in the system PATH
+ */
+function commandExists(command: string): boolean {
+    try {
+        execSync(`${command} --version`, { stdio: 'ignore' });
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+export function activate(context: ExtensionContext): void {
     // Get PEL executable path from configuration
     const pelPath = workspace.getConfiguration('pel').get<string>('server.path') || 'pel';
+
+    // Verify PEL is installed
+    if (!commandExists(pelPath)) {
+        const message = `PEL command '${pelPath}' not found. Please install PEL with LSP support: pip install -e ".[lsp]"`;
+        window.showErrorMessage(message);
+        console.error(message);
+        return;
+    }
 
     // Server is started via the PEL CLI
     const serverOptions: ServerOptions = {
@@ -38,12 +58,19 @@ export function activate(context: ExtensionContext) {
     );
 
     // Start the client (this will also launch the server)
-    client.start();
+    client.start().catch((error) => {
+        const message = `Failed to start PEL Language Server: ${error.message}`;
+        window.showErrorMessage(message);
+        console.error(message, error);
+    });
+
+    console.log('PEL Language Server extension activated');
 }
 
-export function deactivate(): Thenable<void> | undefined {
+export function deactivate(): Promise<void> | undefined {
     if (!client) {
         return undefined;
     }
     return client.stop();
 }
+

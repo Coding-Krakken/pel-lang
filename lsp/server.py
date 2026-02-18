@@ -4,7 +4,11 @@ Main entry point for the Language Server Protocol implementation.
 """
 
 import logging
+import logging.handlers
 import re
+import signal
+import threading
+from typing import Any
 
 # Import PEL compiler components
 import sys
@@ -18,6 +22,7 @@ from lsprotocol.types import (
     TEXT_DOCUMENT_DID_OPEN,
     TEXT_DOCUMENT_DOCUMENT_SYMBOL,
     TEXT_DOCUMENT_HOVER,
+    TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
     TEXT_DOCUMENT_REFERENCES,
     TEXT_DOCUMENT_RENAME,
     CompletionItem,
@@ -38,6 +43,7 @@ from lsprotocol.types import (
     MarkupContent,
     MarkupKind,
     Position,
+    PublishDiagnosticsParams,
     Range,
     ReferenceParams,
     RenameParams,
@@ -75,6 +81,10 @@ class PELLanguageServer(JsonRPCServer):
     completion, hover, go-to-definition, and more.
     """
 
+    # Resource limits
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    PARSE_TIMEOUT = 30  # seconds
+
     def __init__(self):
         self.name = "pel-language-server"
         self.version = "0.1.0"
@@ -83,25 +93,50 @@ class PELLanguageServer(JsonRPCServer):
             converter_factory=lambda: None  # Use default cattrs converter
         )
         self.lsp = self.protocol
-        self.document_asts = {}  # Cache parsed ASTs per document
-        self.document_tokens = {}  # Cache tokens per document
-        self.document_symbols = {}  # Cache symbols per document
+        self._cache_lock = threading.Lock()
+        self.document_asts: dict[str, Model | None] = {}  # Cache parsed ASTs per document
+        self.document_tokens: dict[str, list[Token]] = {}  # Cache tokens per document
+        self.document_symbols: dict[str, list[DocumentSymbol]] = {}  # Cache symbols per document
 
 
 # Create global server instance
 server = PELLanguageServer()
 
 
-def parse_document(source: str) -> tuple[Model | None, list[Token], list[Diagnostic]]:
+def parse_document(source: str, timeout: int = 30) -> tuple[Model | None, list[Token], list[Diagnostic]]:
     """
     Parse PEL source and return AST, tokens, and diagnostics.
+
+    Args:
+        source: PEL source code
+        timeout: Parse timeout in seconds
 
     Returns:
         (ast, tokens, diagnostics)
     """
-    diagnostics = []
-    ast = None
-    tokens = []
+    diagnostics: list[Diagnostic] = []
+    ast: Model | None = None
+    tokens: list[Token] = []
+
+    # Check file size limit
+    if len(source) > PELLanguageServer.MAX_FILE_SIZE:
+        diagnostics.append(Diagnostic(
+            range=Range(
+                start=Position(line=0, character=0),
+                end=Position(line=0, character=0)
+            ),
+            message=f"File too large ({len(source)} bytes, max {PELLanguageServer.MAX_FILE_SIZE})",
+            severity=DiagnosticSeverity.Error,
+            source="pel-lsp"
+        ))
+        return ast, tokens, diagnostics
+
+    def timeout_handler(signum: int, frame: Any) -> None:
+        raise TimeoutError("Parse timeout exceeded")
+
+    # Set up timeout (Unix only)
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
 
     try:
         # Lexical analysis
@@ -135,8 +170,31 @@ def parse_document(source: str) -> tuple[Model | None, list[Token], list[Diagnos
 
     except CompilerError as e:
         diagnostics.append(compiler_error_to_diagnostic(e))
+    except TimeoutError as e:
+        diagnostics.append(Diagnostic(
+            range=Range(
+                start=Position(line=0, character=0),
+                end=Position(line=0, character=0)
+            ),
+            message=f"Parse timeout: {str(e)}",
+            severity=DiagnosticSeverity.Error,
+            source="pel-lsp"
+        ))
+        logger.warning(f"Parse timeout for document")
+    except (AttributeError, KeyError, ValueError) as e:
+        # Handle expected structural errors
+        diagnostics.append(Diagnostic(
+            range=Range(
+                start=Position(line=0, character=0),
+                end=Position(line=0, character=0)
+            ),
+            message=f"Parse error: {str(e)}",
+            severity=DiagnosticSeverity.Error,
+            source="pel-lsp"
+        ))
+        logger.error(f"Structural error during parsing: {e}", exc_info=True)
     except Exception as e:
-        # Catch-all for unexpected errors
+        # Catch-all for truly unexpected errors
         diagnostics.append(Diagnostic(
             range=Range(
                 start=Position(line=0, character=0),
@@ -147,6 +205,10 @@ def parse_document(source: str) -> tuple[Model | None, list[Token], list[Diagnos
             source="pel-lsp"
         ))
         logger.exception("Unexpected error during parsing")
+    finally:
+        # Cancel timeout and restore old handler
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
 
     return ast, tokens, diagnostics
 
@@ -183,12 +245,13 @@ def compiler_error_to_diagnostic(error: CompilerError) -> Diagnostic:
 
 def extract_symbols(ast: Model) -> list[DocumentSymbol]:
     """Extract document symbols from AST."""
-    symbols = []
+    symbols: list[DocumentSymbol] = []
 
     if not ast:
         return symbols
 
     # Model declaration
+    children_list: list[DocumentSymbol] = []
     model_symbol = DocumentSymbol(
         name=ast.name,
         kind=SymbolKind.Module,
@@ -200,7 +263,7 @@ def extract_symbols(ast: Model) -> list[DocumentSymbol]:
             start=Position(line=0, character=0),
             end=Position(line=0, character=10)
         ),
-        children=[]
+        children=children_list
     )
 
     # Parameters
@@ -218,7 +281,7 @@ def extract_symbols(ast: Model) -> list[DocumentSymbol]:
             ),
             detail=f"{param.type_annotation.type_kind}" if param.type_annotation else "Parameter"
         )
-        model_symbol.children.append(param_symbol)
+        children_list.append(param_symbol)
 
     # Variables (rates, etc.)
     for var in ast.vars:
@@ -235,7 +298,7 @@ def extract_symbols(ast: Model) -> list[DocumentSymbol]:
             ),
             detail=f"{var.type_annotation.type_kind}" if var.type_annotation else "Variable"
         )
-        model_symbol.children.append(var_symbol)
+        children_list.append(var_symbol)
 
     symbols.append(model_symbol)
     return symbols
@@ -279,9 +342,12 @@ def get_hover_info(ast: Model, position: Position, source: str) -> str | None:
             if hasattr(param, 'value') and param.value:
                 info += f"**Default:** `{param.value}`\n\n"
             if hasattr(param, 'provenance') and param.provenance:
-                info += f"**Provenance:** {param.provenance.source}\n\n"
-                if param.provenance.rationale:
-                    info += f"**Rationale:** {param.provenance.rationale}\n\n"
+                prov_source = getattr(param.provenance, 'source', None)
+                if prov_source:
+                    info += f"**Provenance:** {prov_source}\n\n"
+                prov_rationale = getattr(param.provenance, 'rationale', None)
+                if prov_rationale:
+                    info += f"**Rationale:** {prov_rationale}\n\n"
             return info
 
     # Check variables
@@ -500,7 +566,7 @@ def find_references(ast: Model, position: Position, source: str, uri: str) -> li
 # LSP Event Handlers
 
 @server.lsp.fm.feature(TEXT_DOCUMENT_DID_OPEN)
-def did_open(ls: PELLanguageServerProtocol, params: DidOpenTextDocumentParams):
+def did_open(ls: PELLanguageServerProtocol, params: DidOpenTextDocumentParams) -> None:
     """Handle document open event."""
     uri = params.text_document.uri
     source = params.text_document.text
@@ -510,17 +576,21 @@ def did_open(ls: PELLanguageServerProtocol, params: DidOpenTextDocumentParams):
 
     # Cache results - access server via ls._server_instance
     srv = ls._server_instance
-    srv.document_asts[uri] = ast
-    srv.document_tokens[uri] = tokens
-    if ast:
-        srv.document_symbols[uri] = extract_symbols(ast)
+    with srv._cache_lock:
+        srv.document_asts[uri] = ast
+        srv.document_tokens[uri] = tokens
+        if ast:
+            srv.document_symbols[uri] = extract_symbols(ast)
 
-    # Publish diagnostics
-    ls.publish_diagnostics(uri, diagnostics)
+    # Publish diagnostics using LSP notify method
+    ls.notify(
+        TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
+        PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
+    )
 
 
 @server.lsp.fm.feature(TEXT_DOCUMENT_DID_CHANGE)
-def did_change(ls: PELLanguageServerProtocol, params: DidChangeTextDocumentParams):
+def did_change(ls: PELLanguageServerProtocol, params: DidChangeTextDocumentParams) -> None:
     """Handle document change event."""
     uri = params.text_document.uri
 
@@ -530,27 +600,32 @@ def did_change(ls: PELLanguageServerProtocol, params: DidChangeTextDocumentParam
     # Re-parse document
     ast, tokens, diagnostics = parse_document(source)
 
-    # Update cache
+    # Update cache with thread safety
     srv = ls._server_instance
-    srv.document_asts[uri] = ast
-    srv.document_tokens[uri] = tokens
-    if ast:
-        srv.document_symbols[uri] = extract_symbols(ast)
+    with srv._cache_lock:
+        srv.document_asts[uri] = ast
+        srv.document_tokens[uri] = tokens
+        if ast:
+            srv.document_symbols[uri] = extract_symbols(ast)
 
-    # Publish updated diagnostics
-    ls.publish_diagnostics(uri, diagnostics)
+    # Publish updated diagnostics using LSP notify method
+    ls.notify(
+        TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
+        PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
+    )
 
 
 @server.lsp.fm.feature(TEXT_DOCUMENT_DID_CLOSE)
-def did_close(ls: PELLanguageServerProtocol, params: DidCloseTextDocumentParams):
+def did_close(ls: PELLanguageServerProtocol, params: DidCloseTextDocumentParams) -> None:
     """Handle document close event."""
     uri = params.text_document.uri
 
-    # Clear cache
+    # Clear cache with thread safety
     srv = ls._server_instance
-    srv.document_asts.pop(uri, None)
-    srv.document_tokens.pop(uri, None)
-    srv.document_symbols.pop(uri, None)
+    with srv._cache_lock:
+        srv.document_asts.pop(uri, None)
+        srv.document_tokens.pop(uri, None)
+        srv.document_symbols.pop(uri, None)
 
 
 @server.lsp.fm.feature(TEXT_DOCUMENT_COMPLETION)
@@ -644,23 +719,28 @@ def rename(ls: PELLanguageServerProtocol, params: RenameParams) -> WorkspaceEdit
     return WorkspaceEdit(changes={uri: edits})
 
 
-def start():
+def start() -> None:
     """Start the LSP server."""
-    import logging
-
-    from pygls import run
-
-    # Configure logging
+    # Configure logging with rotation
+    log_handler = logging.handlers.RotatingFileHandler(
+        '/tmp/pel-lsp.log',
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=5
+    )
+    log_handler.setFormatter(
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    )
+    
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[logging.FileHandler('/tmp/pel-lsp.log'), logging.StreamHandler()]
+        handlers=[log_handler, logging.StreamHandler()]
     )
 
-    logger.info("Starting PEL Language Server...")
+    logger.info("Starting PEL Language Server v0.1.0...")
+    logger.info(f"Resource limits: Max file size={PELLanguageServer.MAX_FILE_SIZE} bytes, Parse timeout={PELLanguageServer.PARSE_TIMEOUT}s")
 
-    # Start server via stdio using the pygls run function
-    run(server)
+    # Start server via stdio
+    server.start_io()
 
 
 if __name__ == "__main__":
