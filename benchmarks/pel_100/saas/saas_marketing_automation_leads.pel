@@ -1,0 +1,76 @@
+// SaaS Marketing Automation with Lead-Based Pricing
+// Models marketing automation platform priced by lead volume
+
+model SaaSMarketingAutomationLeads {
+  param total_customers: Count<Item> = 450
+  param avg_leads_per_customer: Count<Item> = 25000
+  param base_platform_fee: Currency<USD> = $199.0 // minimum monthly fee
+  param price_per_1k_leads: Currency<USD> = $15.0 // additional cost per 1K leads
+  
+  // Customer segmentation by lead volume
+  param smb_customers_pct: Fraction = 0.50 // < 10K leads
+  param midmarket_pct: Fraction = 0.35 // 10K-50K leads
+  param enterprise_pct: Fraction = 0.15 // > 50K leads
+  param smb_avg_leads: Count<Item> = 5000
+  param midmarket_avg_leads: Count<Item> = 28000
+  param enterprise_avg_leads: Count<Item> = 120000
+  
+  // Email deliverability costs
+  param email_send_rate: Fraction = 4.0 // avg emails per lead
+  param cost_per_1k_emails: Currency<USD> = $0.50 // SendGrid/AWS SES pricing
+  
+  // Growth and retention
+  param monthly_growth_rate: Fraction = 0.07
+  param churn_rate: Fraction = 0.04
+  param lead_volume_growth: Fraction = 0.12 // customers add more leads over time
+  
+  // Operating costs
+  param engineering_headcount: Count<Item> = 18
+  param cost_per_engineer: Currency<USD> = $14500.0
+  param sales_marketing_headcount: Count<Item> = 12
+  param cost_per_sales_marketing: Currency<USD> = $10000.0
+  param customer_success_headcount: Count<Item> = 10
+  param cost_per_cs: Currency<USD> = $8500.0
+  param infrastructure_base: Currency<USD> = $12000.0 // servers, databases, monitoring
+  
+  // Calculate customer distribution
+  var smb_customers: Count<Item> = total_customers * smb_customers_pct
+  var midmarket_customers: Count<Item> = total_customers * midmarket_pct
+  var enterprise_customers: Count<Item> = total_customers * enterprise_pct
+  
+  // Total lead volume
+  var total_leads: Count<Item> = (smb_customers * smb_avg_leads) + (midmarket_customers * midmarket_avg_leads) +
+                           (enterprise_customers * enterprise_avg_leads)
+  
+  // Revenue calculation
+  var platform_fee_revenue: Currency<USD> = total_customers * base_platform_fee
+  var leads_in_thousands: Fraction = total_leads / 1000.0
+  var usage_revenue: Currency<USD> = leads_in_thousands * price_per_1k_leads
+  var total_revenue: Currency<USD> = platform_fee_revenue + usage_revenue
+  
+  // Email delivery costs (COGS)
+  var total_emails_sent: Count<Item> = total_leads * email_send_rate
+  var emails_in_thousands: Fraction = total_emails_sent / 1000.0
+  var email_delivery_cost: Currency<USD> = emails_in_thousands * cost_per_1k_emails
+  var gross_profit: Currency<USD> = total_revenue - email_delivery_cost
+  var gross_margin: Fraction = gross_profit / total_revenue
+  
+  // Operating expenses
+  var engineering_cost: Currency<USD> = engineering_headcount * cost_per_engineer
+  var sales_marketing_cost: Currency<USD> = sales_marketing_headcount * cost_per_sales_marketing
+  var customer_success_cost: Currency<USD> = customer_success_headcount * cost_per_cs
+  var total_opex: Currency<USD> = engineering_cost + sales_marketing_cost + customer_success_cost + infrastructure_base
+  
+  var net_income: Currency<USD> = gross_profit - total_opex
+  var operating_margin: Fraction = net_income / total_revenue
+  
+  // Key metrics
+  var arpu: Currency<USD> = total_revenue / total_customers
+  var revenue_per_lead: Currency<USD> = total_revenue / total_leads
+  var platform_revenue_pct: Fraction = platform_fee_revenue / total_revenue
+  var usage_revenue_pct: Fraction = usage_revenue / total_revenue
+  
+  constraint healthy_gross_margin: gross_margin > 0.85 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.15 { severity: warning }
+  constraint balanced_revenue_mix: usage_revenue_pct > 0.60 { severity: warning }
+}

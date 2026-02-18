@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Referral Network
+// Viral coefficient and organic growth from referrals
+
+model marketplace_referral_network {
+  param invited_users: Count<User> = 5_000
+  param referral_conversion: Fraction = 0.06
+  param avg_invites_per_user: Fraction = 0.5
+  param arpu: Currency<USD> = $12/1mo
+
+  var new_users_from_referrals: Count<User> = invited_users * referral_conversion * avg_invites_per_user
+  var total_new: Count<User> = invited_users + new_users_from_referrals
+  var mrr: Currency<USD> = total_new * arpu
+
+  var viral_coeff: Fraction = referral_conversion * avg_invites_per_user
+
+  constraint viral_growth: viral_coeff < 1.0 {
+    severity: warning,
+    message: "Viral coefficient approaching runaway growth (verify assumptions)"
+  }
+}

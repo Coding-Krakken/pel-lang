@@ -1,0 +1,22 @@
+// PEL-100 Benchmark: Services Subcontracting
+// Model margin impact of subcontracted delivery vs in-house
+
+model services_subcontracting {
+  param projects_per_month: Count<Project> = 40
+  param revenue_per_project: Currency<USD> = $18_000
+  param inhouse_cost_pct: Fraction = 0.55
+  param subcontract_cost_pct: Fraction = 0.75
+  param subcontract_share: Fraction = 0.30
+
+  var gross_revenue: Currency<USD> = projects_per_month * revenue_per_project
+  var inhouse_revenue: Currency<USD> = gross_revenue * (1 - subcontract_share)
+  var subcontracted_revenue: Currency<USD> = gross_revenue * subcontract_share
+  var inhouse_costs: Currency<USD> = inhouse_revenue * inhouse_cost_pct
+  var subcontract_costs: Currency<USD> = subcontracted_revenue * subcontract_cost_pct
+  var ebitda: Currency<USD> = gross_revenue - inhouse_costs - subcontract_costs
+
+  constraint profitable: ebitda > $0 {
+    severity: warning,
+    message: "Business not profitable given subcontract mix"
+  }
+}

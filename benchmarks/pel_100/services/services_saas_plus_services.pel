@@ -1,0 +1,18 @@
+// PEL-100 Benchmark: SaaS + Services Hybrid
+// Models combined ARR + services revenue and blended margin
+
+model services_saas_plus_services {
+  param saas_mrr: Currency<USD> = $120_000
+  param services_monthly_revenue: Currency<USD> = $60_000
+  param services_margin_pct: Fraction = 0.30
+  param saas_margin_pct: Fraction = 0.80
+
+  var total_revenue: Currency<USD> = saas_mrr + services_monthly_revenue
+  var blended_margin: Currency<USD> = saas_mrr * saas_margin_pct + services_monthly_revenue * services_margin_pct
+  var blended_margin_pct: Fraction = blended_margin / total_revenue
+
+  constraint margin_floor: blended_margin_pct >= 0.4 {
+    severity: warning,
+    message: "Blended margin below target"
+  }
+}

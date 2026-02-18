@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: E-commerce Dropshipping
+// Low-capex retail where COGS and shipping drive margins
+
+model ecommerce_dropshipping {
+  param monthly_orders: Count<Order> = 8_000
+  param aov: Currency<USD> = $45
+  param cogs_pct: Fraction = 0.55
+  param shipping_per_order: Currency<USD> = $6
+  param monthly_ad_spend: Currency<USD> = $12_000
+
+  var monthly_revenue: Currency<USD> = monthly_orders * aov
+  var monthly_cogs: Currency<USD> = monthly_revenue * cogs_pct + monthly_orders * shipping_per_order
+  var gross_margin: Currency<USD> = monthly_revenue - monthly_cogs - monthly_ad_spend
+
+  constraint positive_margin: gross_margin > $0 {
+    severity: warning,
+    message: "Gross margin is negative"
+  }
+}

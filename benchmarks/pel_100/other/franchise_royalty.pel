@@ -1,0 +1,19 @@
+// PEL-100 Benchmark: Franchise Royalty Model
+// Royalty income, royalty-to-franchisee economics, royalty growth
+
+model franchise_royalty {
+  param franchisees: Count<Franchise> = 120
+  param avg_monthly_sales_per_franchise: Currency<USD> = $40_000
+  param royalty_pct: Fraction = 0.06
+  param franchise_growth_rate_monthly: Fraction = 0.01
+
+  var monthly_gmv_per_franchise: Currency<USD> = avg_monthly_sales_per_franchise
+  var platform_royalty: Currency<USD> = franchisees * monthly_gmv_per_franchise * royalty_pct
+
+  var franchisees_next: Count<Franchise> = franchisees * (1 + franchise_growth_rate_monthly)
+
+  constraint royalty_target: platform_royalty > $250_000 {
+    severity: warning,
+    message: "Royalty revenue below strategic target"
+  }
+}

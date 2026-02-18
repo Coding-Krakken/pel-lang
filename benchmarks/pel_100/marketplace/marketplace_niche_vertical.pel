@@ -1,0 +1,41 @@
+model MarketplaceNicheVertical {
+  // Niche vertical marketplace for specialized goods (e.g., artisanal goods, collectibles)
+  // Focus on high-touch curation and supply quality
+  
+  param seller_count: Count<Item> =1200
+  param buyer_count: Count<Item> =18000
+  param active_listings: Count<Item> =35000
+  
+  param monthly_transactions: Count<Item> = 8000
+  param avg_transaction_value: Currency<USD> = $120
+  param platform_take_rate: Fraction =0.18
+  
+  param seller_onboarding_cost: Currency<USD> = $500
+  param buyer_retention_rate: Fraction =0.70
+  
+  param monthly_gmv: Currency<USD> = monthly_transactions * avg_transaction_value
+  param monthly_commission_revenue: Currency<USD> = monthly_gmv * platform_take_rate
+  
+  param seller_education_stipend: Currency<USD> = $15000/1mo
+  param curation_team_cost: Currency<USD> = $250000/1mo
+  param buyer_support_cost: Currency<USD> = $180000/1mo
+  param infrastructure_cost: Currency<USD> = $120000/1mo
+  
+  param merchant_churn_monthly: Fraction =0.05
+  param buyer_churn_monthly: Fraction =0.15
+  
+  param seller_reacquisition_rate: Fraction =0.25
+  param new_seller_acquisition_monthly: Count<Item> = seller_count * seller_reacquisition_rate
+  
+  var gross_platform_revenue: Currency<USD> = monthly_commission_revenue
+  
+  var acquisition_cost: Currency<USD> = new_seller_acquisition_monthly * seller_onboarding_cost
+  var total_opex: Currency<USD> = seller_education_stipend + curation_team_cost + buyer_support_cost + infrastructure_cost
+  
+  var monthly_contribution: Currency<USD> = gross_platform_revenue - acquisition_cost - total_opex
+  var gmv_growth_opportunity: Currency<USD> = monthly_gmv * (1 - buyer_retention_rate) * buyer_churn_monthly
+  
+  constraint active_listings_constraint: active_listings >= active_listings { severity: warning }
+  constraint seller_count_constraint: seller_count >= seller_count { severity: warning }
+  constraint monthly_contribution_constraint: monthly_contribution > $0 { severity: warning }
+}

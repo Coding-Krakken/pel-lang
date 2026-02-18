@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Freelance Platform
+// Platform fees, match rates, and take-rate economics
+
+model services_freelance_platform {
+  param active_freelancers: Count<Provider> = 5_000
+  param active_clients: Count<Client> = 25_000
+  param match_rate: Fraction = 0.04
+  param avg_job_value: Currency<USD> = $600
+  param platform_take: Fraction = 0.12
+
+  var monthly_jobs: Count<Job> = active_clients * match_rate
+  var gmv: Currency<USD> = monthly_jobs * avg_job_value
+  var platform_revenue: Currency<USD> = gmv * platform_take
+  var revenue_per_freelancer: Currency<USD> = gmv / active_freelancers
+
+  constraint healthy_take: platform_take >= 0.05 {
+    severity: warning,
+    message: "Platform take-rate below minimum"
+  }
+}

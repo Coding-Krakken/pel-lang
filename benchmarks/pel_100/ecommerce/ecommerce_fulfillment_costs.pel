@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Fulfillment Costs
+// Calculate per-order fulfillment, shipping and warehousing costs
+
+model ecommerce_fulfillment_costs {
+  param monthly_orders: Count<Order> = 18_000
+  param avg_weight_kg: Fraction = 1.4
+  param shipping_cost_per_kg: Currency<USD> = $1.20
+  param pick_pack_cost_per_order: Currency<USD> = $2.50
+  param monthly_warehouse_cost: Currency<USD> = $6_000
+
+  var shipping_costs: Currency<USD> = monthly_orders * avg_weight_kg * shipping_cost_per_kg
+  var pick_pack: Currency<USD> = monthly_orders * pick_pack_cost_per_order
+  var total_fulfillment: Currency<USD> = shipping_costs + pick_pack + monthly_warehouse_cost
+  var fulfillment_cost_per_order: Currency<USD> = total_fulfillment / monthly_orders
+
+  constraint per_order_limit: fulfillment_cost_per_order < $10 {
+    severity: warning,
+    message: "Fulfillment cost per order exceeds target"
+  }
+}

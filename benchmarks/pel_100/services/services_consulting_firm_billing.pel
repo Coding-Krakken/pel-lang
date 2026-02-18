@@ -1,0 +1,50 @@
+model ServicesConsultingFirmBilling {
+  // Professional services firm model with project delivery and utilization economics
+  
+  param consultant_headcount: Int = 75
+  param partner_headcount: Int = 12
+  param staff_headcount: Int = 45
+  
+  param consultant_billing_rate: Currency<USD> = $250
+  param partner_billing_rate: Currency<USD> = $500
+  param staff_billing_rate: Currency<USD> = $120
+  
+  param billable_hours_per_year: Fraction =1600
+  param consultant_utilization: Fraction =0.75
+  param partner_utilization: Fraction =0.70
+  param staff_utilization: Fraction =0.80
+  
+  param consultant_cost: Currency<USD> = $120000
+  param partner_cost: Currency<USD> = $350000
+  param staff_cost: Currency<USD> = $60000
+  
+  param operating_expenses: Currency<USD> = $5000000
+  
+  // Revenue calculations
+  var consultant_hours: Fraction =consultant_headcount * billable_hours_per_year * consultant_utilization
+  var consultant_revenue: Currency<USD> = consultant_hours * consultant_billing_rate
+  
+  var partner_hours: Fraction =partner_headcount * billable_hours_per_year * partner_utilization
+  var partner_revenue: Currency<USD> = partner_hours * partner_billing_rate
+  
+  var staff_hours: Fraction =staff_headcount * billable_hours_per_year * staff_utilization
+  var staff_revenue: Currency<USD> = staff_hours * staff_billing_rate
+  
+  var total_revenue: Currency<USD> = consultant_revenue + partner_revenue + staff_revenue
+  
+  // Cost of revenue
+  var total_consultant_cost: Currency<USD> = consultant_headcount * consultant_cost
+  var total_partner_cost: Currency<USD> = partner_headcount * partner_cost
+  var total_staff_cost: Currency<USD> = staff_headcount * staff_cost
+  var total_payroll_cost: Currency<USD> = total_consultant_cost + total_partner_cost + total_staff_cost
+  
+  var gross_profit: Currency<USD> = total_revenue - total_payroll_cost
+  var operating_income: Currency<USD> = gross_profit - operating_expenses
+  
+  var gross_margin: Fraction =gross_profit / total_revenue
+  var operating_margin: Fraction =operating_income / total_revenue
+  
+  constraint consultant_utilization_constraint: consultant_utilization > 0.60 { severity: warning }
+  constraint operating_margin_constraint: operating_margin > 0.10 { severity: warning }
+  constraint total_revenue_constraint: total_revenue > $0 { severity: warning }
+}

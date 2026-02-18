@@ -1,0 +1,99 @@
+// Marketplace - Tickets Resale Platform
+// Models secondary ticket marketplace for concerts, sports, events
+
+model MarketplaceTicketsResale {
+  param monthly_ticket_sales: Count<Item> = 28000
+  param avg_ticket_price: Currency<USD> = $125.0
+  param buyer_service_fee_pct: Fraction = 0.18
+  param seller_service_fee_pct: Fraction = 0.10
+  
+  // Ticket category mix
+  param concerts_pct: Fraction = 0.45
+  param sports_pct: Fraction = 0.35
+  param theater_pct: Fraction = 0.12
+  param other_events_pct: Fraction = 0.08
+  
+  // Pricing dynamics
+  param above_face_value_pct: Fraction = 0.65 // % sold above original price
+  param below_face_value_pct: Fraction = 0.35 // % sold below face value
+  param avg_markup_above: Fraction = 0.40
+  param avg_markdown_below: Fraction = 0.25
+  
+  // Fraud prevention and authentication
+  param fraud_detection_cost_per_ticket: Currency<USD> = $0.85
+  param transfer_verification_cost: Currency<USD> = $0.45
+  param chargebacks_rate: Fraction = 0.008
+  param avg_chargeback_amount: Currency<USD> = $180.0
+  
+  // Seller tools and features
+  param instant_payout_adoption: Fraction = 0.40
+  param instant_payout_fee_pct: Fraction = 0.03 // additional fee for immediate payment
+  param listing_optimization_fee: Currency<USD> = $2.50 // premium listing placement
+  param premium_listing_adoption: Fraction = 0.15
+  
+  // Payment processing
+  param payment_processing_pct: Fraction = 0.029
+  param payment_processing_fixed: Currency<USD> = $0.30
+  
+  // Customer service
+  param support_agents: Count<Item> = 22
+  param cost_per_agent: Currency<USD> = $5800.0
+  param high_touch_events_pct: Fraction = 0.08 // events needing extra support
+  param high_touch_support_cost: Currency<USD> = $12.0
+  
+  // Technology and operations
+  param engineering_headcount: Count<Item> = 18
+  param cost_per_engineer: Currency<USD> = $13500.0
+  param marketing_partnerships: Currency<USD> = $85000.0
+  param infrastructure_costs: Currency<USD> = $15000.0
+  param legal_compliance: Currency<USD> = $8500.0 // ticket resale regulations
+  
+  // Calculate GMV and revenue
+  var gross_merchandise_value: Currency<USD> = monthly_ticket_sales * avg_ticket_price
+  var buyer_fees: Currency<USD> = gross_merchandise_value * buyer_service_fee_pct
+  var seller_fees: Currency<USD> = gross_merchandise_value * seller_service_fee_pct
+  
+  // Additional revenue streams
+  var instant_payout_tickets: Count<Item> = monthly_ticket_sales * instant_payout_adoption
+  var instant_payout_revenue: Currency<USD> = instant_payout_tickets * avg_ticket_price * instant_payout_fee_pct
+  var premium_listings: Count<Item> = monthly_ticket_sales * premium_listing_adoption
+  var premium_listing_revenue: Currency<USD> = premium_listings * listing_optimization_fee
+  
+  var gross_revenue: Currency<USD> = buyer_fees + seller_fees + instant_payout_revenue + premium_listing_revenue
+  
+  // Payment processing costs
+  var payment_processing_costs: Currency<USD> = (gross_merchandise_value * payment_processing_pct) + (monthly_ticket_sales * payment_processing_fixed)
+  
+  // Fraud prevention and chargebacks
+  var fraud_detection_costs: Currency<USD> = monthly_ticket_sales * (fraud_detection_cost_per_ticket + transfer_verification_cost)
+  var chargeback_costs: Currency<USD> = monthly_ticket_sales * chargebacks_rate * avg_chargeback_amount
+  var fraud_costs: Currency<USD> = fraud_detection_costs + chargeback_costs
+  
+  var cogs: Currency<USD> = payment_processing_costs + fraud_costs
+  var gross_profit: Currency<USD> = gross_revenue - cogs
+  var gross_margin: Fraction = gross_profit / gross_revenue
+  
+  // Customer support
+  var base_support_costs: Currency<USD> = support_agents * cost_per_agent
+  var high_touch_events: Count<Item> = monthly_ticket_sales * high_touch_events_pct
+  var high_touch_costs: Currency<USD> = high_touch_events * high_touch_support_cost
+  var total_support_costs: Currency<USD> = base_support_costs + high_touch_costs
+  
+  // Operating expenses
+  var engineering_costs: Currency<USD> = engineering_headcount * cost_per_engineer
+  var total_opex: Currency<USD> = engineering_costs + marketing_partnerships + infrastructure_costs + legal_compliance
+  
+  var total_costs: Currency<USD> = cogs + total_support_costs + total_opex
+  var net_income: Currency<USD> = gross_revenue - total_costs
+  var operating_margin: Fraction = net_income / gross_revenue
+  
+  // Marketplace metrics
+  var blended_take_rate: Fraction = gross_revenue / gross_merchandise_value
+  var revenue_per_ticket: Currency<USD> = gross_revenue / monthly_ticket_sales
+  var vas_revenue_pct: Fraction = (instant_payout_revenue + premium_listing_revenue) / gross_revenue
+  var fraud_cost_pct: Fraction = fraud_costs / gross_revenue
+  
+  constraint healthy_take_rate: blended_take_rate > 0.25 { severity: warning }
+  constraint controlled_fraud: fraud_cost_pct < 0.08 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.15 { severity: warning }
+}

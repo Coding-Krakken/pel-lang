@@ -1,0 +1,113 @@
+/*
+ * Example: FractionToRate Contract
+ * 
+ * Demonstrates: Product<Fraction, Rate> → Rate
+ * Use case: Efficiency-adjusted rates, probabilistic throughput
+ * 
+ * Semantic justification:
+ * - Multiplying a rate by a fraction scales the rate
+ * - Example: 100 users/day * 0.2 success rate = 20 successful users/day
+ * - The fraction acts as an efficiency/probability multiplier
+ * - Contract: FractionToRate
+ */
+
+model Throughput_And_Efficiency_Metrics {
+    // Base throughput rates
+    param signup_rate: Rate<User, Day> = 100
+    param processing_rate: Rate<Transaction, Hour> = 500
+    param visitor_rate: Rate<Visitor, Day> = 5000
+    
+    // Efficiency fractions
+    param conversion_efficiency: Fraction = 0.15  // 15% convert
+    param success_probability: Fraction = 0.95    // 95% succeed
+    param engagement_rate: Fraction = 0.25         // 25% engage
+    
+    // FractionToRate: signup rate * conversion efficiency → customer rate
+    // 100 signups/day * 0.15 = 15 customers/day
+    var customer_acquisition_rate: Rate<Customer, Day> = 
+        signup_rate * conversion_efficiency
+    
+    // FractionToRate: processing rate * success probability → success rate
+    // 500 transactions/hour * 0.95 = 475 successful/hour
+    var successful_processing_rate: Rate<Transaction, Hour> = 
+        processing_rate * success_probability
+    
+    // FractionToRate: visitor rate * engagement → engaged visitor rate
+    // 5000 visitors/day * 0.25 = 1250 engaged visitors/day
+    var engaged_visitor_rate: Rate<Visitor, Day> = 
+        visitor_rate * engagement_rate
+    
+    // Multi-stage funnel with cascading probabilities
+    param trial_to_paid_rate: Fraction = 0.20  // 20% of trials convert
+    
+    // Combined efficiency: visitor → trial → customer
+    var end_to_end_efficiency: Fraction = 
+        conversion_efficiency * trial_to_paid_rate  // 0.15 * 0.20 = 0.03
+    
+    // FractionToRate: visitor rate * combined efficiency → final customer rate
+    var overall_customer_rate: Rate<Customer, Day> = 
+        visitor_rate * end_to_end_efficiency
+    
+    // Expected value calculations
+    param revenue_per_customer: Currency<USD> = $1000
+    
+    // Rate * Currency → Revenue rate
+    var expected_daily_revenue: Rate<Currency<USD>, Day> = 
+        customer_acquisition_rate * revenue_per_customer
+    
+    // Time-based projections
+    param days_in_month: Count<Day> = 30
+    
+    // Rate * Count → Total expected customers
+    var monthly_customer_acquisition: Count<Customer> = 
+        customer_acquisition_rate * days_in_month
+    
+    // Capacity and efficiency
+    param max_capacity_rate: Rate<Transaction, Hour> = 1000
+    
+    // Fraction: actual / capacity → utilization
+    var capacity_utilization: Fraction = 
+        processing_rate / max_capacity_rate
+    
+    // FractionToRate: max capacity * utilization → actual throughput
+    var verified_throughput: Rate<Transaction, Hour> = 
+        max_capacity_rate * capacity_utilization
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. customer_acquisition_rate = signup_rate * conversion_efficiency
+ *    - From: Product<Rate<User, Day>, Fraction>
+ *    - To: Rate<Customer, Day>
+ *    - Contract: FractionToRate
+ *    - Justification: Fraction scales the rate (efficiency multiplier)
+ * 
+ * 2. successful_processing_rate = processing_rate * success_probability
+ *    - From: Product<Rate<Transaction, Hour>, Fraction>
+ *    - To: Rate<Transaction, Hour>
+ *    - Contract: FractionToRate
+ *    - Justification: Success probability filters throughput
+ * 
+ * 3. overall_customer_rate = visitor_rate * end_to_end_efficiency
+ *    - From: Product<Rate<Visitor, Day>, Fraction>
+ *    - To: Rate<Customer, Day>
+ *    - Contract: FractionToRate
+ *    - Justification: Multi-stage funnel efficiency
+ * 
+ * 4. verified_throughput = max_capacity_rate * capacity_utilization
+ *    - From: Product<Rate<Transaction, Hour>, Fraction>
+ *    - To: Rate<Transaction, Hour>
+ *    - Contract: FractionToRate
+ *    - Justification: Utilization scales capacity to actual throughput
+ * 
+ * Key insight: FractionToRate models "efficiency-adjusted flow".
+ * When you multiply a flow rate by a fraction:
+ * - Fraction represents success probability, conversion rate, or utilization
+ * - Result is the effective flow rate after filtering
+ * - Common in funnel analysis, capacity planning, probabilistic modeling
+ * 
+ * Contrast with pure multiplication:
+ * - Rate * scalar = scale the rate (2x growth)
+ * - Rate * Fraction = filter the rate (efficiency/probability)
+ */

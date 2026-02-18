@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Freelance Creative Marketplace
+// Project-based with escrow and featured listings
+
+model marketplace_freelance_creative_bench {
+  param monthly_projects: Count<Project> = 2400
+  param avg_project_value: Currency<USD> = $1200
+  param platform_commission: Fraction = 0.20
+  param featured_listing_revenue: Currency<USD> = $18_000
+  param escrow_processing_costs: Currency<USD> = $8500
+
+  var gmv: Currency<USD> = monthly_projects * avg_project_value
+  var commission_revenue: Currency<USD> = gmv * platform_commission
+  var total_revenue: Currency<USD> = commission_revenue + featured_listing_revenue
+  var net_revenue: Currency<USD> = total_revenue - escrow_processing_costs
+
+  constraint gmv_target: gmv >= $2_500_000 {
+    severity: warning,
+    message: "GMV below $2.5M monthly target"
+  }
+}

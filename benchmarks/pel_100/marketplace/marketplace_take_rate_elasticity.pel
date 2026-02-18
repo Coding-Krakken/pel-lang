@@ -1,0 +1,17 @@
+// PEL-100 Benchmark: Take-rate Elasticity
+// Analyze how take-rate changes affect supply incentives and GMV
+
+model marketplace_take_rate_elasticity {
+  param take_rate: Fraction = 0.12
+  param base_gmv: Currency<USD> = $500_000
+  param supply_elasticity: Fraction = 0.3
+
+  var effective_supply: Fraction = 1 - (supply_elasticity * (take_rate - 0.10))
+  var adjusted_gmv: Currency<USD> = base_gmv * effective_supply
+  var platform_revenue: Currency<USD> = adjusted_gmv * take_rate
+
+  constraint revenue_vs_take: platform_revenue > $30_000 {
+    severity: warning,
+    message: "Platform revenue low for current take rate"
+  }
+}

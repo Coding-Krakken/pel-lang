@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: SaaS Trial-to-Paid Retention
+// Models trial conversion, paid retention, and impact on MRR
+
+model saas_trial_retention {
+  param trial_users: Count<User> = 10_000
+  param trial_to_paid: Fraction = 0.03
+  param paid_retention_monthly: Fraction = 0.88
+  param paid_arpu: Currency<USD> = $79/1mo
+
+  var new_paid: Count<User> = trial_users * trial_to_paid
+  var retained_paid: TimeSeries<Count<User>>retained_paid[0] = new_paid
+  retained_paid[t+1] = retained_paid[t] * paid_retention_monthly
+
+  var cohort_mrr: TimeSeries<Currency<USD>>cohort_mrr[t] = retained_paid[t] * paid_arpu
+
+  constraint positive_mrr: cohort_mrr[0] > $0 {
+    severity: fatal,
+    message: "Cohort MRR must be positive"
+  }
+}

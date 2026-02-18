@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: E‑commerce Returns & Refunds
+// Models returns rate, refund cost and net revenue
+
+model ecommerce_returns_and_refunds {
+  param monthly_orders: Count<Order> = 25_000
+  param aov: Currency<USD> = $80
+  param return_rate: Fraction = 0.08
+  param refund_processing_cost_pct: Fraction = 0.02
+
+  var gross_revenue: Currency<USD> = monthly_orders * aov
+  var expected_returns: Count<Order> = monthly_orders * return_rate
+  var refund_amount: Currency<USD> = expected_returns * aov
+  var refund_costs: Currency<USD> = refund_amount * refund_processing_cost_pct
+  var net_revenue: Currency<USD> = gross_revenue - refund_amount - refund_costs
+
+  constraint net_positive: net_revenue > $0 {
+    severity: fatal,
+    message: "Net revenue must be positive after returns"
+  }
+}

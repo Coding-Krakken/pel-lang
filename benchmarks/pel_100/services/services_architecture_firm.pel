@@ -1,0 +1,85 @@
+// Professional Services - Architecture Firm
+// Models architecture firm with project stages and fee structures
+
+model ServicesArchitectureFirm {
+  param active_projects: Count<Item> = 18
+  param avg_project_fee: Currency<USD> = $125000.0
+  param project_duration_months: Fraction = 9
+  
+  // Fee structure by project phase
+  param schematic_design_pct: Fraction = 0.15
+  param design_development_pct: Fraction = 0.20
+  param construction_documents_pct: Fraction = 0.40
+  param construction_administration_pct: Fraction = 0.25
+  
+  // Project distribution by phase
+  param projects_schematic: Count<Item> = 4
+  param projects_dd: Count<Item> = 5
+  param projects_cd: Count<Item> = 6
+  param projects_ca: Count<Item> = 3
+  
+  // Staff composition
+  param principals: Count<Item> = 3
+  param project_architects: Count<Item> = 6
+  param designers: Count<Item> = 8
+  param drafters: Count<Item> = 7
+  param admin_staff: Count<Item> = 3
+  
+  // Compensation
+  param principal_cost: Currency<USD> = $22000.0
+  param project_architect_cost: Currency<USD> = $12000.0
+  param designer_cost: Currency<USD> = $8500.0
+  param drafter_cost: Currency<USD> = $6000.0
+  param admin_cost: Currency<USD> = $4500.0
+  
+  // Project costs
+  param consultant_fees_pct: Fraction = 0.18 // structural, MEP engineers
+  param software_licenses: Currency<USD> = $4500.0 // CAD, BIM, rendering
+  param model_printing_costs: Currency<USD> = $2800.0
+  
+  // Office and overhead
+  param office_rent: Currency<USD> = $18000.0
+  param insurance_liability: Currency<USD> = $6500.0
+  param marketing_costs: Currency<USD> = $8000.0
+  param travel_expenses: Currency<USD> = $5500.0
+  
+  // Revenue recognition by phase
+  var schematic_revenue: Currency<USD> = projects_schematic * avg_project_fee * schematic_design_pct / project_duration_months
+  var dd_revenue: Currency<USD> = projects_dd * avg_project_fee * design_development_pct / project_duration_months
+  var cd_revenue: Currency<USD> = projects_cd * avg_project_fee * construction_documents_pct / project_duration_months
+  var ca_revenue: Currency<USD> = projects_ca * avg_project_fee * construction_administration_pct / project_duration_months
+  
+  var monthly_revenue: Currency<USD> = schematic_revenue + dd_revenue + cd_revenue + ca_revenue
+  
+  // Consultant pass-through costs
+  var consultant_fees: Currency<USD> = monthly_revenue * consultant_fees_pct
+  var net_revenue: Currency<USD> = monthly_revenue - consultant_fees
+  
+  // Staff costs
+  var principal_costs: Currency<USD> = principals * principal_cost
+  var project_architect_costs: Currency<USD> = project_architects * project_architect_cost
+  var designer_costs: Currency<USD> = designers * designer_cost
+  var drafter_costs: Currency<USD> = drafters * drafter_cost
+  var admin_costs_total: Currency<USD> = admin_staff * admin_cost
+  var total_staff_costs: Currency<USD> = principal_costs + project_architect_costs + designer_costs +drafter_costs + admin_costs_total
+  
+  // Operating expenses
+  var direct_project_costs: Currency<USD> = software_licenses + model_printing_costs
+  var overhead_costs: Currency<USD> = office_rent + insurance_liability + marketing_costs + travel_expenses
+  var total_opex: Currency<USD> = direct_project_costs + overhead_costs
+  
+  var total_costs: Currency<USD> = total_staff_costs + total_opex
+  var net_income: Currency<USD> = net_revenue - total_costs
+  var operating_margin: Fraction = net_income / net_revenue
+  
+  // Architecture firm metrics
+  var total_staff: Count<Item> = principals + project_architects + designers + drafters + admin_staff
+  var revenue_per_person: Currency<USD> = net_revenue / total_staff
+  var utilization_rate_design_staff: Fraction = (project_architects + designers + drafters) / total_staff
+  var profit_per_principal: Currency<USD> = net_income / principals
+  var overhead_rate: Fraction = overhead_costs / total_staff_costs
+  
+  constraint healthy_margins: operating_margin > 0.18 { severity: warning }
+  constraint efficient_staffing: revenue_per_person > $12000 { severity: warning }
+  constraint manageable_overhead: overhead_rate < 0.60 { severity: warning }
+}

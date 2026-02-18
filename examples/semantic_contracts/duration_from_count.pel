@@ -1,0 +1,128 @@
+/*
+ * Example: DurationFromCount Contract
+ * 
+ * Demonstrates: Count<TimeUnit> → Duration<TimeUnit>
+ * Use case: Converting time period counts to duration values
+ * 
+ * Semantic justification:
+ * - Count<Day> (5 days counted) vs Duration<Day> (5-day period)
+ * - Count tracks discrete instances; Duration represents time span
+ * - Contract: DurationFromCount
+ */
+
+model Subscription_Lifecycle_Metrics {
+    // Trial period configuration (counted time units)
+    param trial_period_length: Count<Day> = 14      // 14-day trial
+    param billing_cycle_length: Count<Day> = 30     // 30-day billing
+    param grace_period_length: Count<Day> = 7       // 7-day grace
+    
+    // DurationFromCount: Convert counts to durations for time calculations
+    var trial_duration: Duration<Day> = trial_period_length
+    var billing_cycle_duration: Duration<Day> = billing_cycle_length
+    var grace_period_duration: Duration<Day> = grace_period_length
+    
+    // Total subscription lifecycle duration
+    var full_trial_period: Duration<Day> = trial_duration + grace_period_duration
+    
+    // Time-to-value metrics
+    param days_to_first_value: Count<Day> = 3
+    param days_to_activation: Count<Day> = 7
+    
+    // DurationFromCount: User journey time spans
+    var time_to_first_value: Duration<Day> = days_to_first_value
+    var time_to_activation: Duration<Day> = days_to_activation
+    
+    // Contract term configuration
+    param contract_length_months: Count<Month> = 12
+    
+    // DurationFromCount: Annual contract duration
+    var contract_duration: Duration<Month> = contract_length_months
+    
+    // Service availability metrics
+    param uptime_hours: Count<Hour> = 720      // 720 hours in 30 days
+    param downtime_hours: Count<Hour> = 2       // 2 hours downtime
+    
+    // DurationFromCount: Time span measurements
+    var total_measurement_period: Duration<Hour> = uptime_hours + downtime_hours
+    var actual_downtime: Duration<Hour> = downtime_hours
+    
+    // Calculate availability fraction (needs Duration for semantic correctness)
+    var availability: Fraction = uptime_hours / (uptime_hours + downtime_hours)
+    
+    // Customer cohort retention periods
+    param cohort_day_0: Count<Day> = 0
+    param cohort_day_30: Count<Day> = 30
+    param cohort_day_90: Count<Day> = 90
+    param cohort_day_180: Count<Day> = 180
+    
+    // DurationFromCount: Cohort retention checkpoints
+    var retention_checkpoint_1: Duration<Day> = cohort_day_30
+    var retention_checkpoint_2: Duration<Day> = cohort_day_90
+    var retention_checkpoint_3: Duration<Day> = cohort_day_180
+    
+    // Time period for rate calculations
+    param observation_window_days: Count<Day> = 90
+    
+    // DurationFromCount: Observation period for cohort analysis
+    var cohort_observation_duration: Duration<Day> = observation_window_days
+    
+    // Revenue recognition periods
+    param recognition_period_months: Count<Month> = 12
+    
+    // DurationFromCount: Revenue recognition time span
+    var revenue_recognition_period: Duration<Month> = recognition_period_months
+    
+    // Combine durations for total lifecycle
+    var total_lifecycle_with_grace: Duration<Day> = 
+        trial_duration + billing_cycle_duration + grace_period_duration
+}
+
+/*
+ * Contract Analysis:
+ * 
+ * 1. trial_duration = trial_period_length (Count<Day>)
+ *    - From: Count<Day>
+ *    - To: Duration<Day>
+ *    - Contract: DurationFromCount
+ *    - Justification: 14 counted days → 14-day time period
+ * 
+ * 2. time_to_first_value = days_to_first_value
+ *    - From: Count<Day>
+ *    - To: Duration<Day>
+ *    - Contract: DurationFromCount
+ *    - Justification: User journey milestone (time elapsed)
+ * 
+ * 3. contract_duration = contract_length_months
+ *    - From: Count<Month>
+ *    - To: Duration<Month>
+ *    - Contract: DurationFromCount
+ *    - Justification: 12-month count → 12-month contract term
+ * 
+ * 4. actual_downtime = downtime_hours
+ *    - From: Count<Hour>
+ *    - To: Duration<Hour>
+ *    - Contract: DurationFromCount
+ *    - Justification: Downtime is a time span, not discrete events
+ * 
+ * 5. retention_checkpoint_1 = cohort_day_30
+ *    - From: Count<Day>
+ *    - To: Duration<Day>
+ *    - Contract: DurationFromCount
+ *    - Justification: Day 30 checkpoint is time elapsed since cohort start
+ * 
+ * Key insight: DurationFromCount bridges counting and time measurement.
+ * 
+ * When to use Count<TimeUnit>:
+ * - Discrete instances: "processed 5 days of data"
+ * - Iterating over periods: "for each of 30 days..."
+ * - Quantifying occurrences
+ * 
+ * When to use Duration<TimeUnit>:
+ * - Time spans: "14-day trial period"
+ * - Elapsed time: "time to activation"
+ * - Temporal arithmetic: trial + grace period
+ * - Time-based comparisons
+ * 
+ * The contract enables semantic correctness when configuration
+ * values (counts) represent actual time periods (durations).
+ */

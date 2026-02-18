@@ -1,0 +1,96 @@
+// Marketplace - B2B Wholesale Platform
+// Models B2B marketplace connecting manufacturers with retailers
+
+model MarketplaceB2BWholesale {
+  param monthly_transactions: Count<Item> = 850
+  param avg_transaction_value: Currency<USD> = $8500.0
+  param commission_rate: Fraction = 0.045 // take rate on GMV
+  
+  // Buyer and supplier dynamics
+  param total_buyers: Count<Item> = 2200 // retailers, small businesses
+  param total_suppliers: Count<Item> = 450 // manufacturers, distributors
+  param avg_transactions_per_buyer: Fraction = 0.35 // monthly
+  param avg_transactions_per_supplier: Fraction = 1.89
+  
+  // Payment terms and financing
+  param net_terms_offered_pct: Fraction = 0.55 // % of transactions with net-30/60
+  param avg_payment_terms_days: Fraction = 40
+  param factoring_cost_pct: Fraction = 0.025 // cost to offer net terms
+  
+  // Value-added services
+  param logistics_service_adoption: Fraction = 0.35
+  param logistics_fee_per_transaction: Currency<USD> = $125.0
+  param quality_inspection_fee: Currency<USD> = $75.0
+  param inspection_adoption_pct: Fraction = 0.22
+  
+  // Customer acquisition and retention
+  param buyer_acquisition_cost: Currency<USD> = $250.0
+  param supplier_acquisition_cost: Currency<USD> = $850.0
+  param new_buyers_monthly: Count<Item> = 45
+  param new_suppliers_monthly: Count<Item> = 8
+  param buyer_churn_rate: Fraction = 0.06
+  param supplier_churn_rate: Fraction = 0.04
+  
+  // Platform costs
+  param engineering_team: Count<Item> = 16
+  param cost_per_engineer: Currency<USD> = $13500.0
+  param sales_team: Count<Item> = 12
+  param cost_per_sales: Currency<USD> = $10000.0
+  param account_management_team: Count<Item> = 8
+  param cost_per_am: Currency<USD> = $8500.0
+  param customer_support_team: Count<Item> = 10
+  param cost_per_support: Currency<USD> = $6000.0
+  
+  // Infrastructure and overhead
+  param platform_hosting: Currency<USD> = $12000.0
+  param payment_processing_pct: Fraction = 0.025
+  param admin_overhead: Currency<USD> = $15000.0
+  
+  // Calculate GMV and revenue
+  var gross_merchandise_value: Currency<USD> = monthly_transactions * avg_transaction_value
+  var commission_revenue: Currency<USD> = gross_merchandise_value * commission_rate
+  
+  // Value-added service revenue
+  var logistics_transactions: Count<Item> = monthly_transactions * logistics_service_adoption
+  var logistics_revenue: Currency<USD> = logistics_transactions * logistics_fee_per_transaction
+  var inspection_transactions: Count<Item> = monthly_transactions * inspection_adoption_pct
+  var inspection_revenue: Currency<USD> = inspection_transactions * quality_inspection_fee
+  var vas_revenue: Currency<USD> = logistics_revenue + inspection_revenue
+  
+  var gross_revenue: Currency<USD> = commission_revenue + vas_revenue
+  
+  // Payment processing and financing costs
+  var payment_processing: Currency<USD> = gross_merchandise_value * payment_processing_pct
+  var net_terms_transactions: Currency<USD> = gross_merchandise_value * net_terms_offered_pct
+  var factoring_costs: Currency<USD> = net_terms_transactions * factoring_cost_pct
+  var cogs: Currency<USD> = payment_processing + factoring_costs
+  
+  var gross_profit: Currency<USD> = gross_revenue - cogs
+  
+  // Acquisition costs
+  var buyer_acquisition_spend: Currency<USD> = new_buyers_monthly * buyer_acquisition_cost
+  var supplier_acquisition_spend: Currency<USD> = new_suppliers_monthly * supplier_acquisition_cost
+  var total_acquisition_costs: Currency<USD> = buyer_acquisition_spend + supplier_acquisition_spend
+  
+  // Operating expenses
+  var engineering_costs: Currency<USD> = engineering_team * cost_per_engineer
+  var sales_costs: Currency<USD> = sales_team * cost_per_sales
+  var am_costs: Currency<USD> = account_management_team * cost_per_am
+  var support_costs: Currency<USD> = customer_support_team * cost_per_support
+  var total_opex: Currency<USD> = engineering_costs + sales_costs + am_costs + support_costs +platform_hosting + admin_overhead
+  
+  var total_costs: Currency<USD> = cogs + total_acquisition_costs + total_opex
+  var net_income: Currency<USD> = gross_revenue - total_costs
+  var operating_margin: Fraction = net_income / gross_revenue
+  
+  // Marketplace metrics
+  var blended_take_rate: Fraction = gross_revenue / gross_merchandise_value
+  var vas_revenue_pct: Fraction = vas_revenue / gross_revenue
+  var gmv_per_buyer: Currency<USD> = gross_merchandise_value / total_buyers
+  var gmv_per_supplier: Currency<USD> = gross_merchandise_value / total_suppliers
+  var buyer_supplier_ratio: Fraction = total_buyers / total_suppliers
+  
+  constraint healthy_take_rate: blended_take_rate > 0.06 { severity: warning }
+  constraint diversified_revenue: vas_revenue_pct > 0.25 { severity: warning }
+  constraint balanced_marketplace: buyer_supplier_ratio > 3.0 { severity: warning }
+}

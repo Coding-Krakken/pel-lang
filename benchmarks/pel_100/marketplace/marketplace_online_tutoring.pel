@@ -1,0 +1,104 @@
+// Marketplace - Online Tutoring Platform
+// Models online tutoring marketplace connecting students with tutors
+
+model MarketplaceOnlineTutoring {
+  param monthly_sessions: Int = 4200
+  param avg_session_duration_hours: Fraction = 1.5
+  param avg_hourly_rate: Currency<USD> = $45.0
+  param platform_commission_pct: Fraction = 0.28
+  
+  // Student and tutor dynamics
+  param total_active_students: Int = 2800
+  param total_active_tutors: Int = 750
+  param sessions_per_student_month: Fraction = 1.50
+  param sessions_per_tutor_month: Fraction = 5.60
+  
+  // Subject categories and pricing
+  param math_science_pct: Fraction = 0.40
+  param languages_pct: Fraction = 0.25
+  param test_prep_pct: Fraction = 0.20
+  param other_subjects_pct: Fraction = 0.15
+  param test_prep_rate_multiplier: Fraction = 1.40
+  param other_rate_multiplier: Fraction = 0.85
+  
+  // Tutor acquisition and quality
+  param tutor_screening_cost: Currency<USD> = $35.0
+  param new_tutors_monthly: Int = 45
+  param background_check_pct: Fraction = 1.0 // all tutors
+  param background_check_cost: Currency<USD> = $25.0
+  param tutor_churn_rate: Fraction = 0.08
+  
+  // Student acquisition
+  param student_acquisition_cost: Currency<USD> = $42.0
+  param new_students_monthly: Int = 280
+  param student_churn_rate: Fraction = 0.12
+  
+  // Session guarantees and refunds
+  param satisfaction_guarantee_claims: Fraction = 0.04
+  param refund_per_claim: Currency<USD> = $67.50 // avg session value
+  
+  // Technology and platform
+  param video_conferencing_cost_per_hour: Currency<USD> = $0.35
+  param recording_storage_costs: Currency<USD> = $2500.0
+  param payment_processing_pct: Fraction = 0.029
+  
+  // Operations
+  param engineering_team: Int = 12
+  param cost_per_engineer: Currency<USD> = $12500.0
+  param customer_support_team: Int = 8
+  param cost_per_support: Currency<USD> = $5500.0
+  param tutor_success_team: Int = 5
+  param cost_per_ts: Currency<USD> = $6500.0
+  param marketing_spend: Currency<USD> = $45000.0
+  param admin_overhead: Currency<USD> = $12000.0
+  
+  // Calculate session value and GMV
+  var total_session_hours: Fraction = monthly_sessions * avg_session_duration_hours
+  var gross_merchandise_value: Currency<USD> = total_session_hours * avg_hourly_rate
+  
+  // Revenue from commission
+  var commission_revenue: Currency<USD> = gross_merchandise_value * platform_commission_pct
+  
+  // Payment processing costs
+  var payment_processing: Currency<USD> = gross_merchandise_value * payment_processing_pct
+  
+  // Video platform costs
+  var video_costs: Currency<USD> = total_session_hours * video_conferencing_cost_per_hour
+  
+  // Tutor acquisition costs
+  var tutor_screening_costs: Currency<USD> = new_tutors_monthly * (tutor_screening_cost + background_check_cost)
+  
+  // Student acquisition costs
+  var student_acquisition_costs: Currency<USD> = new_students_monthly * student_acquisition_cost
+  
+  // Satisfaction guarantees
+  var guarantee_claims: Fraction = monthly_sessions * satisfaction_guarantee_claims
+  var refund_costs: Currency<USD> = guarantee_claims * refund_per_claim
+  
+  var cogs: Currency<USD> = payment_processing + video_costs + recording_storage_costs + refund_costs
+  var gross_profit: Currency<USD> = commission_revenue - cogs
+  var gross_margin: Fraction = gross_profit / commission_revenue
+  
+  // Operating expenses
+  var engineering_costs: Currency<USD> = engineering_team * cost_per_engineer
+  var support_costs: Currency<USD> = customer_support_team * cost_per_support
+  var tutor_success_costs: Currency<USD> = tutor_success_team * cost_per_ts
+  var acquisition_costs: Currency<USD> = tutor_screening_costs + student_acquisition_costs
+  var total_opex: Currency<USD> = engineering_costs + support_costs + tutor_success_costs +marketing_spend + admin_overhead
+  
+  var total_costs: Currency<USD> = cogs + acquisition_costs + total_opex
+  var net_income: Currency<USD> = commission_revenue - total_costs
+  var operating_margin: Fraction = net_income / commission_revenue
+  
+  // Marketplace health metrics
+  var take_rate: Fraction = platform_commission_pct
+  var gmv_per_student: Currency<USD> = gross_merchandise_value / total_active_students
+  var gmv_per_tutor: Currency<USD> = gross_merchandise_value / total_active_tutors
+  var student_tutor_ratio: Fraction = total_active_students / total_active_tutors
+  var tutor_earnings_per_session: Currency<USD> = (gross_merchandise_value / monthly_sessions) * (1.0 - platform_commission_pct)
+  var blended_cac: Currency<USD> = (student_acquisition_costs + tutor_screening_costs) / (new_students_monthly + new_tutors_monthly)
+  
+  constraint healthy_take_rate: take_rate > 0.25 { severity: warning }
+  constraint balanced_marketplace: student_tutor_ratio > 3.0 { severity: warning }
+  constraint profitable_operations: operating_margin > 0.10 { severity: warning }
+}

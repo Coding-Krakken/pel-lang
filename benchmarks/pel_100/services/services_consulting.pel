@@ -1,0 +1,34 @@
+// PEL-100 Benchmark: Consulting Services Model
+// Professional services with utilization rates and hourly billing
+
+model services_consulting_bench {
+  // Team size
+  param consultants: Count<Employee> = 10
+  
+  // Billable hourly rate
+  param billable_rate: Currency<USD> = $250
+  
+  // Utilization rate (billable hours / available hours)
+  param utilization_rate: Fraction = 0.70
+  
+  // Available hours per consultant per month
+  param hours_per_month: Int = 160
+  
+  // Fully loaded cost per consultant
+  param cost_per_consultant: Currency<USD> = $12000/1mo
+  
+  // Calculations
+  var total_available_hours = consultants * hours_per_month
+  
+  var billable_hours = total_available_hours * utilization_rate
+  
+  var monthly_revenue: Currency<USD> = billable_hours * billable_rate
+  
+  var monthly_cost: Currency<USD> = consultants * cost_per_consultant
+  
+  var monthly_profit: Currency<USD> = monthly_revenue - monthly_cost
+  
+  var profit_margin_pct: Fraction = monthly_profit / monthly_revenue
+  
+  var revenue_per_employee: Currency<USD> = monthly_revenue / consultants
+}

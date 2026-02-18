@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: E-Commerce Print-on-Demand
+// No inventory, fulfillment partner costs
+
+model ecommerce_print_on_demand_bench {
+  param monthly_orders: Count<Order> = 8500
+  param avg_order_value: Currency<USD> = $42
+  param fulfillment_cost_per_order: Currency<USD> = $18
+  param platform_fee_rate: Fraction = 0.05
+  param marketing_spend: Currency<USD> = $25_000
+
+  var gross_revenue: Currency<USD> = monthly_orders * avg_order_value
+  var fulfillment_costs: Currency<USD> = monthly_orders * fulfillment_cost_per_order
+  var platform_fees: Currency<USD> = gross_revenue * platform_fee_rate
+  var contribution_margin: Currency<USD> = gross_revenue - fulfillment_costs - platform_fees - marketing_spend
+  var margin_pct: Fraction = contribution_margin / gross_revenue
+
+  constraint profitable_unit_economics: margin_pct > 0.25 {
+    severity: warning,
+    message: "Contribution margin below 25%"
+  }
+}

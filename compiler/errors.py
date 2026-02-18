@@ -239,6 +239,16 @@ def contradictory_constraints(constraint1: str, constraint2: str, location: Sour
     )
 
 
+def constraint_violation(constraint_name: str, message: str = "Constraint violated", location: SourceLocation | None = None) -> ConstraintError:
+    """E0502: Constraint violation (static check)."""
+    return ConstraintError(
+        "E0502",
+        f"Constraint violation: '{constraint_name}' - {message}",
+        location,
+        hint="This constraint is violated by the static parameter values"
+    )
+
+
 # === Distribution Errors (E06xx) ===
 
 class DistributionError(CompilerError):

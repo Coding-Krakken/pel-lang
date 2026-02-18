@@ -1,0 +1,21 @@
+// PEL-100 Benchmark: SaaS HR & Payroll Platform
+// Per-employee pricing with compliance costs
+
+model saas_hr_payroll_bench {
+  param customer_companies: Count<Company> = 1200
+  param avg_employees_per_company: Count<Employee> = 45
+  param base_fee_per_company: Currency<USD> = $199/1mo
+  param fee_per_employee: Currency<USD> = $8/1mo
+  param compliance_costs_monthly: Currency<USD> = $45_000
+
+  var total_employees: Count<Employee> = customer_companies * avg_employees_per_company
+  var base_revenue: Currency<USD> = customer_companies * base_fee_per_company
+  var per_employee_revenue: Currency<USD> = total_employees * fee_per_employee
+  var total_revenue: Currency<USD> = base_revenue + per_employee_revenue
+  var net_revenue: Currency<USD> = total_revenue - compliance_costs_monthly
+
+  constraint revenue_positive: net_revenue > $100_000 {
+    severity: warning,
+    message: "Net revenue below $100K target"
+  }
+}

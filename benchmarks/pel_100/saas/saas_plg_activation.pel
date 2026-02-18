@@ -1,0 +1,20 @@
+// PEL-100 Benchmark: Product-Led Growth Activation Funnel
+// Activation -> engagement -> paid conversion metrics
+
+model saas_plg_activation {
+  param signups: Count<User> = 80_000
+  param activation_rate: Fraction = 0.25
+  param engagement_to_paid: Fraction = 0.05
+  param arpu: Currency<USD> = $29/1mo
+
+  var activated: Count<User> = signups * activation_rate
+  var converting: Count<User> = activated * engagement_to_paid
+  var monthly_revenue: Currency<USD> = converting * arpu
+
+  var conversion_pct: Fraction = converting / signups
+
+  constraint activation_floor: activation_rate >= 0.10 {
+    severity: warning,
+    message: "Activation below expected PLG threshold"
+  }
+}
