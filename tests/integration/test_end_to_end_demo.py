@@ -15,9 +15,9 @@ def test_demo_workflow_executes_successfully(tmp_path):
     """Test that the quick_start.sh script runs end-to-end without errors."""
     # Skip if visualization dependencies are not installed
     try:
-        import jinja2  # noqa: F401
+        import matplotlib  # noqa: F401
     except ImportError:
-        pytest.skip("Visualization dependencies (jinja2) not installed - install with: pip install 'pel-lang[viz]'")
+        pytest.skip("Visualization dependencies not installed - install with: pip install 'pel-lang[viz]'")
 
     # Determine repository root (two levels up from this test file: tests/integration → tests → repo root)
     repo_root = Path(__file__).resolve().parents[2]

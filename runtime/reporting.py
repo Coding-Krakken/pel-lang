@@ -11,7 +11,7 @@ understand model results without interpreting raw JSON.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +47,7 @@ class ModelReport:
 
         # Header
         md.append(f"# PEL Model Report: {self.model_name}")
-        md.append(f"\n**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
+        md.append(f"\n**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
 
         # Executive Summary
         md.append("## Executive Summary\n")
@@ -169,7 +169,7 @@ class ModelReport:
 </head>
 <body>
     <h1>PEL Model Report: {self.model_name}</h1>
-    <p><strong>Generated:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+    <p><strong>Generated:</strong> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
 
     <h2>Executive Summary</h2>
     <div class="summary">
