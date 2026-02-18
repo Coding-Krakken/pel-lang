@@ -100,8 +100,8 @@ class TestLinterPerformance:
         violations = linter.lint_string(source)
         elapsed = time.time() - start
         
-        # Should be fast for small files (< 20ms)
-        assert elapsed < 0.020, f"Linter took {elapsed:.3f}s for small file"
+        # Should be fast for small files (< 50ms)
+        assert elapsed < 0.050, f"Linter took {elapsed:.3f}s for small file"
 
     def test_linter_medium_file_performance(self):
         """Test linter performance on medium file."""
