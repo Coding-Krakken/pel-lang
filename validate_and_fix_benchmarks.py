@@ -14,9 +14,11 @@ import sys
 from pathlib import Path
 from collections import defaultdict
 
-BENCHMARK_DIR = Path('benchmarks/pel_100')
-RESULTS_FILE = Path('benchmarks/PEL_100_RESULTS.json')
-COMPILER = Path('/home/obsidian/Projects/PEL/pel')
+# Determine project root dynamically
+PROJECT_ROOT = Path(__file__).parent.absolute()
+BENCHMARK_DIR = PROJECT_ROOT / 'benchmarks' / 'pel_100'
+RESULTS_FILE = PROJECT_ROOT / 'benchmarks' / 'PEL_100_RESULTS.json'
+COMPILER = PROJECT_ROOT / 'pel'
 
 # Load existing results
 def load_results():

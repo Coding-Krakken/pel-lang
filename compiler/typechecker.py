@@ -824,7 +824,20 @@ class TypeChecker:
         return TypeAnnotation(type_kind=pel_type.type_kind, params=pel_type.params)
 
     def types_compatible(self, t1: PELType, t2: PELType) -> bool:
-        """Check if two types are compatible."""
+        """Check if two types are compatible.
+        
+        Design Note: This method implements PRAGMATIC type compatibility rules for Phase 1.
+        These rules allow broad implicit conversions to support existing PEL models and
+        provide backward compatibility. 
+        
+        Semantic contracts (Phase 2+) provide the VALIDATION and DOCUMENTATION layer
+        that ensures these conversions are domain-appropriate. When types_compatible()
+        returns True but a conversion fails, enhanced error messages (via 
+        create_enhanced_type_error) suggest applicable semantic contracts to guide users.
+        
+        Future phases will integrate semantic contract enforcement directly into this
+        method, tightening these rules while maintaining upgrade paths for existing code.
+        """
         # Allow Int literals to be implicitly coerced to Count types
         if t1.type_kind == "Count" and t2.type_kind == "Int":
             return True
@@ -850,21 +863,25 @@ class TypeChecker:
 
         # Allow Quotient types (from division) to be assignable to Fraction when explicitly typed
         # This handles: var ratio: Fraction = a / b
+        # Semantic contract: FractionFromRatio, QuotientNormalization
         if t1.type_kind == "Fraction" and t2.type_kind == "Quotient":
             return True
 
         # Allow Quotient types to be assignable to Currency when explicitly typed
         # This handles: var avg_price: Currency<USD> = total_revenue / count
+        # Semantic contract: RevenuePerUnit_to_Price, RateNormalization
         if t1.type_kind == "Currency" and t2.type_kind == "Quotient":
             return True
 
         # Allow Quotient types to be assignable to Rate when explicitly typed
         # This handles: var churn_rate: Rate per Month = churned / total
+        # Semantic contract: RateNormalization, QuotientNormalization
         if t1.type_kind == "Rate" and t2.type_kind == "Quotient":
             return True
 
         # Allow Quotient types to be assignable to Count when explicitly typed
         # This handles: var customers: Count<Customer> = revenue / price_per_customer
+        # Semantic contract: CountAggregation
         if t1.type_kind == "Count" and t2.type_kind == "Quotient":
             return True
 
