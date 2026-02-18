@@ -183,7 +183,8 @@ class Parser:
         self.expect(TokenType.RPAREN)
         self.expect(TokenType.ARROW)
         return_type = self.parse_type()
-        body = self.parse_block()
+        # Function bodies contain statements (var, return, for, if), not just expressions
+        body = self.parse_statement_block()
 
         return FuncDecl(name=name, parameters=params, return_type=return_type, body=body)
 
@@ -247,6 +248,11 @@ class Parser:
 
     def parse_statement(self) -> Statement:
         """Parse a statement (assignment, for/if, return)."""
+        if self.match(TokenType.VAR):
+            stmt = self.parse_var()
+            self.consume_if(TokenType.SEMICOLON)
+            return stmt
+
         if self.match(TokenType.RETURN):
             self.advance()
             value = None
@@ -310,70 +316,108 @@ class Parser:
 
     def parse_type(self) -> TypeAnnotation:
         """Parse type annotation."""
-        # Primitive types
+        # Parse a base type into a TypeAnnotation instance, then post-process
+        # optional modifiers like `<...>` inner params and `per` suffix.
+
+        type_ann: TypeAnnotation | None = None
+
+        # Currency: Currency<CUR>
         if self.match(TokenType.CURRENCY_TYPE):
             self.advance()
             self.expect(TokenType.LT)
             currency_code = self.expect(TokenType.IDENTIFIER).value
             self.expect(TokenType.GT)
-            return TypeAnnotation(type_kind="Currency", params={"currency_code": currency_code})
+            type_ann = TypeAnnotation(type_kind="Currency", params={"currency_code": currency_code})
 
+        # Rate: Rate per Month
         elif self.match(TokenType.RATE_TYPE):
             self.advance()
-            self.consume_if(TokenType.PER)  # "per" keyword
-            time_unit = self.expect(TokenType.IDENTIFIER).value
-            return TypeAnnotation(type_kind="Rate", params={"per": time_unit})
+            # allow `Rate per Month` or just `Rate`
+            per_val = None
+            if self.consume_if(TokenType.PER):
+                per_val = self.expect(TokenType.IDENTIFIER).value
+            params = {"per": per_val} if per_val is not None else {}
+            type_ann = TypeAnnotation(type_kind="Rate", params=params)
 
+        # Duration: Duration or Duration<Unit>
         elif self.match(TokenType.DURATION_TYPE):
             self.advance()
-            return TypeAnnotation(type_kind="Duration")
+            if self.consume_if(TokenType.LT):
+                unit = self.expect(TokenType.IDENTIFIER).value
+                self.expect(TokenType.GT)
+                type_ann = TypeAnnotation(type_kind="Duration", params={"unit": unit})
+            else:
+                type_ann = TypeAnnotation(type_kind="Duration")
 
+        # Capacity: Capacity or Capacity<Entity>
         elif self.match(TokenType.CAPACITY_TYPE):
             self.advance()
-            self.expect(TokenType.LT)
-            entity = self.expect(TokenType.IDENTIFIER).value
-            self.expect(TokenType.GT)
-            return TypeAnnotation(type_kind="Capacity", params={"entity": entity})
+            if self.consume_if(TokenType.LT):
+                entity = self.expect(TokenType.IDENTIFIER).value
+                self.expect(TokenType.GT)
+                type_ann = TypeAnnotation(type_kind="Capacity", params={"entity": entity})
+            else:
+                type_ann = TypeAnnotation(type_kind="Capacity")
 
+        # Count: Count or Count<Entity>
         elif self.match(TokenType.COUNT_TYPE):
             self.advance()
-            self.expect(TokenType.LT)
-            entity = self.expect(TokenType.IDENTIFIER).value
-            self.expect(TokenType.GT)
-            return TypeAnnotation(type_kind="Count", params={"entity": entity})
+            if self.consume_if(TokenType.LT):
+                entity = self.expect(TokenType.IDENTIFIER).value
+                self.expect(TokenType.GT)
+                type_ann = TypeAnnotation(type_kind="Count", params={"entity": entity})
+            else:
+                type_ann = TypeAnnotation(type_kind="Count")
 
+        # Fraction
         elif self.match(TokenType.FRACTION_TYPE):
             self.advance()
-            return TypeAnnotation(type_kind="Fraction")
+            type_ann = TypeAnnotation(type_kind="Fraction")
 
-        # Composite types
+        # TimeSeries / Distribution composite types
         elif self.match(TokenType.TIMESERIES_TYPE):
             self.advance()
             self.expect(TokenType.LT)
             inner_type = self.parse_type()
             self.expect(TokenType.GT)
-            return TypeAnnotation(type_kind="TimeSeries", params={"inner": inner_type})
+            type_ann = TypeAnnotation(type_kind="TimeSeries", params={"inner": inner_type})
 
         elif self.match(TokenType.DISTRIBUTION_TYPE):
             self.advance()
             self.expect(TokenType.LT)
             inner_type = self.parse_type()
             self.expect(TokenType.GT)
-            return TypeAnnotation(type_kind="Distribution", params={"inner": inner_type})
+            type_ann = TypeAnnotation(type_kind="Distribution", params={"inner": inner_type})
 
-        # User-defined types (identifier)
+        # Array<Inner>
+        elif self.match(TokenType.ARRAY_TYPE):
+            self.advance()
+            self.expect(TokenType.LT)
+            inner_type = self.parse_type()
+            self.expect(TokenType.GT)
+            type_ann = TypeAnnotation(type_kind="Array", params={"inner": inner_type})
+
+        # User-defined / generic type names (validate against known set)
         elif self.match(TokenType.IDENTIFIER):
             type_name = self.advance().value
-            # Validate type name
             if type_name not in VALID_TYPE_NAMES:
                 raise syntax_error(
                     f"Invalid type '{type_name}'. Valid types are: {', '.join(sorted(VALID_TYPE_NAMES))}",
                     self.current_location()
                 )
-            return TypeAnnotation(type_kind=type_name)
+            type_ann = TypeAnnotation(type_kind=type_name)
 
         else:
             raise syntax_error(f"Expected type, got {self.current().type.name}", self.current_location())
+
+        # Allow suffix `per Unit` for types like `Count<User> per Day`
+        if self.consume_if(TokenType.PER):
+            unit = self.expect(TokenType.IDENTIFIER).value
+            if type_ann.params is None:
+                type_ann.params = {}
+            type_ann.params['per'] = unit
+
+        return type_ann
 
     # ===== Expressions (operator precedence parsing) =====
 

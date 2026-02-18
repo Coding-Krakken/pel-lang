@@ -77,7 +77,7 @@ class PELRuntime:
             if node["node_type"] == "param":
                 value = self.evaluate_expression(node["value"], state, deterministic=True)
                 state[node["name"]] = value
-                
+
                 # Collect assumption/provenance data
                 if "provenance" in node:
                     prov = node["provenance"]
@@ -197,45 +197,45 @@ class PELRuntime:
         if expr_type == "Literal":
             literal_value = expr["literal_value"]
             literal_type = expr.get("literal_type", "unknown")
-            
+
             # Handle currency literals - parse string to number
             if literal_type == "currency" and isinstance(literal_value, str):
                 # Remove $ and underscores, convert to float
                 numeric_str = literal_value.replace("$", "").replace("_", "").strip()
                 return float(numeric_str)
-            
+
             # Handle other literals
             if isinstance(literal_value, (int, float)):
                 return literal_value
-            
+
             # Try to convert string numbers to float
             if isinstance(literal_value, str):
                 try:
                     return float(literal_value.replace("_", ""))
                 except ValueError:
                     return 0
-            
+
             return literal_value
 
         elif expr_type == "Variable":
             var_name = expr["variable_name"]
             return state.get(var_name, 0)
-        
+
         elif expr_type == "Indexing":
             # Handle array/timeseries indexing like profit[12]
             base_expr = expr["expression"]
             index_expr = expr["index"]
-            
+
             base_value = self.evaluate_expression(base_expr, state, deterministic)
             index_value = self.evaluate_expression(index_expr, state, deterministic)
-            
+
             # If base is a list/array, index into it
             if isinstance(base_value, list) and isinstance(index_value, int):
                 if 0 <= index_value < len(base_value):
                     return base_value[index_value]
                 else:
                     return 0  # Out of bounds
-            
+
             return 0
 
         elif expr_type == "BinaryOp":

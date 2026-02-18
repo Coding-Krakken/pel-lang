@@ -24,6 +24,18 @@ def test_typechecker_ast_type_to_pel_type_capacity_boolean_distribution_and_fall
     assert cap.type_kind == "Capacity"
     assert cap.dimension.units == {"capacity": "CPU"}
 
+    # Backward compatibility: parser may produce `entity` for Capacity generic arg.
+    cap_entity = tc.ast_type_to_pel_type(TypeAnnotation(type_kind="Capacity", params={"entity": "Seat"}))
+    assert cap_entity.type_kind == "Capacity"
+    assert cap_entity.dimension.units == {"capacity": "Seat"}
+
+    # No generic arg should still map to non-dimensionless Capacity.
+    cap_default = tc.ast_type_to_pel_type(TypeAnnotation(type_kind="Capacity", params={}))
+    assert cap_default.dimension.units == {"capacity": "Units"}
+
+    int_type = tc.infer_expression(Literal(value=1, literal_type="integer"))
+    assert not tc.types_compatible(cap_entity, int_type)
+
     boo = tc.ast_type_to_pel_type(TypeAnnotation(type_kind="Boolean", params={}))
     assert boo.type_kind == "Boolean"
 

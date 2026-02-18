@@ -1,0 +1,281 @@
+// PEL Standard Library: Funnel Module
+// Functions for multi-stage conversion funnels and funnel analysis
+
+// ============================================================================
+// Core Funnel Functions
+// ============================================================================
+
+/// Calculate multi-stage funnel conversion
+/// Given initial stage size and conversion rates, calculate stage throughput
+func multi_stage_funnel(
+  initial_stage_size: Count<User>,
+  conversion_rates: Array<Fraction>
+) -> Array<Count<User>> {
+  var funnel: Array<Count<User>> = []
+  funnel[0] = initial_stage_size
+  
+  for i in 1..conversion_rates.length {
+    funnel[i] = funnel[i-1] * conversion_rates[i-1]
+  }
+  
+  return funnel
+}
+
+/// Calculate funnel step-down (from stage i to stage i+1)
+func funnel_step_down(
+  stage_i_count: Count<User>,
+  conversion_rate: Fraction
+) -> Count<User> {
+  return stage_i_count * conversion_rate
+}
+
+/// Calculate overall conversion rate (first stage → last stage)
+func overall_conversion_rate(
+  conversion_rates: Array<Fraction>
+) -> Fraction {
+  var overall: Fraction = 1.0
+  
+  for i in 0..conversion_rates.length - 1 {
+    overall = overall * conversion_rates[i]
+  }
+  
+  return overall
+}
+
+/// Calculate stage-specific conversion rate
+func stage_conversion_rate(
+  stage_i_count: Count<User>,
+  stage_i_plus_1_count: Count<User>
+) -> Fraction {
+  if stage_i_count == 0 {
+    return 0.0
+  }
+  return stage_i_plus_1_count / stage_i_count
+}
+
+// ============================================================================
+// Funnel Analysis
+// ============================================================================
+
+/// Calculate drop-off (leakage) at each stage
+func funnel_leakage(
+  stage_sizes: Array<Count<User>>
+) -> Array<Count<User>> {
+  var leakage: Array<Count<User>> = []
+  
+  for i in 1..stage_sizes.length - 1 {
+    leakage[i-1] = stage_sizes[i-1] - stage_sizes[i]
+  }
+  
+  return leakage
+}
+
+/// Calculate leakage percentage at each stage
+func funnel_leakage_pct(
+  stage_sizes: Array<Count<User>>
+) -> Array<Fraction> {
+  var leakage_pct: Array<Fraction> = []
+  
+  for i in 1..stage_sizes.length - 1 {
+    var lost: Count<User> = stage_sizes[i-1] - stage_sizes[i]
+    leakage_pct[i-1] = lost / stage_sizes[i-1]
+  }
+  
+  return leakage_pct
+}
+
+/// Identify bottleneck stage (worst conversion rate)
+func bottleneck_detection(
+  conversion_rates: Array<Fraction>
+) -> Count {
+  var min_rate: Fraction = 1.0
+  var bottleneck_idx: Count = 0
+  
+  for i in 0..conversion_rates.length - 1 {
+    if conversion_rates[i] < min_rate {
+      min_rate = conversion_rates[i]
+      bottleneck_idx = i
+    }
+  }
+  
+  return bottleneck_idx
+}
+
+// ============================================================================
+// Funnel Velocity
+// ============================================================================
+
+/// Calculate total time through funnel
+func funnel_velocity(
+  time_in_stages: Array<Duration<Day>>
+) -> Duration<Day> {
+  var total_time: Duration<Day> = 0d
+  
+  for i in 0..time_in_stages.length - 1 {
+    total_time = total_time + time_in_stages[i]
+  }
+  
+  return total_time
+}
+
+/// Calculate average time in specific funnel stage
+/// total_person_days represents a person-day quantity (users * days)
+func time_in_funnel_stage(
+  entry_count: Count<User>,
+  total_person_days: Fraction
+) -> Duration<Day> {
+  if entry_count == 0 {
+    return 0d
+  }
+  // Divide total person-days by number of users
+  var avg_days: Fraction = total_person_days / entry_count
+  return avg_days * 1d
+}
+
+/// Calculate funnel throughput rate (users per day)
+func funnel_throughput(
+  users_entered: Count<User>,
+  time_period: Duration<Day>
+) -> Count<User> per Day {
+  return users_entered / time_period
+}
+
+// ============================================================================
+// Cohort Funnel Analysis
+// ============================================================================
+
+/// Calculate cohort-specific funnel
+func cohort_funnel(
+  cohort_initial_size: Count<User>,
+  cohort_conversion_rates: Array<Fraction>
+) -> Array<Count<User>> {
+  var funnel: Array<Count<User>> = []
+  funnel[0] = cohort_initial_size
+  
+  for i in 1..cohort_conversion_rates.length {
+    funnel[i] = funnel[i-1] * cohort_conversion_rates[i-1]
+  }
+  
+  return funnel
+}
+
+/// Compare Two Cohort Funnels
+func cohort_funnel_comparison(
+  cohort_a_conversion_rates: Array<Fraction>,
+  cohort_b_conversion_rates: Array<Fraction>
+) -> Array<Fraction> {
+  var delta: Array<Fraction> = []
+  
+  for i in 0..cohort_a_conversion_rates.length - 1 {
+    delta[i] = cohort_b_conversion_rates[i] - cohort_a_conversion_rates[i]
+  }
+  
+  return delta
+}
+
+// ============================================================================
+// Common Funnel Archetypes
+// ============================================================================
+
+/// Standard SaaS signup funnel
+/// Stages: Visit → Signup → Activation → Trial → Paid
+func saas_signup_funnel(
+  website_visitors: Count<User>,
+  signup_rate: Fraction,
+  activation_rate: Fraction,
+  trial_rate: Fraction,
+  trial_to_paid_rate: Fraction
+) -> Array<Count<User>> {
+  var funnel: Array<Count<User>> = []
+  
+  funnel[0] = website_visitors
+  funnel[1] = funnel[0] * signup_rate
+  funnel[2] = funnel[1] * activation_rate
+  funnel[3] = funnel[2] * trial_rate
+  funnel[4] = funnel[3] * trial_to_paid_rate
+  
+  return funnel
+}
+
+/// E-commerce checkout funnel
+/// Stages: View → Add to Cart → Checkout → Purchase
+func ecommerce_checkout_funnel(
+  product_views: Count<User>,
+  add_to_cart_rate: Fraction,
+  checkout_rate: Fraction,
+  purchase_rate: Fraction
+) -> Array<Count<User>> {
+  var funnel: Array<Count<User>> = []
+  
+  funnel[0] = product_views
+  funnel[1] = funnel[0] * add_to_cart_rate
+  funnel[2] = funnel[1] * checkout_rate
+  funnel[3] = funnel[2] * purchase_rate
+  
+  return funnel
+}
+
+/// B2B sales funnel
+/// Stages: Lead → Marketing Qualified → Sales Qualified → Opportunity → Closed-Won
+func b2b_sales_funnel(
+  leads: Count<Contact>,
+  mql_rate: Fraction,
+  sql_rate: Fraction,
+  opportunity_rate: Fraction,
+  close_rate: Fraction
+) -> Array<Count<Contact>> {
+  var funnel: Array<Count<Contact>> = []
+  
+  funnel[0] = leads
+  funnel[1] = funnel[0] * mql_rate
+  funnel[2] = funnel[1] * sql_rate
+  funnel[3] = funnel[2] * opportunity_rate
+  funnel[4] = funnel[3] * close_rate
+  
+  return funnel
+}
+
+// ============================================================================
+// Funnel Optimization Helpers
+// ============================================================================
+
+/// Calculate impact of improving specific stage
+func stage_improvement_impact(
+  current_funnel: Array<Count<User>>,
+  stage_to_improve: Count,
+  new_conversion_rate: Fraction,
+  old_conversion_rate: Fraction
+) -> Count<User> {
+  // Estimate additional users reaching final stage from one stage improvement
+  if stage_to_improve >= current_funnel.length - 1 {
+    return 0
+  }
+
+  var rate_delta: Fraction = new_conversion_rate - old_conversion_rate
+  var users_entering_stage: Count<User> = current_funnel[stage_to_improve]
+  var additional_next_stage: Count<User> = users_entering_stage * rate_delta
+
+  var next_stage_users: Count<User> = current_funnel[stage_to_improve + 1]
+  if next_stage_users == 0 {
+    return 0
+  }
+
+  var final_stage_idx: Count = current_funnel.length - 1
+  var downstream_multiplier: Fraction = current_funnel[final_stage_idx] / next_stage_users
+  var additional_final_stage: Count<User> = additional_next_stage * downstream_multiplier
+
+  return additional_final_stage
+}
+
+/// Calculate required conversion rate to hit target
+func required_conversion_rate_for_target(
+  stage_i_count: Count<User>,
+  target_final_count: Count<User>,
+  downstream_conversion_rate: Fraction
+) -> Fraction {
+  // What conversion rate do we need at this stage to hit target?
+  var required_at_next_stage: Count<User> = 
+    target_final_count / downstream_conversion_rate
+  
+  return required_at_next_stage / stage_i_count
+}

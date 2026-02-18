@@ -23,7 +23,7 @@ func ltv_with_discount(
 
 func payback_period(
   cac: Currency<USD> per Customer,
-  monthly_margin: Currency<USD> per Month per Customer
+  monthly_margin: Currency<USD> per Month
 ) -> Duration<Month> {
   // Payback period = CAC / monthly margin
   return cac / monthly_margin
@@ -46,7 +46,7 @@ func customer_lifetime(
 
 func breakeven_customer_count(
   fixed_costs: Currency<USD> per Month,
-  unit_margin: Currency<USD> per Month per Customer
+  unit_margin: Currency<USD> per Month
 ) -> Count<Customer> {
   // Customers needed to break even
   return fixed_costs / unit_margin
@@ -113,7 +113,7 @@ func net_dollar_retention(
 func revenue_per_employee(
   annual_revenue: Currency<USD> per Year,
   employee_count: Count<Employee>
-) -> Currency<USD> per Year per Employee {
+) -> Currency<USD> per Year {
   return annual_revenue / employee_count
 }
 
@@ -128,7 +128,7 @@ func utilization_rate(
 func revenue_per_seat(
   total_revenue: Currency<USD> per Month,
   seat_capacity: Capacity<Seat>
-) -> Currency<USD> per Month per Seat {
+) -> Currency<USD> per Month {
   // Revenue per seat (for coworking, SaaS, etc.)
   return total_revenue / seat_capacity
 }
@@ -137,7 +137,7 @@ func revenue_per_seat(
 
 func cohort_payback(
   cohort_cac: Currency<USD> per Customer,
-  cohort_monthly_margin: TimeSeries<Currency<USD> per Month per Customer>,
+  cohort_monthly_margin: TimeSeries<Currency<USD> per Month>,
   months: Count<Month>
 ) -> Duration<Month> {
   // Calculate when cumulative margin exceeds CAC
@@ -168,7 +168,7 @@ func magic_number(
 
 func burn_multiple(
   net_burn: Currency<USD> per Month,
-  net_new_arr: Currency<USD> per Year per Month
+  net_new_arr: Currency<USD> per Month
 ) -> Fraction {
   // Burn multiple = monthly burn / monthly net new ARR
   // Lower is better (< 1.5 is excellent)

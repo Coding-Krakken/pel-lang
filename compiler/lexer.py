@@ -62,6 +62,7 @@ class TokenType(Enum):
     FRACTION_TYPE = auto()  # Fraction
     TIMESERIES_TYPE = auto()  # TimeSeries
     DISTRIBUTION_TYPE = auto()  # Distribution
+    ARRAY_TYPE = auto()  # Array
 
     # Operators
     PLUS = auto()  # +
@@ -156,6 +157,7 @@ class Lexer:
         'Fraction': TokenType.FRACTION_TYPE,
         'TimeSeries': TokenType.TIMESERIES_TYPE,
         'Distribution': TokenType.DISTRIBUTION_TYPE,
+        'Array': TokenType.ARRAY_TYPE,
     }
 
     DURATION_UNITS = ("mo", "yr", "q", "w", "d")

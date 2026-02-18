@@ -192,7 +192,7 @@ class ParamDecl(ASTNode):
 
 
 @dataclass
-class VarDecl(ASTNode):
+class VarDecl(Statement):
     """Variable declaration."""
     name: str
     type_annotation: TypeAnnotation | None  # Can be inferred
@@ -206,7 +206,7 @@ class FuncDecl(ASTNode):
     name: str
     parameters: list[tuple]  # [(name, type), ...]
     return_type: TypeAnnotation
-    body: list[Expression]
+    body: list[Statement]  # Function bodies contain statements (var, return, etc.)
 
 
 @dataclass
