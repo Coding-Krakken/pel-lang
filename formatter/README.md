@@ -5,6 +5,11 @@ This module provides automatic code formatting for PEL source files.
 ## Status
 ✅ **Available** - Formatting is implemented with token-aware spacing and indentation.
 
+**Current Limitations:**
+- Line wrapping for overly long statements is best-effort (some lines >100 chars may remain)
+- Block comment formatting is not yet supported (line comments `//` work correctly)
+- No auto-import organization (future feature)
+
 ## Formatter Features
 - Consistent indentation (default: 4 spaces)
 - Operator spacing and comma normalization

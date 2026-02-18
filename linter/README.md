@@ -5,6 +5,11 @@ Static analysis for PEL code quality and best practices.
 ## Status
 ✅ **Available** - Core lint rules and JSON/text reporting are implemented.
 
+**Current Scope:**
+- 6 rules implemented (PEL001, PEL002, PEL004, PEL005, PEL008, PEL010)
+- Additional rules planned for future releases
+- Custom rule plugins not yet supported
+
 ## Rules
 - PEL001: Unused parameter
 - PEL002: Unreferenced variable
