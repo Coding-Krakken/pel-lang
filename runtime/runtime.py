@@ -258,7 +258,10 @@ class PELRuntime:
                     raise ValueError(
                         f"Invalid correlation coefficient {corr} between '{name}' and '{other_name}'"
                     )
-                pair = tuple(sorted((name, other_name)))
+                if name <= other_name:
+                    pair: tuple[str, str] = (name, other_name)
+                else:
+                    pair = (other_name, name)
                 existing = seen_pairs.get(pair)
                 if existing is not None and abs(existing - corr) > 1e-9:
                     raise ValueError(
@@ -385,6 +388,14 @@ class PELRuntime:
             for node in model.get("nodes", [])
             if node.get("node_type") == "param"
         }
+        param_state: dict[str, Any] = {}
+        for node in model.get("nodes", []):
+            if node.get("node_type") != "param":
+                continue
+            value_expr = node.get("value")
+            if isinstance(value_expr, dict):
+                param_state[node["name"]] = self.evaluate_expression(value_expr, param_state, deterministic=True)
+
         sampled: dict[str, float] = {}
 
         for i, name in enumerate(names):
@@ -397,7 +408,7 @@ class PELRuntime:
             resolved_params: dict[str, Any] = {}
             for param_name, param_expr in params.items():
                 if isinstance(param_expr, dict) and "expr_type" in param_expr:
-                    resolved_params[param_name] = self.evaluate_expression(param_expr, {}, deterministic=True)
+                    resolved_params[param_name] = self.evaluate_expression(param_expr, param_state, deterministic=True)
                 else:
                     resolved_params[param_name] = param_expr
 
