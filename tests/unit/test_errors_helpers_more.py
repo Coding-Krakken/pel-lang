@@ -7,6 +7,7 @@ from compiler.errors import (
     InternalError,
     SourceLocation,
     contradictory_constraints,
+    constraint_violation,
     correlation_matrix_not_psd,
     currency_mismatch,
     cyclic_dependency,
@@ -77,6 +78,10 @@ def test_error_helpers_set_codes_and_formatting_variants() -> None:
 
     e13 = contradictory_constraints("c1", "c2", loc)
     assert e13.code == "E0501"
+
+    e13b = constraint_violation("positive_revenue", "Revenue must be positive", loc)
+    assert e13b.code == "E0502"
+    assert "hint" in str(e13b)
 
     e14 = invalid_distribution_param("Normal", "sigma", "must be > 0", loc)
     assert e14.code == "E0600"

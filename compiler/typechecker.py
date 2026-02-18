@@ -20,10 +20,12 @@ from typing import Any, Optional
 from compiler.ast_nodes import *
 from compiler.errors import (
     CompilerError,
+    ConstraintError,
     TypeError,
     dimensional_mismatch,
     type_mismatch,
     undefined_variable,
+    constraint_violation,
 )
 from compiler.semantic_contracts import SemanticContracts
 
@@ -285,6 +287,7 @@ class TypeChecker:
         self.env = TypeEnvironment()
         self.errors: list[CompilerError] = []
         self.warnings: list[str] = []
+        self.static_values: dict[str, Any] = {}  # Store static parameter values for constraint checking
 
         # Built-ins used by the language surface syntax.
         # `t` is the implicit time index in TimeSeries expressions.
@@ -308,6 +311,11 @@ class TypeChecker:
         for param in model.params:
             param_type = self.ast_type_to_pel_type(param.type_annotation)
             self.env.bind(param.name, param_type)
+            
+            # Store static literal values for constraint checking
+            # Accept Literal, UnaryOp (for negation), and simple binary operations
+            if isinstance(param.value, (Literal, UnaryOp, BinaryOp)):
+                self.static_values[param.name] = param.value
 
             # Type check parameter value
             # Distributions in surface syntax are treated as generators of the declared type.
@@ -359,6 +367,32 @@ class TypeChecker:
             condition_type = self.infer_expression(constraint.condition)
             if condition_type.type_kind != "Boolean":
                 self.errors.append(self.create_enhanced_type_error(PELType.boolean(), condition_type))
+        
+        # Phase 3.1: Evaluate static constraints (constraints involving only parameters with literal values)
+        for constraint in model.constraints:
+            try:
+                # Try to evaluate the constraint condition statically
+                result = self._evaluate_static_expression(constraint.condition)
+                if result is not None and not result:
+                    # Constraint is violated
+                    severity = constraint.severity
+                    if severity == "fatal":
+                        # Record constraint error for fatal constraint violations
+                        location = None
+                        if getattr(constraint, "line", None) is not None and getattr(constraint, "column", None) is not None:
+                            from compiler.ast_nodes import SourceLocation
+                            location = SourceLocation(line=constraint.line, column=constraint.column)
+                        self.errors.append(
+                            constraint_violation(
+                                constraint.name,
+                                getattr(constraint, 'message', 'Constraint violated'),
+                                location
+                            )
+                        )
+            except (AttributeError, KeyError, ValueError, ZeroDivisionError) as e:
+                # If evaluation fails (e.g., references non-static values, division by zero), skip static check
+                # Log the exception for debugging if needed
+                pass
 
         # Phase 3.5: Type check top-level statements (assignments, etc.)
         for stmt in model.statements:
@@ -1069,6 +1103,94 @@ class TypeChecker:
             hint += f"       {names}\n"
             hint += f"       See: spec/semantic_contracts_guide.md for details"
             return hint
+
+    def _evaluate_static_expression(self, expr: Expression) -> Any:
+        """
+        Evaluate an expression statically (at compile time).
+        
+        Returns the evaluated value if the expression involves only literals and 
+        parameters with literal values. Returns None if the expression cannot be
+        statically evaluated.
+        
+        Used for compile-time constraint checking.
+        """
+        # Literal values
+        if isinstance(expr, Literal):
+            if expr.literal_type in ("currency", "rate", "duration"):
+                # Extract numeric value from currency literals like "$100", "$100.50/1mo"
+                value_str = str(expr.value)
+                # Remove currency symbols ($, £, €, etc.) and extract number
+                # Match optional sign, then digits with optional decimal point
+                match = re.search(r'([+-]?[\d.]+)', value_str)
+                if match:
+                    return float(match.group(1))
+                return None
+            elif expr.literal_type in ("number", "integer"):
+                return float(expr.value) if '.' in str(expr.value) else int(expr.value)
+            elif expr.literal_type == "boolean":
+                return expr.value
+            return None
+        
+        # Variable references (look up parameter values)
+        if isinstance(expr, Variable):
+            # Look up in static_values (parameters with literal values)
+            if expr.name in self.static_values:
+                # Recursively evaluate the stored literal
+                return self._evaluate_static_expression(self.static_values[expr.name])
+            return None
+        
+        # Unary operations
+        if isinstance(expr, UnaryOp):
+            operand_val = self._evaluate_static_expression(expr.operand)
+            if operand_val is None:
+                return None
+            
+            op = expr.operator
+            if op == '-':
+                return -operand_val
+            elif op == '+':
+                return operand_val
+            elif op == 'not':
+                return not operand_val
+            return None
+        
+        # Binary operations
+        if isinstance(expr, BinaryOp):
+            left_val = self._evaluate_static_expression(expr.left)
+            right_val = self._evaluate_static_expression(expr.right)
+            
+            if left_val is None or right_val is None:
+                return None
+            
+            op = expr.operator
+            if op == '+':
+                return left_val + right_val
+            elif op == '-':
+                return left_val - right_val
+            elif op == '*':
+                return left_val * right_val
+            elif op == '/':
+                return left_val / right_val if right_val != 0 else None
+            elif op == '==':
+                return left_val == right_val
+            elif op == '!=':
+                return left_val != right_val
+            elif op == '<':
+                return left_val < right_val
+            elif op == '<=':
+                return left_val <= right_val
+            elif op == '>':
+                return left_val > right_val
+            elif op == '>=':
+                return left_val >= right_val
+            elif op == 'and':
+                return left_val and right_val
+            elif op == 'or':
+                return left_val or right_val
+            return None
+        
+        # Other expression types
+        return None
 
     def generate_contract_report(self, model: Model) -> str:
         """
