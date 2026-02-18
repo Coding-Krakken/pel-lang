@@ -314,21 +314,27 @@ make security
 
 ### CI Configuration Files
 
-- **`.github/workflows/ci.yml`** - GitHub Actions workflow
+- **`.github/workflows/ci.yml`** - Main GitHub Actions CI workflow
+- **`.github/workflows/test.yml`** - Multi-platform test workflow
 - **`.pre-commit-config.yaml`** - Pre-commit hooks
-- **`Makefile`** - Local CI commands
+- **`Makefile`** - Local CI commands (`make ci`, `make coverage`, etc.)
 - **`pyproject.toml`** - Tool configurations (pytest, coverage, ruff, bandit)
+
+**For detailed CI documentation:**
+- **[Merge Requirements](docs/ci/MERGE_REQUIREMENTS.md)** - Quality gates and merge policy
+- **[CI Troubleshooting](docs/ci/TROUBLESHOOTING.md)** - Debugging CI failures
 
 ### Branch Protection
 
 The `main` branch is protected with:
 - Required status checks (all CI stages must pass)
-- Required review approval
+- Required review approval (at least 1 maintainer)
+- Coverage threshold ≥ 80%
 - No force pushes
 - No deletions
 - Linear history required
 
-See [`docs/ci/BRANCH_PROTECTION.md`](docs/ci/BRANCH_PROTECTION.md) for complete branch protection documentation.
+**See [Merge Requirements](docs/ci/MERGE_REQUIREMENTS.md) for complete merge policy documentation.**
 
 ---
 
@@ -527,6 +533,13 @@ Fixes #456
 ---
 
 ## Testing Requirements
+
+### Quick Reference
+
+For comprehensive testing information, see:
+- **[Complete Testing Guide](docs/TESTING.md)** - In-depth testing documentation
+- **[CI Troubleshooting](docs/ci/TROUBLESHOOTING.md)** - Debugging CI failures
+- **[Merge Requirements](docs/ci/MERGE_REQUIREMENTS.md)** - Quality gates and merge process
 
 ### Test Philosophy
 
