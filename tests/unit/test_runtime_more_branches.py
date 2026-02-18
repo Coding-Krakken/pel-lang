@@ -281,3 +281,63 @@ def test_runtime_run_monte_carlo_raises_for_conflicting_correlation_values() -> 
 
     with pytest.raises(ValueError, match="Conflicting correlation values"):
         runtime.run_monte_carlo(ir_doc)
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_correlated_sampling_resolves_param_expressions() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "base",
+                    "value": {"expr_type": "Literal", "literal_value": 10.0},
+                    "provenance": {"source": "test", "method": "given", "confidence": 1.0},
+                },
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {
+                            "mu": {"expr_type": "Variable", "variable_name": "base"},
+                            "sigma": 1.0,
+                        },
+                    },
+                    "provenance": {
+                        "source": "test",
+                        "method": "fitted",
+                        "confidence": 1.0,
+                        "correlated_with": ["b", 0.5],
+                    },
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {
+                            "mu": {"expr_type": "Variable", "variable_name": "base"},
+                            "sigma": 1.0,
+                        },
+                    },
+                    "provenance": {"source": "test", "method": "fitted", "confidence": 1.0},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    result = runtime.run_monte_carlo(ir_doc)
+    assumptions = {item["name"]: item["value"] for item in result["runs"][0]["assumptions"]}
+
+    assert result["status"] == "success"
+    assert assumptions["base"] == 10.0
+    assert assumptions["a"] > 5.0
+    assert assumptions["b"] > 5.0

@@ -85,8 +85,8 @@ Why now:
 ```bash
 .venv-lint/bin/ruff check compiler/ runtime/ tests/
 python -m pytest -q
-python -m pytest tests/runtime -q
-python benchmarks/score_benchmark.py
+python -m pytest tests/unit/test_runtime_more_branches.py -q
+python benchmarks/score_benchmark.py --min-success-rate 90
 ```
 
 ## Risk Assessment
