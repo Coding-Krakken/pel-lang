@@ -2,214 +2,214 @@
 // Demonstrates: economic types, uncertainty, constraints, policies, provenance
 
 model saas_subscription {
-  // === Time Configuration ===
-  // time_horizon: 36  // 3 years
-  // time_unit: Month
-  
-  // === Parameters with Provenance ===
-  
-  param initial_mrr: Currency<USD> = $50_000 {
-    source: "stripe_export_2025_12",
-    method: "observed",
-    confidence: 0.95,
-    freshness: "P1M",  // 1 month old
-    owner: "finance@company.com",
-    notes: "Stripe MRR as of 2025-12-31"
-  }
-  
-  param monthly_growth_rate: Rate per Month = ~Normal(μ=0.12/1mo, σ=0.03/1mo) {
-    source: "historical_cohort_analysis_2023_2025",
-    method: "fitted",
-    confidence: 0.75,
-    freshness: "P2M",
-    owner: "growth@company.com",
-    correlated_with: [
-      ("cac", -0.4),  // Higher growth correlates with higher CAC
-      ("conversion_rate", 0.6)  // Higher growth correlates with higher conversion
-    ],
-    notes: "Fitted from 24 months of data, includes seasonality"
-  }
-  
-  param churn_rate: Rate per Month = ~Beta(α=2, β=38) {
-    source: "customer_retention_dashboard",
-    method: "fitted",
-    confidence: 0.80,
-    freshness: "P1M",
-    owner: "product@company.com",
-    notes: "Beta(2, 38) gives mean ~5% churn with long tail"
-  }
-  
-  param cac: Currency<USD> = ~LogNormal(μ=$450, σ=$120) {
-    source: "marketing_spend_analysis_2025_q4",
-    method: "derived",
-    confidence: 0.70,
-    freshness: "P1M",
-    owner: "marketing@company.com",
-    correlated_with: [
-      ("monthly_growth_rate", -0.4)
-    ],
-    notes: "CAC calculated from total marketing spend / new customers"
-  }
-  
-  param arpu: Currency<USD> = ~Normal(μ=$125/1mo, σ=$25/1mo) {
-    source: "billing_system_2025_12",
-    method: "observed",
-    confidence: 0.90,
-    freshness: "P1M",
-    owner: "finance@company.com",
-    notes: "Average revenue per user across all plans"
-  }
-  
-  param conversion_rate: Fraction = ~Beta(α=5, β=45) {
-    source: "signup_funnel_analytics",
-    method: "fitted",
-    confidence: 0.75,
-    freshness: "P2W",  // 2 weeks old
-    owner: "growth@company.com",
-    correlated_with: [
-      ("monthly_growth_rate", 0.6)
-    ],
-    notes: "Trial-to-paid conversion rate"
-  }
-  
-  param operating_expense_rate: Fraction = 0.65 {
-    source: "budget_2026",
-    method: "assumption",
-    confidence: 0.60,
-    owner: "cfo@company.com",
-    notes: "OpEx as % of revenue (excludes COGS)"
-  }
-  
-  param minimum_cash_buffer: Currency<USD> = $200_000 {
-    source: "board_policy_2025_q3",
-    method: "assumption",
-    confidence: 1.0,
-    owner: "cfo@company.com",
-    notes: "Minimum 2 months of operating expenses"
-  }
-  
-  param initial_cash: Currency<USD> = $500_000 {
-    source: "bank_balance_2025_12_31",
-    method: "observed",
-    confidence: 1.0,
-    freshness: "P1M",
-    owner: "finance@company.com"
-  }
-  
-  // === Variables (Computed Values) ===
-  
-  var mrr: TimeSeries<Currency<USD>>
-  mrr[0] = initial_mrr
-  mrr[t+1] = mrr[t] * (1 + monthly_growth_rate[t] - churn_rate[t])
-  
-  var new_customers: TimeSeries<Count<Customer>>
-  new_customers[t] = (mrr[t] * monthly_growth_rate[t]) / arpu[t]
-  
-  var acquisition_cost: TimeSeries<Currency<USD>>
-  acquisition_cost[t] = new_customers[t] * cac[t]
-  
-  var revenue: TimeSeries<Currency<USD>>
-  revenue[t] = mrr[t]  // Revenue equals MRR for subscription model
-  
-  var operating_expenses: TimeSeries<Currency<USD>>
-  operating_expenses[t] = revenue[t] * operating_expense_rate
-  
-  var ebitda: TimeSeries<Currency<USD>>
-  ebitda[t] = revenue[t] - operating_expenses[t] - acquisition_cost[t]
-  
-  var cash: TimeSeries<Currency<USD>>
-  cash[0] = initial_cash
-  cash[t+1] = cash[t] + ebitda[t]
-  
-  var ltv: Currency<USD> = arpu / churn_rate
-  var ltv_to_cac_ratio: Fraction = ltv / cac
-  
-  var months_to_profitability: Duration = {
-    for t in 0..time_horizon {
-      if ebitda[t] > $0 {
-        return t * 1mo
-      }
+    // === Time Configuration ===
+    // time_horizon: 36  // 3 years
+    // time_unit: Month
+
+    // === Parameters with Provenance ===
+
+    param initial_mrr: Currency<USD> = $50_000 {
+        source: "stripe_export_2025_12",
+        method: "observed",
+        confidence: 0.95,
+        freshness: "P1M", // 1 month old
+        owner: "finance@company.com",
+        notes: "Stripe MRR as of 2025-12-31"
     }
-    return time_horizon * 1mo
-  }
-  
-  // === Constraints ===
-  
-  constraint cash_positive: cash[t] >= $0 {
-    severity: fatal,
-    message: "Company ran out of cash",
-    for: all timesteps
-  }
-  
-  constraint minimum_runway: cash[t] >= minimum_cash_buffer {
-    severity: warning,
-    message: "Cash below minimum buffer (2 months OpEx)",
-    for: all timesteps
-  }
-  
-  constraint healthy_unit_economics: ltv_to_cac_ratio >= 3.0 {
-    severity: warning,
-    message: "LTV:CAC ratio below 3.0 (unhealthy unit economics)",
-    for: t >= 6  // After 6 months ramp-up
-  }
-  
-  constraint sustainable_growth: monthly_growth_rate[t] <= 0.30/1mo {
-    severity: warning,
-    message: "Growth rate above 30%/mo may be unsustainable",
-    for: all timesteps
-  }
-  
-  constraint profitability_timeline: months_to_profitability <= 24mo {
-    severity: warning,
-    message: "Profitability takes >24 months (may concern investors)",
-    for: t == 0
-  }
-  
-  // === Policies (Adaptive Strategies) ===
-  
-  policy annual_price_increase {
-    when: t % 12 == 0 && t > 0,  // Every 12 months
-    then: {
-      arpu = arpu * 1.05  // 5% annual increase
-      emit event("price_increase", amount: 0.05)
+
+    param monthly_growth_rate: Rate per Month = ~Normal(μ = 0.12 / 1mo, σ = 0.03 / 1mo) {
+        source: "historical_cohort_analysis_2023_2025",
+        method: "fitted",
+        confidence: 0.75,
+        freshness: "P2M",
+        owner: "growth@company.com",
+        correlated_with:[
+        ("cac", - 0.4), // Higher growth correlates with higher CAC
+        ("conversion_rate", 0.6) // Higher growth correlates with higher conversion
+        ],
+        notes: "Fitted from 24 months of data, includes seasonality"
     }
-  }
-  
-  policy growth_hiring {
-    when: revenue[t] > revenue[t-1] * 1.20 && cash[t] > $500_000,
-    then: {
-      operating_expense_rate = operating_expense_rate * 1.10  // Hire more
-      emit event("hiring_surge")
+
+    param churn_rate: Rate per Month = ~Beta(α = 2, β = 38) {
+        source: "customer_retention_dashboard",
+        method: "fitted",
+        confidence: 0.80,
+        freshness: "P1M",
+        owner: "product@company.com",
+        notes: "Beta(2, 38) gives mean ~5% churn with long tail"
     }
-  }
-  
-  policy hiring_freeze {
-    when: cash[t] < minimum_cash_buffer * 1.5,
-    then: {
-      operating_expense_rate = operating_expense_rate * 0.95  // Slow hiring
-      emit event("hiring_freeze")
+
+    param cac: Currency<USD> = ~LogNormal(μ = $450, σ = $120) {
+        source: "marketing_spend_analysis_2025_q4",
+        method: "derived",
+        confidence: 0.70,
+        freshness: "P1M",
+        owner: "marketing@company.com",
+        correlated_with:[
+        ("monthly_growth_rate", - 0.4)
+        ],
+        notes: "CAC calculated from total marketing spend / new customers"
     }
-  }
-  
-  policy cut_marketing_if_low_cash {
-    when: cash[t] < minimum_cash_buffer * 2.0 && ebitda[t] < $0,
-    then: {
-      cac = cac * 0.70  // Reduce CAC by cutting marketing spend
-      monthly_growth_rate = monthly_growth_rate * 0.80  // Lower growth
-      emit event("marketing_cut", reduction: 0.30)
+
+    param arpu: Currency<USD> = ~Normal(μ = $125 / 1mo, σ = $25 / 1mo) {
+        source: "billing_system_2025_12",
+        method: "observed",
+        confidence: 0.90,
+        freshness: "P1M",
+        owner: "finance@company.com",
+        notes: "Average revenue per user across all plans"
     }
-  }
-  
-  policy pivot_to_profitability {
-    when: t == 18 && ebitda[t] < $0,  // If not profitable by month 18
-    then: {
-      // Cut CAC aggressively, focus on retention
-      cac = cac * 0.50
-      monthly_growth_rate = monthly_growth_rate * 0.60
-      churn_rate = churn_rate * 0.90  // Improve retention
-      emit event("strategic_pivot", reason: "focus_profitability")
+
+    param conversion_rate: Fraction = ~Beta(α = 5, β = 45) {
+        source: "signup_funnel_analytics",
+        method: "fitted",
+        confidence: 0.75,
+        freshness: "P2W", // 2 weeks old
+        owner: "growth@company.com",
+        correlated_with:[
+        ("monthly_growth_rate", 0.6)
+        ],
+        notes: "Trial-to-paid conversion rate"
     }
-  }
+
+    param operating_expense_rate: Fraction = 0.65 {
+        source: "budget_2026",
+        method: "assumption",
+        confidence: 0.60,
+        owner: "cfo@company.com",
+        notes: "OpEx as % of revenue (excludes COGS)"
+    }
+
+    param minimum_cash_buffer: Currency<USD> = $200_000 {
+        source: "board_policy_2025_q3",
+        method: "assumption",
+        confidence: 1.0,
+        owner: "cfo@company.com",
+        notes: "Minimum 2 months of operating expenses"
+    }
+
+    param initial_cash: Currency<USD> = $500_000 {
+        source: "bank_balance_2025_12_31",
+        method: "observed",
+        confidence: 1.0,
+        freshness: "P1M",
+        owner: "finance@company.com"
+    }
+
+    // === Variables (Computed Values) ===
+
+    var mrr: TimeSeries<Currency<USD>>
+    mrr[0] = initial_mrr
+    mrr[t + 1] = mrr[t] * (1 + monthly_growth_rate[t] - churn_rate[t])
+
+    var new_customers: TimeSeries<Count<Customer>>
+    new_customers[t] = (mrr[t] * monthly_growth_rate[t]) / arpu[t]
+
+    var acquisition_cost: TimeSeries<Currency<USD>>
+    acquisition_cost[t] = new_customers[t] * cac[t]
+
+    var revenue: TimeSeries<Currency<USD>>
+    revenue[t] = mrr[t] // Revenue equals MRR for subscription model
+
+    var operating_expenses: TimeSeries<Currency<USD>>
+    operating_expenses[t] = revenue[t] * operating_expense_rate
+
+    var ebitda: TimeSeries<Currency<USD>>
+    ebitda[t] = revenue[t] - operating_expenses[t] - acquisition_cost[t]
+
+    var cash: TimeSeries<Currency<USD>>
+    cash[0] = initial_cash
+    cash[t + 1] = cash[t] + ebitda[t]
+
+    var ltv: Currency<USD> = arpu / churn_rate
+    var ltv_to_cac_ratio: Fraction = ltv / cac
+
+    var months_to_profitability: Duration = {
+        for t in 0..time_horizon {
+            if ebitda[t]> $0 {
+                return t * 1mo
+            }
+        }
+        return time_horizon * 1mo
+    }
+
+    // === Constraints ===
+
+    constraint cash_positive: cash[t] >= $0 {
+        severity: fatal,
+        message: "Company ran out of cash",
+        for: all timesteps
+    }
+
+    constraint minimum_runway: cash[t] >= minimum_cash_buffer {
+        severity: warning,
+        message: "Cash below minimum buffer (2 months OpEx)",
+        for: all timesteps
+    }
+
+    constraint healthy_unit_economics: ltv_to_cac_ratio >= 3.0 {
+        severity: warning,
+        message: "LTV:CAC ratio below 3.0 (unhealthy unit economics)",
+        for: t >= 6 // After 6 months ramp-up
+    }
+
+    constraint sustainable_growth: monthly_growth_rate[t] <= 0.30 / 1mo {
+        severity: warning,
+        message: "Growth rate above 30%/mo may be unsustainable",
+        for: all timesteps
+    }
+
+    constraint profitability_timeline: months_to_profitability <= 24mo {
+        severity: warning,
+        message: "Profitability takes >24 months (may concern investors)",
+        for: t == 0
+    }
+
+    // === Policies (Adaptive Strategies) ===
+
+    policy annual_price_increase {
+        when: t % 12 == 0 && t > 0, // Every 12 months
+        then: {
+            arpu = arpu * 1.05 // 5% annual increase
+            emit event("price_increase", amount: 0.05)
+        }
+    }
+
+    policy growth_hiring {
+        when: revenue[t]> revenue[t - 1] * 1.20 && cash[t]> $500_000,
+        then: {
+            operating_expense_rate = operating_expense_rate * 1.10 // Hire more
+            emit event("hiring_surge")
+        }
+    }
+
+    policy hiring_freeze {
+        when: cash[t]< minimum_cash_buffer * 1.5,
+        then: {
+            operating_expense_rate = operating_expense_rate * 0.95 // Slow hiring
+            emit event("hiring_freeze")
+        }
+    }
+
+    policy cut_marketing_if_low_cash {
+        when: cash[t]< minimum_cash_buffer * 2.0 && ebitda[t]< $0,
+        then: {
+            cac = cac * 0.70 // Reduce CAC by cutting marketing spend
+            monthly_growth_rate = monthly_growth_rate * 0.80 // Lower growth
+            emit event("marketing_cut", reduction: 0.30)
+        }
+    }
+
+    policy pivot_to_profitability {
+        when: t == 18 && ebitda[t]< $0, // If not profitable by month 18
+        then: {
+            // Cut CAC aggressively, focus on retention
+            cac = cac * 0.50
+            monthly_growth_rate = monthly_growth_rate * 0.60
+            churn_rate = churn_rate * 0.90 // Improve retention
+            emit event("strategic_pivot", reason: "focus_profitability")
+        }
+    }
 }
 
 // === End of Model ===

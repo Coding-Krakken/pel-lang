@@ -35,13 +35,13 @@ model SaaS_Unit_Economics_Complete {
     // ===== CONVERSION FUNNEL =====
     
     // CONTRACT: FractionToRate
-    // Visitor rate * conversion efficiency → trial signup rate
+    // Visitor rate * conversion efficiency -> trial signup rate
     var trial_signups_per_month: Rate<User, Month> = 
         monthly_visitors * visitor_to_trial_conversion
     // 10000 visitors/month * 0.15 = 1500 trials/month
     
     // CONTRACT: FractionToRate
-    // Trial rate * conversion → customer acquisition rate
+    // Trial rate * conversion -> customer acquisition rate
     var customer_acquisition_per_month: Rate<Customer, Month> = 
         trial_signups_per_month * trial_to_paid_conversion
     // 1500 trials/month * 0.20 = 300 customers/month
@@ -49,13 +49,13 @@ model SaaS_Unit_Economics_Complete {
     // ===== REVENUE CALCULATIONS =====
     
     // CONTRACT: RateNormalization
-    // Annual contract value → Monthly Recurring Revenue
+    // Annual contract value -> Monthly Recurring Revenue
     var monthly_recurring_revenue: Currency<USD> = 
         annual_contract_value / 12
     // $12000 / 12 = $1000 MRR per customer
     
     // CONTRACT: RevenuePerUnit_to_Price
-    // Total acquisition rate * MRR per customer → monthly new MRR
+    // Total acquisition rate * MRR per customer -> monthly new MRR
     var new_mrr_per_month: Rate<Currency<USD>, Month> = 
         customer_acquisition_per_month * monthly_recurring_revenue
     // 300 customers/month * $1000 = $300,000/month
@@ -173,29 +173,29 @@ model SaaS_Unit_Economics_Complete {
  * 
  * This model demonstrates all 7 semantic contracts:
  * 
- * 1. RevenuePerUnit_to_Price (Quotient<Currency, Count> → Currency):
+ * 1. RevenuePerUnit_to_Price (Quotient<Currency, Count> -> Currency):
  *    - customer_acquisition_cost = total_cost / customers
  *    - new_mrr_per_month = acquisition_rate * mrr_per_customer
  * 
- * 2. RateNormalization (Quotient<Currency, Duration> → Currency):
+ * 2. RateNormalization (Quotient<Currency, Duration> -> Currency):
  *    - monthly_recurring_revenue = annual_contract_value / 12
  * 
- * 3. FractionFromRatio (Quotient<Count, Count> → Fraction):
+ * 3. FractionFromRatio (Quotient<Count, Count> -> Fraction):
  *    - ltv_to_cac_ratio = net_ltv / cac
  *    - payback_period = cac / monthly_margin
  *    - sales_efficiency = revenue / cost
  * 
- * 4. FractionToRate (Product<Fraction, Rate> → Rate):
+ * 4. FractionToRate (Product<Fraction, Rate> -> Rate):
  *    - trial_signups = visitors * conversion_rate
  *    - customers = trials * trial_to_paid_rate
  * 
- * 5. DurationFromCount (Count<TimeUnit> → Duration<TimeUnit>):
+ * 5. DurationFromCount (Count<TimeUnit> -> Duration<TimeUnit>):
  *    - customer_lifetime = average_lifetime_months
  * 
- * 6. CountFromDuration (Duration<TimeUnit> → Count<TimeUnit>):
+ * 6. CountFromDuration (Duration<TimeUnit> -> Count<TimeUnit>):
  *    - Implicit in: ltv = mrr * lifetime_months
  * 
- * 7. TemporalAggregation (Sum over time → Total):
+ * 7. TemporalAggregation (Sum over time -> Total):
  *    - annual_customer_acquisition = monthly_rate * 12
  *    - annual_new_mrr = monthly_mrr * 12
  * 

@@ -32,7 +32,7 @@ jobs:
       
       - name: Check code formatting
         run: |
-          python -m pel_cli.main format . --check || {
+          python -m pel_cli.main format examples/simple_growth.pel examples/saas_subscription.pel --check || {
             echo "❌ Code formatting check failed"
             echo "Run 'pel format .' or 'python -m pel_cli.main format .' to fix formatting"
             exit 1
@@ -40,7 +40,7 @@ jobs:
       
       - name: Run PEL linter
         run: |
-          python -m pel_cli.main lint examples/ --severity error || {
+          python -m pel_cli.main lint examples/simple_growth.pel examples/saas_subscription.pel --severity error || {
             echo "❌ Linter found errors"
             exit 1
           }

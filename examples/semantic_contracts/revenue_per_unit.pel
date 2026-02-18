@@ -1,7 +1,7 @@
 /*
  * Example: RevenuePerUnit_to_Price Contract
  * 
- * Demonstrates: Quotient<Currency, Count> → Currency
+ * Demonstrates: Quotient<Currency, Count> -> Currency
  * Use case: Unit economics - computing price/cost per customer/unit
  * 
  * Semantic justification:
@@ -17,7 +17,7 @@ model SaaS_Unit_Economics {
     param marketing_spend: Currency<USD> = $240000
     param new_customers: Count<Customer> = 200
     
-    // RevenuePerUnit_to_Price contract: revenue / customers → price per customer
+    // RevenuePerUnit_to_Price contract: revenue / customers -> price per customer
     // This conversion is justified because we're computing average revenue per customer
     var revenue_per_customer: Currency<USD> = annual_revenue / customer_count
     

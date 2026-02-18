@@ -2,34 +2,34 @@
 // Used by quick_start demo and 15-minute tutorial
 
 model SimpleGrowth {
-  // Starting revenue
-  param initial_revenue: Currency<USD> = $10_000 {
-    source: "current_metrics",
-    method: "observed",
-    confidence: 0.95
-  }
-  
-  // Monthly growth rate (with uncertainty)
-  param growth_rate: Rate per Month = ~Normal(μ=0.10/1mo, σ=0.02/1mo) {
-    source: "historical_analysis",
-    method: "fitted",
-    confidence: 0.70,
-    notes: "Fitted from last 12 months"
-  }
-  
-  // Operating costs per month
-  param monthly_opex: Currency<USD> = $6_000 {
-    source: "budget_2026",
-    method: "assumption",
-    confidence: 0.80
-  }
-  
-  // Calculated: Revenue over time
-  var revenue: TimeSeries<Currency<USD>>
-  revenue[0] = initial_revenue
-  revenue[t+1] = revenue[t] * (1 + growth_rate[t])
-  
-  // Calculated: Profit
-  var profit: TimeSeries<Currency<USD>>
-  profit[t] = revenue[t] - monthly_opex
+    // Starting revenue
+    param initial_revenue: Currency<USD> = $10_000 {
+        source: "current_metrics",
+        method: "observed",
+        confidence: 0.95
+    }
+
+    // Monthly growth rate (with uncertainty)
+    param growth_rate: Rate per Month = ~Normal(μ = 0.10 / 1mo, σ = 0.02 / 1mo) {
+        source: "historical_analysis",
+        method: "fitted",
+        confidence: 0.70,
+        notes: "Fitted from last 12 months"
+    }
+
+    // Operating costs per month
+    param monthly_opex: Currency<USD> = $6_000 {
+        source: "budget_2026",
+        method: "assumption",
+        confidence: 0.80
+    }
+
+    // Calculated: Revenue over time
+    var revenue: TimeSeries<Currency<USD>>
+    revenue[0] = initial_revenue
+    revenue[t + 1] = revenue[t] * (1 + growth_rate[t])
+
+    // Calculated: Profit
+    var profit: TimeSeries<Currency<USD>>
+    profit[t] = revenue[t] - monthly_opex
 }
