@@ -7,12 +7,12 @@ import logging
 import logging.handlers
 import re
 import signal
-import threading
-from typing import Any
 
 # Import PEL compiler components
 import sys
+import threading
 from pathlib import Path
+from typing import Any
 
 from lsprotocol.types import (
     TEXT_DOCUMENT_COMPLETION,
@@ -180,7 +180,7 @@ def parse_document(source: str, timeout: int = 30) -> tuple[Model | None, list[T
             severity=DiagnosticSeverity.Error,
             source="pel-lsp"
         ))
-        logger.warning(f"Parse timeout for document")
+        logger.warning("Parse timeout for document")
     except (AttributeError, KeyError, ValueError) as e:
         # Handle expected structural errors
         diagnostics.append(Diagnostic(
@@ -730,7 +730,7 @@ def start() -> None:
     log_handler.setFormatter(
         logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     )
-    
+
     logging.basicConfig(
         level=logging.INFO,
         handlers=[log_handler, logging.StreamHandler()]
