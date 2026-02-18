@@ -23,7 +23,7 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install -e .[dev]
 
       - name: Run benchmark scorer
-        run: python3 benchmarks/score_benchmark.py
+        run: python3 benchmarks/score_benchmark.py --min-success-rate 90
 
       - name: Upload results
         uses: actions/upload-artifact@v4

@@ -141,3 +141,71 @@ def test_runtime_run_deterministic_initializes_params_into_state() -> None:
     result = runtime.run_deterministic(ir_doc)
     assert result["status"] == "success"
     assert result["constraint_violations"] == []
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_samples_distribution_params_per_run() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=3, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "d",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 10.0, "sigma": 1.0},
+                    },
+                    "provenance": {"source": "test", "method": "fitted", "confidence": 1.0},
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    result = runtime.run_monte_carlo(ir_doc)
+    sampled_values = [run["assumptions"][0]["value"] for run in result["runs"]]
+
+    assert result["status"] == "success"
+    assert len(set(sampled_values)) > 1
+
+
+@pytest.mark.unit
+def test_runtime_run_monte_carlo_raises_for_invalid_correlation_coefficient() -> None:
+    runtime = PELRuntime(RuntimeConfig(mode="monte_carlo", seed=123, num_runs=1, time_horizon=1))
+    ir_doc = {
+        "model": {
+            "name": "mc",
+            "time_horizon": 1,
+            "time_unit": "Month",
+            "nodes": [
+                {
+                    "node_type": "param",
+                    "name": "a",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                    "provenance": {"correlated_with": ["b", 1.5]},
+                },
+                {
+                    "node_type": "param",
+                    "name": "b",
+                    "value": {
+                        "expr_type": "Distribution",
+                        "dist_type": "Normal",
+                        "params": {"mu": 0.0, "sigma": 1.0},
+                    },
+                },
+                {"node_type": "var", "name": "v"},
+            ],
+        }
+    }
+
+    with pytest.raises(ValueError, match="Invalid correlation coefficient"):
+        runtime.run_monte_carlo(ir_doc)

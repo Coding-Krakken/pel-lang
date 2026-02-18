@@ -12,6 +12,7 @@ Reference implementation v0.1.0
 
 import argparse
 import json
+import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,7 +62,12 @@ class PELRuntime:
         else:
             raise ValueError(f"Unknown mode: {self.config.mode}")
 
-    def run_deterministic(self, ir_doc: dict[str, Any]) -> dict[str, Any]:
+    def run_deterministic(
+        self,
+        ir_doc: dict[str, Any],
+        deterministic: bool = True,
+        sampled_params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Run single deterministic simulation.
 
@@ -73,9 +79,13 @@ class PELRuntime:
 
         # Initialize parameters (sample distributions at mean)
         assumptions = []
+        sampled_params = sampled_params or {}
         for node in model["nodes"]:
             if node["node_type"] == "param":
-                value = self.evaluate_expression(node["value"], state, deterministic=True)
+                if node["name"] in sampled_params:
+                    value = sampled_params[node["name"]]
+                else:
+                    value = self.evaluate_expression(node["value"], state, deterministic=deterministic)
                 state[node["name"]] = value
 
                 # Collect assumption/provenance data
@@ -106,7 +116,11 @@ class PELRuntime:
                     timeseries_results[node["name"]].append(state[node["name"]])
 
             # Check constraints
-            for constraint in model.get("constraints", []):
+            ordered_constraints = sorted(
+                model.get("constraints", []),
+                key=lambda c: (str(c.get("name", "")), str(c.get("constraint_id", ""))),
+            )
+            for constraint in ordered_constraints:
                 # Check if this constraint applies to this timestep
                 # For now, we check all constraints at all timesteps
                 # TODO: Parse constraint "for" clauses to determine when to check
@@ -164,7 +178,9 @@ class PELRuntime:
 
         Distributions sampled from full distribution with correlation.
         """
-        # Stub: run N independent deterministic runs with different seeds
+        model = ir_doc["model"]
+        correlated_names, correlation_matrix = self._extract_correlation_spec(model)
+
         runs = []
         for i in range(self.config.num_runs):
             # Create new config with different seed
@@ -174,7 +190,20 @@ class PELRuntime:
                 time_horizon=self.config.time_horizon
             )
             runtime = PELRuntime(run_config)
-            result = runtime.run_deterministic(ir_doc)
+
+            sampled_params: dict[str, Any] = {}
+            if correlated_names:
+                sampled_params = runtime._sample_correlated_parameter_values(
+                    model,
+                    correlated_names,
+                    correlation_matrix,
+                )
+
+            result = runtime.run_deterministic(
+                ir_doc,
+                deterministic=False,
+                sampled_params=sampled_params,
+            )
             runs.append(result)
 
         # Aggregate results (stub: just collect)
@@ -188,6 +217,192 @@ class PELRuntime:
                 "success_rate": sum(1 for r in runs if r["status"] == "success") / len(runs)
             }
         }
+
+    def _extract_correlation_spec(self, model: dict[str, Any]) -> tuple[list[str], list[list[float]]]:
+        """Extract and validate Normal-parameter correlation matrix from provenance metadata."""
+        normal_params: dict[str, dict[str, Any]] = {}
+
+        for node in model.get("nodes", []):
+            if node.get("node_type") != "param":
+                continue
+            value = node.get("value", {})
+            if not isinstance(value, dict) or value.get("expr_type") != "Distribution":
+                continue
+            dist_type = self._distribution_type(value)
+            if dist_type in ("Normal", "normal"):
+                normal_params[node["name"]] = node
+
+        if len(normal_params) < 2:
+            return [], []
+
+        names = list(normal_params.keys())
+        index = {name: i for i, name in enumerate(names)}
+        size = len(names)
+        matrix = [[0.0 for _ in range(size)] for _ in range(size)]
+        for i in range(size):
+            matrix[i][i] = 1.0
+
+        for name, node in normal_params.items():
+            provenance = node.get("provenance") or {}
+            if not isinstance(provenance, dict):
+                continue
+            for other_name, corr in self._parse_correlated_with(provenance.get("correlated_with")):
+                if other_name not in index:
+                    continue
+                i = index[name]
+                j = index[other_name]
+                if i == j:
+                    continue
+                if corr < -1.0 or corr > 1.0:
+                    raise ValueError(
+                        f"Invalid correlation coefficient {corr} between '{name}' and '{other_name}'"
+                    )
+                existing = matrix[i][j]
+                if existing != 0.0 and abs(existing - corr) > 1e-9:
+                    raise ValueError(
+                        f"Conflicting correlation values for '{name}' and '{other_name}'"
+                    )
+                matrix[i][j] = corr
+                matrix[j][i] = corr
+
+        has_off_diagonal = any(
+            i != j and matrix[i][j] != 0.0
+            for i in range(size)
+            for j in range(size)
+        )
+        if not has_off_diagonal:
+            return [], []
+
+        self._validate_correlation_matrix(matrix)
+        return names, matrix
+
+    def _distribution_type(self, expr: dict[str, Any]) -> str | None:
+        """Read distribution type from either current or legacy IR shapes."""
+        if "distribution" in expr and isinstance(expr["distribution"], dict):
+            return cast(str | None, expr["distribution"].get("distribution_type"))
+        return cast(str | None, expr.get("dist_type"))
+
+    def _distribution_params(self, expr: dict[str, Any]) -> dict[str, Any]:
+        """Read distribution params from either current or legacy IR shapes."""
+        if "distribution" in expr and isinstance(expr["distribution"], dict):
+            return cast(dict[str, Any], expr["distribution"].get("parameters", {}))
+        return cast(dict[str, Any], expr.get("params", {}))
+
+    def _parse_correlated_with(self, correlated_with: Any) -> list[tuple[str, float]]:
+        """Parse provenance correlated_with metadata.
+
+        Supported forms:
+        - ["other_param", 0.4]
+        - [["p1", 0.4], ["p2", -0.2]]
+        """
+        parsed: list[tuple[str, float]] = []
+
+        if not isinstance(correlated_with, list):
+            return parsed
+
+        # Single pair form
+        if (
+            len(correlated_with) == 2
+            and isinstance(correlated_with[0], str)
+            and isinstance(correlated_with[1], (int, float))
+        ):
+            parsed.append((correlated_with[0], float(correlated_with[1])))
+            return parsed
+
+        # List of pairs
+        for item in correlated_with:
+            if (
+                isinstance(item, list)
+                and len(item) == 2
+                and isinstance(item[0], str)
+                and isinstance(item[1], (int, float))
+            ):
+                parsed.append((item[0], float(item[1])))
+
+        return parsed
+
+    def _validate_correlation_matrix(self, matrix: list[list[float]]) -> None:
+        """Validate correlation matrix shape, symmetry, and positive semidefiniteness."""
+        size = len(matrix)
+        if size == 0:
+            return
+        for row in matrix:
+            if len(row) != size:
+                raise ValueError("Correlation matrix must be square")
+
+        for i in range(size):
+            if abs(matrix[i][i] - 1.0) > 1e-9:
+                raise ValueError("Correlation matrix diagonal entries must be 1.0")
+            for j in range(size):
+                if abs(matrix[i][j] - matrix[j][i]) > 1e-9:
+                    raise ValueError("Correlation matrix must be symmetric")
+                if matrix[i][j] < -1.0 or matrix[i][j] > 1.0:
+                    raise ValueError("Correlation coefficients must be within [-1, 1]")
+
+        self._cholesky_decomposition(matrix)
+
+    def _cholesky_decomposition(self, matrix: list[list[float]]) -> list[list[float]]:
+        """Compute Cholesky decomposition and fail for non-PSD matrices."""
+        size = len(matrix)
+        lower = [[0.0 for _ in range(size)] for _ in range(size)]
+
+        for i in range(size):
+            for j in range(i + 1):
+                acc = sum(lower[i][k] * lower[j][k] for k in range(j))
+
+                if i == j:
+                    diagonal = matrix[i][i] - acc
+                    if diagonal < -1e-12:
+                        raise ValueError("Correlation matrix must be positive semidefinite")
+                    lower[i][j] = math.sqrt(max(diagonal, 0.0))
+                else:
+                    if abs(lower[j][j]) < 1e-12:
+                        lower[i][j] = 0.0
+                    else:
+                        lower[i][j] = (matrix[i][j] - acc) / lower[j][j]
+
+        return lower
+
+    def _sample_correlated_parameter_values(
+        self,
+        model: dict[str, Any],
+        names: list[str],
+        matrix: list[list[float]],
+    ) -> dict[str, float]:
+        """Sample correlated Normal parameters using Cholesky transform."""
+        lower = self._cholesky_decomposition(matrix)
+        independent = [self.rng.gauss(0.0, 1.0) for _ in names]
+
+        correlated_standard = []
+        for i in range(len(names)):
+            correlated_standard.append(sum(lower[i][k] * independent[k] for k in range(i + 1)))
+
+        nodes_by_name = {
+            node["name"]: node
+            for node in model.get("nodes", [])
+            if node.get("node_type") == "param"
+        }
+        sampled: dict[str, float] = {}
+
+        for i, name in enumerate(names):
+            node = nodes_by_name.get(name)
+            if not node:
+                continue
+
+            value = cast(dict[str, Any], node.get("value", {}))
+            params = self._distribution_params(value)
+            resolved_params: dict[str, Any] = {}
+            for param_name, param_expr in params.items():
+                if isinstance(param_expr, dict) and "expr_type" in param_expr:
+                    resolved_params[param_name] = self.evaluate_expression(param_expr, {}, deterministic=True)
+                else:
+                    resolved_params[param_name] = param_expr
+
+            mu = float(resolved_params.get("μ", resolved_params.get("mu", 0.0)))
+            sigma = float(resolved_params.get("σ", resolved_params.get("sigma", 1.0)))
+            sampled[name] = mu + sigma * correlated_standard[i]
+
+        return sampled
 
     def evaluate_expression(self, expr: dict[str, Any], state: dict[str, Any], deterministic: bool = True) -> Any:
         """Evaluate IR expression (stub)."""
@@ -257,6 +472,52 @@ class PELRuntime:
                 return left < right
             elif op == ">":
                 return left > right
+
+        elif expr_type == "UnaryOp":
+            operand = self.evaluate_expression(expr["operand"], state, deterministic)
+            operator = expr.get("operator")
+            if operator == "-":
+                return -operand
+            if operator == "+":
+                return +operand
+            if operator in ("!", "not"):
+                return not operand
+
+        elif expr_type == "IfThenElse":
+            condition = self.evaluate_expression(expr["condition"], state, deterministic)
+            if condition:
+                return self.evaluate_expression(expr["then_expr"], state, deterministic)
+            return self.evaluate_expression(expr["else_expr"], state, deterministic)
+
+        elif expr_type == "ArrayLiteral":
+            return [self.evaluate_expression(element, state, deterministic) for element in expr.get("elements", [])]
+
+        elif expr_type == "FunctionCall":
+            function_name = expr.get("function_name", "")
+            args = [self.evaluate_expression(arg, state, deterministic) for arg in expr.get("arguments", [])]
+
+            if function_name == "min" and args:
+                return min(args)
+            if function_name == "max" and args:
+                return max(args)
+            if function_name == "abs" and len(args) == 1:
+                return abs(args[0])
+            if function_name == "round" and args:
+                if len(args) == 1:
+                    return round(args[0])
+                return round(args[0], int(args[1]))
+            if function_name == "pow" and len(args) == 2:
+                return args[0] ** args[1]
+            if function_name == "sum" and len(args) == 1 and isinstance(args[0], list):
+                return sum(args[0])
+            if function_name == "len" and len(args) == 1:
+                return len(args[0])
+
+        elif expr_type == "MemberAccess":
+            base = self.evaluate_expression(expr["expression"], state, deterministic)
+            member = expr.get("member")
+            if member == "length" and isinstance(base, list):
+                return len(base)
 
         elif expr_type == "Distribution":
             # Support both legacy IR shape and current IR shape.
