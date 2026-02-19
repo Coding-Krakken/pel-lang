@@ -51,7 +51,7 @@ Models ingest real data, fit distributions, detect drift, and recommend what to 
 Standard IR (Intermediate Representation) with conformance tests guarantees identical results across compliant runtimes. Model hash + seed = deterministic output.
 
 ### 9. **Language-Grade Tooling**
-Formatter (`pel format`), linter (`pel lint`), type checker, provenance validator, and IR compiler—treat business models like production code. LSP server, test runner, package manager, and dependency visualizer are planned for future releases.
+Compiler, test runner, CLI, dependency visualizer—treat business models like production code. Formatting and linting delegate to established tools (e.g., `ruff`).
 
 ### 10. **Benchmarked & Proven**
 Public benchmark suites measure expressiveness, correctness, auditability, tail-risk accuracy, and developer experience.
@@ -203,11 +203,8 @@ Running this model:
     shock_library/          # Recession, platform shocks
 
   /tooling                  # Language tooling
-    lsp_server/             # Language Server Protocol
-    formatter/              # `pel fmt`
-    linter/                 # `pel lint`
     cli/                    # `pel compile`, `pel run`, `pel test`
-    visualizer/             # Dependency graphs, risk maps
+    visualizer/             # Dependency graphs, risk maps (planned)
 
   /tests                    # Conformance + benchmark suites
     pel_100_expressiveness/ # 100 business archetype models
@@ -282,15 +279,6 @@ Output includes:
 - Time series results (with confidence intervals if Monte Carlo)
 - Sensitivity ranking (which parameters matter most)
 - Model hash and reproducibility artifacts
-
-### Code Quality
-
-```bash
-pel format hello_economics.pel --check
-pel lint hello_economics.pel
-```
-
-See the style guide at [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md).
 
 ---
 
@@ -382,7 +370,7 @@ See [ROADMAP.md](ROADMAP.md) for detailed development phases.
 - ✅ Reference compiler implementation
 - ✅ Deterministic and Monte Carlo runtimes
 - ✅ Core standard library modules
-- ✅ LSP server and basic tooling
+- ✅ CLI compiler tooling (`pel compile`, `pel run`, `pel test`)
 - ✅ Conformance test harness
 - ✅ PEL-100 expressiveness benchmark suite
 - 🚧 Calibration loop (planned Q2 2026)

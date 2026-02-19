@@ -1,6 +1,5 @@
-from pathlib import Path
-
 import yaml
+from pathlib import Path
 
 p = Path('tests/conformance/testcases/typechecking/CONF-TYPE-001.yaml')
 if not p.exists():

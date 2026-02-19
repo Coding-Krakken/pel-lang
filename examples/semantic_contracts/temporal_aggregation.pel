@@ -2,8 +2,8 @@
  * Example: CountFromDuration and TemporalAggregation Contracts
  * 
  * Demonstrates:
- * - Duration<T> -> Count<T>: CountFromDuration contract
- * - Sum(Count<T> over Duration) -> Count<T>: TemporalAggregation contract
+ * - Duration<T> → Count<T>: CountFromDuration contract
+ * - Sum(Count<T> over Duration) → Count<T>: TemporalAggregation contract
  * 
  * Use case: Time-based counting, temporal rollups, period conversions
  * 
@@ -155,7 +155,7 @@ model Temporal_Aggregation_Metrics {
  * 
  * TemporalAggregation use cases:
  * - Rolling up metrics from sub-periods to larger periods
- * - Weekly -> Monthly -> Quarterly -> Annual aggregation
+ * - Weekly → Monthly → Quarterly → Annual aggregation
  * - Summing event counts over observation windows
  * 
  * Important: TemporalAggregation assumes non-overlapping time periods
