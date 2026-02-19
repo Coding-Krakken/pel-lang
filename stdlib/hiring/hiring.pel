@@ -1,6 +1,21 @@
 // PEL Standard Library: Hiring Module
 // Functions for workforce planning, hiring funnels, and talent acquisition
 
+// TODO(v0.7.0): Extract mathematical constants when PEL supports module-level const
+//   Currently E (2.71828...) is inlined 2× at lines ~369, ~376
+//   When const syntax lands, extract to module-level constants:
+//     const E: Fraction = 2.71828182845904523536
+//     const EXPONENTIAL_STEEPNESS: Fraction = 3.0
+//     const S_CURVE_STEEPNESS: Fraction = 10.0
+//
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic" comments to:
+//     @contract(Monotonic)
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 21 functions with contract annotations throughout this module
+
 // ============================================================================
 // Mathematical Constants
 // ============================================================================
@@ -366,6 +381,7 @@ func ramp_curve(
     // Formula: 1 - e^(-k*x) where k = EXPONENTIAL_STEEPNESS = 3.0
     // At k=3, 95% productivity reached by end of ramp (1 - e^(-3) ≈ 0.9502)
     // Using Euler's number e = 2.71828182845904523536
+    // TODO(v0.7.0): Replace with: return 1.0 - pow(E, -EXPONENTIAL_STEEPNESS * progress)
     return 1.0 - pow(2.71828182845904523536, -3.0 * progress)
   }
   if ramp_shape == "s-curve" {
@@ -373,6 +389,7 @@ func ramp_curve(
     // Formula: 1 / (1 + e^(-k*(x-0.5))) where k = S_CURVE_STEEPNESS = 10.0
     // At k=10, sharp transition at 50% of ramp period (sigmoid midpoint)
     // Using Euler's number e = 2.71828182845904523536
+    // TODO(v0.7.0): Replace with: return 1.0 / (1.0 + pow(E, -S_CURVE_STEEPNESS * (progress - 0.5)))
     return 1.0 / (1.0 + pow(2.71828182845904523536, -10.0 * (progress - 0.5)))
   }
   
@@ -405,6 +422,13 @@ func effective_headcount(
 
 /// Total team productivity accounting for ramp and attrition
 /// Contracts: @Monotonic
+///
+/// TODO(v1.0): Consider inlining or adding value-add logic
+///   This is a trivial wrapper (single multiplication). Retained for:
+///   - Semantic naming/API discoverability
+///   - Future enhancement without breaking changes
+///   - "Functions as documentation" pattern
+///   Review during v1.0 API stabilization
 func team_productivity(
   effective_headcount: Count<Person>,
   productivity_per_person: Rate per Month
@@ -418,6 +442,13 @@ func team_productivity(
 
 /// Calculate output capacity per employee
 /// Contracts: @Monotonic
+///
+/// TODO(v1.0): Consider inlining or adding value-add logic
+///   This is a trivial wrapper (two multiplications). Retained for:
+///   - Semantic naming/API discoverability
+///   - Future enhancement without breaking changes
+///   - Common business modeling pattern deserves named function
+///   Review during v1.0 API stabilization
 func headcount_capacity(
   headcount: Count<Person>,
   capacity_per_person: Rate per Month,

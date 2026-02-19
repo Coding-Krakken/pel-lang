@@ -483,17 +483,26 @@ PEL follows a **specification-first, conformance-driven** development model:
 - PEL-100 expressiveness benchmark
 
 ### v0.2.0 (Planned April 2026) — "Ecosystem Release"
-- Complete standard library
+- Complete standard library (9/9 modules)
 - Advanced sensitivity analysis (Sobol)
 - Linter with 50+ rules
 - Model diff and governance tools
 - PEL-SAFE and PEL-TRUST benchmark suites
+- **Language Enhancement:** Module-level constants (`const E: Fraction = 2.71828...`)
+  - Tracked in: stdlib/hiring/hiring.pel (TODO comments at lines ~5, ~369, ~376)
+  - Unblocks: Mathematical constant extraction (Euler's number, steepness parameters)
+  - Impact: Reduces duplication, improves maintainability
 
 ### v0.3.0 (Planned June 2026) — "Calibration Release"
 - Data connectors and fitting
 - Drift detection
 - PEL-RISK benchmark suite
 - First third-party runtime (in beta)
+- **Language Enhancement:** Contract attribute syntax (`@contract(Monotonic, Bounded(...))`)
+  - Tracked in: stdlib/capacity/capacity.pel, stdlib/hiring/hiring.pel (TODO comments)
+  - Unblocks: Runtime contract validation, enhanced compiler diagnostics
+  - Scope: 37 stdlib functions with documented semantic contracts (@Monotonic, @Bounded)
+  - Impact: Validates invariants at runtime, better error messages for contract violations
 
 ### v1.0.0 (Planned December 2026) — "Stability Release"
 - Specification frozen for backward compatibility
@@ -501,6 +510,11 @@ PEL follows a **specification-first, conformance-driven** development model:
 - All benchmark suites complete
 - Production-ready tooling
 - Multi-runtime ecosystem
+- **API Review:** Trivial wrapper function simplification
+  - Tracked in: stdlib functions with TODO(v1.0) comments
+  - Scope: 3 functions (parallel_capacity, team_productivity, headcount_capacity)
+  - Decision: Retain vs inline vs add value-add logic
+  - Rationale: Semantic naming aids discoverability; allows non-breaking enhancement
 
 ---
 

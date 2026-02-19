@@ -1,6 +1,14 @@
 // PEL Standard Library: Capacity Module
 // Functions for capacity planning, utilization, and resource allocation
 
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic", "@Bounded", etc. comments to:
+//     @contract(Monotonic, Bounded(0.0, 1.0))
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 16 functions with contract annotations throughout this module
+
 // ============================================================================
 // Core Capacity Calculations
 // ============================================================================
@@ -266,6 +274,13 @@ func bottleneck_capacity(
 ///
 /// Implementation note: Delegates to builtin sum() for simplicity and consistency.
 /// Could be inlined but kept as named function for semantic clarity and discoverability.
+///
+/// TODO(v1.0): Consider inlining or adding value-add logic
+///   This is a trivial wrapper (delegates to builtin sum()). Retained for:
+///   - Semantic naming improves API discoverability
+///   - Allows future enhancement without breaking changes
+///   - "Functions as documentation" pattern
+///   Review during v1.0 API stabilization
 func parallel_capacity(
   capacities: Array<Rate per Month>
 ) -> Rate per Month {
