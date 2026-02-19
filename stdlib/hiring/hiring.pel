@@ -1,0 +1,600 @@
+// PEL Standard Library: Hiring Module
+// Functions for workforce planning, hiring funnels, and talent acquisition
+
+// ============================================================================
+// Mathematical Constants
+// ============================================================================
+//
+// E (Euler's number) = 2.71828182845904523536
+//   High-precision (19-digit) constant used in exponential and sigmoid ramp
+//   curves. PEL does not yet support module-level named constants, so this
+//   value is inlined at each call site. When module constants are supported,
+//   extract to: const E: Fraction = 2.71828182845904523536
+//
+// EXPONENTIAL_STEEPNESS = 3.0
+//   Controls the exponential ramp curve shape. At k=3, 95% productivity
+//   is reached by the end of the ramp period (1 - e^(-3) ≈ 0.9502).
+//   Higher values reach full productivity faster.
+//
+// S_CURVE_STEEPNESS = 10.0
+//   Controls the sigmoid (S-curve) ramp shape. At k=10, the transition
+//   from slow-start to rapid-gain occurs at ~50% of the ramp period.
+//   Higher values create a sharper transition in the middle.
+
+// ============================================================================
+// Hiring Funnel
+// ============================================================================
+
+/// Multi-stage hiring funnel (applicants → screens → interviews → offers → hires)
+///
+/// @param applicants - Initial applicant count (must be >= 0)
+/// @param conversion_rates - Array of stage conversion rates [screen_pass, interview_pass, ...]
+/// @return Final hire count after all funnel stages
+///
+/// @example hiring_funnel(200, [0.30, 0.25, 0.70]) = 10.5 hires
+///
+/// Returns final hire count given funnel conversion rates
+/// Contracts: @Monotonic
+func hiring_funnel(
+  applicants: Count<Applicant>,
+  conversion_rates: Array<Fraction>  // [screen_pass, interview_pass, offer_accept, ...]
+) -> Count<Person> {
+  // Input validation
+  if applicants < 0 {
+    return 0  // Negative applicants is invalid
+  }
+  
+  var funnel_output = applicants
+  
+  // Apply each stage's conversion rate sequentially
+  for i in 0..conversion_rates.length - 1 {
+    // Clamp conversion rate to valid range [0, 1]
+    var rate = max(0.0, min(1.0, conversion_rates[i]))
+    funnel_output = funnel_output * rate
+  }
+  
+  return funnel_output
+}
+
+/// Calculate offer acceptance rate
+///
+/// @param offers_accepted - Number of offers accepted (must be >= 0)
+/// @param offers_extended - Number of offers extended (must be > 0)
+/// @return Acceptance rate as fraction, clamped to (0.0 to 1.0)
+///
+/// @errors Returns 0.0 if offers_extended <= 0 or offers_accepted < 0
+///
+/// Contracts: @Bounded(0.0, 1.0)
+func offer_acceptance_rate(
+  offers_accepted: Count<Offer>,
+  offers_extended: Count<Offer>
+) -> Fraction {
+  // Input validation: prevent division by zero
+  if offers_extended <= 0 {
+    return 0.0  // Cannot compute rate without offers extended
+  }
+  if offers_accepted < 0 {
+    return 0.0  // Negative acceptances is invalid
+  }
+  
+  // Clamp result to [0.0, 1.0] to honour @Bounded contract
+  // (handles case where offers_accepted > offers_extended due to data errors)
+  var raw_rate = offers_accepted / offers_extended
+  return max(0.0, min(1.0, raw_rate))
+}
+
+/// Average time from application to hire
+///
+/// @param total_person_days - Aggregate person-days spent in pipeline
+///        (sum of each hire's days-to-hire, expressed as a dimensionless
+///        scalar because PEL duration arithmetic is not yet fully supported
+///        for aggregation; the caller multiplies hires × avg_days upstream)
+/// @param num_hires - Number of hires made (must be > 0)
+/// @return Average days-to-hire per person
+///
+/// @errors Returns 0d if num_hires <= 0 or total_person_days < 0
+///
+/// Contracts: @Bounded(0d, Inf)
+func hiring_velocity(
+  total_person_days: Fraction,
+  num_hires: Count<Person>
+) -> Duration<Day> {
+  // Input validation
+  if num_hires <= 0 {
+    return 0d  // Cannot compute average without hires
+  }
+  if total_person_days < 0.0 {
+    return 0d  // Negative person-days is invalid
+  }
+  
+  var avg_days: Fraction = total_person_days / num_hires
+  return avg_days * 1d
+}
+
+/// Total cost per hire (recruiting + sourcing + interviewing)
+///
+/// @param total_recruiting_cost - Total recruiting budget (must be >= 0)
+/// @param num_hires - Number of hires made (must be > 0)
+/// @return Average cost per hire
+///
+/// @errors Returns $0 per hire if num_hires <= 0
+///
+func cost_per_hire(
+  total_recruiting_cost: Currency<USD>,
+  num_hires: Count<Person>
+) -> Currency<USD> per Person {
+  // Input validation: prevent division by zero
+  if num_hires <= 0 {
+    return $0  // Cannot compute cost per hire with no hires
+  }
+  if total_recruiting_cost < $0 {
+    return $0  // Negative cost is invalid
+  }
+  
+  return total_recruiting_cost / num_hires
+}
+
+// ============================================================================
+// Workforce Planning
+// ============================================================================
+
+/// Calculate required headcount for target capacity
+///
+/// @param target_capacity - Desired team capacity (must be >= 0)
+/// @param productivity_per_person - Output per person (must be > 0)
+/// @param ramp_factor - Productivity multiplier accounting for ramp (must be > 0, typically 0.7-0.9)
+/// @return Required headcount estimate
+///
+/// @errors Returns 0 if productivity_per_person or ramp_factor <= 0
+///
+/// Returns a dimensionless headcount estimate
+/// Contracts: @Monotonic
+func required_headcount(
+  target_capacity: Rate per Month,
+  productivity_per_person: Rate per Month,
+  ramp_factor: Fraction
+) -> Count<Person> {
+  // Input validation: prevent division by zero
+  if productivity_per_person <= 0 / 1mo {
+    return 0  // Cannot compute without valid productivity
+  }
+  if ramp_factor <= 0.0 {
+    return 0  // Cannot compute with invalid ramp factor
+  }
+  if target_capacity < 0 / 1mo {
+    return 0  // Negative capacity is invalid
+  }
+  
+  return (target_capacity / productivity_per_person) / ramp_factor
+}
+
+/// Generate hiring plan to reach target headcount
+///
+/// @param current_headcount - Current team size (must be >= 0)
+/// @param target_headcount - Desired team size (must be >= 0)
+/// @param time_horizon - Planning horizon (must be > 0)
+/// @param period - Reporting period (e.g., 1mo) (must be > 0)
+/// @return Hires needed per period
+///
+/// @errors Returns 0 if time_horizon or period <= 0
+///
+/// Returns hires needed per period as a dimensionless count
+/// Contracts: @Monotonic
+func hiring_plan(
+  current_headcount: Count<Person>,
+  target_headcount: Count<Person>,
+  time_horizon: Duration<Month>,
+  period: Duration<Month>
+) -> Count<Person> {
+  // Input validation
+  if period <= 0mo {
+    return 0  // Cannot divide by zero period
+  }
+  if time_horizon <= 0mo {
+    return 0  // No hiring needed for zero or negative horizon
+  }
+  
+  var headcount_gap = target_headcount - current_headcount
+  
+  // If already at or above target, no hiring needed
+  if headcount_gap <= 0 {
+    return 0
+  }
+  
+  var num_periods = time_horizon / period
+  
+  // Prevent division by zero (should not happen given validation above)
+  if num_periods <= 0 {
+    return 0
+  }
+  
+  return headcount_gap / num_periods
+}
+
+/// Calculate replacement hires needed for attrition
+///
+/// @param current_headcount - Current team size (must be >= 0)
+/// @param attrition_rate - Annual attrition rate (must be >= 0)
+/// @return Annual replacement hires needed
+///
+/// @errors Returns 0 if current_headcount < 0 or attrition_rate < 0
+///
+/// DIMENSIONAL ANALYSIS: This function demonstrates PEL's unit cancellation
+/// Step 1: attrition_rate (Rate per Year) × 1yr (Duration<Year>) → Fraction (dimensionless)
+///         Example: 0.15/1yr × 1yr = 0.15 (dimensionless fraction)
+///         The time units cancel: (1/Year) × Year = 1 (scalar)
+///
+/// Step 2: Fraction × Count<Person> → Count<Person>
+///         Example: 0.15 × 100 people = 15 people
+///         The dimensionless scalar scales the count without changing its type
+///
+/// This two-step transformation (Rate → Fraction → Count) is type-safe and
+/// preserves domain semantics: "15% annual attrition on 100 people = 15 replacements/year"
+///
+/// Contracts: @Monotonic, @Bounded(0, Inf)
+func attrition_replacement(
+  current_headcount: Count<Person>,
+  attrition_rate: Rate per Year
+) -> Count<Person> {
+  // Input validation: prevent nonsensical results
+  if current_headcount < 0 {
+    return 0  // Negative headcount is invalid
+  }
+  
+  // Step 1: Convert annual rate to dimensionless attrition fraction
+  // Rate per Year × Duration<Year> → Fraction (unit cancellation)
+  var annual_attrition: Fraction = attrition_rate * 1yr
+  
+  // Clamp attrition to non-negative (negative attrition is meaningless)
+  if annual_attrition < 0.0 {
+    return 0  // Negative attrition rate is invalid
+  }
+  
+  // Step 2: Apply attrition fraction to current headcount
+  // Fraction × Count<Person> → Count<Person> (dimensionless scaling)
+  return current_headcount * annual_attrition
+}
+
+/// Calculate growth hiring (net new hires beyond attrition)
+///
+/// @param current_headcount - Current team size (must be >= 0)
+/// @param target_headcount - Desired team size (must be >= 0)
+/// @param time_horizon - Growth timeframe (must be > 0)
+/// @return Growth hires per month
+///
+/// @errors Returns 0 if time_horizon <= 0
+///
+/// Contracts: @Monotonic
+func growth_hiring(
+  current_headcount: Count<Person>,
+  target_headcount: Count<Person>,
+  time_horizon: Duration<Month>
+) -> Count<Person> {
+  // Input validation
+  if time_horizon <= 0mo {
+    return 0  // Cannot divide by zero or negative time
+  }
+  
+  var net_growth = target_headcount - current_headcount
+  
+  // If already at or above target, no growth hiring needed
+  if net_growth <= 0 {
+    return 0
+  }
+  
+  var months = time_horizon / 1mo
+  
+  // Additional safety check (should not be needed)
+  if months <= 0 {
+    return 0
+  }
+  
+  return net_growth / months
+}
+
+// ============================================================================
+// Ramp & Productivity
+// ============================================================================
+
+/// Time to reach full productivity (ramp period)
+///
+/// @param ramp_time_base - Base ramp time without improvements (must be > 0)
+/// @param onboarding_quality - Quality multiplier 0.5-2.0 (must be > 0, >1.0 improves ramp)
+/// @return Adjusted ramp time
+///
+/// @errors Returns ramp_time_base if onboarding_quality <= 0
+///
+func ramp_time(
+  ramp_time_base: Duration<Month>,
+  onboarding_quality: Fraction
+) -> Duration<Month> {
+  // Input validation: prevent division by zero
+  if onboarding_quality <= 0.0 {
+    return ramp_time_base  // Fall back to base time
+  }
+  if ramp_time_base < 0mo {
+    return 0mo  // Negative ramp time is invalid
+  }
+  
+  return ramp_time_base / onboarding_quality
+}
+
+/// Productivity curve during ramp period
+///
+/// @param time_since_hire - Time since employee was hired (must be >= 0)
+/// @param ramp_duration - Total ramp time to full productivity (must be > 0)
+/// @param ramp_shape - Curve shape: "linear", "exponential", "s-curve" (validated)
+/// @return Productivity fraction at time t (0.0 to 1.0)
+///
+/// @errors Returns 1.0 if ramp_duration <= 0
+///         Returns progress (linear) for invalid ramp_shape
+///
+/// @note Valid ramp_shape values:
+///       - "linear": Constant productivity gain rate
+///       - "exponential": Fast initial gain, then slow (95% at ramp_duration)
+///       - "s-curve": Slow start, fast middle, slow end (sigmoid)
+///
+/// Returns productivity fraction at time t after hire
+/// Contracts: @Monotonic, @Bounded(0.0, 1.0)
+func ramp_curve(
+  time_since_hire: Duration<Month>,
+  ramp_duration: Duration<Month>,
+  ramp_shape: String
+) -> Fraction {
+  // Input validation
+  if ramp_duration <= 0mo {
+    return 1.0  // Instant productivity if no ramp period
+  }
+  if time_since_hire < 0mo {
+    return 0.0  // Cannot have negative time
+  }
+  
+  // If already past ramp period, return full productivity
+  if time_since_hire >= ramp_duration {
+    return 1.0
+  }
+  
+  // Calculate progress through ramp period (0.0 to 1.0)
+  var progress = time_since_hire / ramp_duration
+  
+  // Validate and apply ramp shape
+  if ramp_shape == "linear" {
+    return progress
+  }
+  if ramp_shape == "exponential" {
+    // Exponential curve: fast early gains, slower later
+    // Formula: 1 - e^(-k*x) where k = EXPONENTIAL_STEEPNESS = 3.0
+    // At k=3, 95% productivity reached by end of ramp (1 - e^(-3) ≈ 0.9502)
+    // Using Euler's number e = 2.71828182845904523536
+    return 1.0 - pow(2.71828182845904523536, -3.0 * progress)
+  }
+  if ramp_shape == "s-curve" {
+    // S-curve (sigmoid): slow start, fast middle, slow end
+    // Formula: 1 / (1 + e^(-k*(x-0.5))) where k = S_CURVE_STEEPNESS = 10.0
+    // At k=10, sharp transition at 50% of ramp period (sigmoid midpoint)
+    // Using Euler's number e = 2.71828182845904523536
+    return 1.0 / (1.0 + pow(2.71828182845904523536, -10.0 * (progress - 0.5)))
+  }
+  
+  // Default to linear for unrecognized shapes
+  // In production, this could log a warning
+  return progress
+}
+
+/// Calculate effective headcount accounting for ramp
+///
+/// @param ramped_headcount - Fully productive employees (must be >= 0)
+/// @param ramping_headcount - Employees still ramping (must be >= 0)
+/// @param avg_ramp_progress - Average ramp progress 0.0-1.0 (clamped to range)
+/// @return Effective headcount (fractional)
+///
+/// New hires contribute < 100% during ramp period
+/// Contracts: @Bounded(0.0, ramped_headcount + ramping_headcount)
+func effective_headcount(
+  ramped_headcount: Count<Person>,
+  ramping_headcount: Count<Person>,
+  avg_ramp_progress: Fraction
+) -> Count<Person> {
+  // Input validation
+  var validated_ramped = max(0, ramped_headcount)
+  var validated_ramping = max(0, ramping_headcount)
+  var validated_progress = max(0.0, min(1.0, avg_ramp_progress))
+  
+  return validated_ramped + (validated_ramping * validated_progress)
+}
+
+/// Total team productivity accounting for ramp and attrition
+/// Contracts: @Monotonic
+func team_productivity(
+  effective_headcount: Count<Person>,
+  productivity_per_person: Rate per Month
+) -> Rate per Month {
+  return effective_headcount * productivity_per_person
+}
+
+// ============================================================================
+// Capacity Planning
+// ============================================================================
+
+/// Calculate output capacity per employee
+/// Contracts: @Monotonic
+func headcount_capacity(
+  headcount: Count<Person>,
+  capacity_per_person: Rate per Month,
+  utilization: Fraction
+) -> Rate per Month {
+  return headcount * capacity_per_person * utilization
+}
+
+/// Total team capacity (sum across all team members)
+///
+/// @param headcounts_by_role - Array of headcount per role (must match capacity_per_role length)
+/// @param capacity_per_role - Array of capacity per role (must match headcounts_by_role length)
+/// @return Total team capacity
+///
+/// @errors Returns 0 if arrays are empty or mismatched lengths
+///
+/// Contracts: @Monotonic
+func team_capacity(
+  headcounts_by_role: Array<Count<Person>>,
+  capacity_per_role: Array<Rate per Month>
+) -> Rate per Month {
+  // Input validation: ensure arrays have same length
+  if headcounts_by_role.length == 0 {
+    return 0.0 / 1mo  // No roles means no capacity
+  }
+  if capacity_per_role.length == 0 {
+    return 0.0 / 1mo  // No capacity data
+  }
+  
+  // Use minimum length to prevent array access errors
+  var max_idx = min(headcounts_by_role.length, capacity_per_role.length)
+  
+  var total_capacity: Rate per Month = 0.0 / 1mo
+  
+  for i in 0..max_idx - 1 {
+    total_capacity = total_capacity + (headcounts_by_role[i] * capacity_per_role[i])
+  }
+  
+  return total_capacity
+}
+
+/// Incremental capacity from new hire (after ramp)
+///
+/// @param capacity_per_person - Full productivity capacity (must be >= 0)
+/// @param ramp_time - Time to reach full productivity (must be >= 0)
+/// @param full_productivity_time - Time period for amortization (must be > 0)
+/// @return Average capacity contribution accounting for ramp
+///
+/// @errors Returns 0 if full_productivity_time <= 0
+///
+/// Approximation: Assumes linear ramp (50% productivity during ramp, 100% after).
+/// This is accurate for ramp_curve(..., "linear") but diverges for "exponential" 
+/// or "s-curve" ramp shapes. For precise modeling with non-linear ramps, integrate
+/// ramp_curve() over the time period or accept this conservative linear estimate.
+///
+/// Contracts: @Monotonic
+func capacity_per_hire(
+  capacity_per_person: Rate per Month,
+  ramp_time: Duration<Month>,
+  full_productivity_time: Duration<Month>
+) -> Rate per Month {
+  // Input validation: prevent division by zero
+  if full_productivity_time <= 0mo {
+    return 0 / 1mo  // Cannot compute without valid time period
+  }
+  if capacity_per_person < 0 / 1mo {
+    return 0 / 1mo  // Negative capacity is invalid
+  }
+  if ramp_time < 0mo {
+    return capacity_per_person  // Negative ramp treated as instant productivity
+  }
+  
+  // Capacity contribution over time, accounting for ramp
+  // Approximation: average of 50% during ramp + 100% after
+  var ramp_factor = (full_productivity_time - ramp_time / 2) / full_productivity_time
+  return capacity_per_person * ramp_factor
+}
+
+/// Impact of hiring lag on capacity
+///
+/// @param current_gap - Current capacity shortfall (must be >= 0)
+/// @param planned_hire_date - Planned hire date offset from now (must be >= 0)
+/// @param actual_hire_date - Actual hire date offset from now (must be >= planned_hire_date)
+/// @return Capacity impact of hiring delay (positive = worsened gap)
+///
+/// @errors Returns 0 if current_gap <= 0 or actual <= planned (no delay)
+///
+/// If hiring is delayed, the capacity gap persists longer.
+/// The impact is proportional to the delay duration.
+/// Contracts: @Bounded(0, Inf)
+func hiring_lag_impact(
+  current_gap: Rate per Month,
+  planned_hire_date: Duration<Month>,
+  actual_hire_date: Duration<Month>
+) -> Rate per Month {
+  // Input validation
+  if current_gap <= 0 / 1mo {
+    return 0 / 1mo  // No gap means no impact from delay
+  }
+  if planned_hire_date < 0mo {
+    return 0 / 1mo  // Invalid planned date
+  }
+  if actual_hire_date < 0mo {
+    return 0 / 1mo  // Invalid actual date
+  }
+  
+  var delay = actual_hire_date - planned_hire_date
+  
+  // If hired on time or early, no negative impact
+  if delay <= 0mo {
+    return 0 / 1mo
+  }
+  
+  return current_gap * (delay / 1mo)
+}
+
+// ============================================================================
+// Cost Modeling
+// ============================================================================
+
+/// Total recruiting cost (sourcing + screening + interviewing)
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+func recruiting_cost(
+  num_applicants: Count<Applicant>,
+  cost_per_applicant: Currency<USD> per Applicant,
+  num_interviews: Count<Interview>,
+  cost_per_interview: Currency<USD> per Interview
+) -> Currency<USD> {
+  return (num_applicants * cost_per_applicant) + (num_interviews * cost_per_interview)
+}
+
+/// Onboarding cost (training, equipment, lost productivity)
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+func onboarding_cost(
+  num_hires: Count<Person>,
+  onboarding_cost_per_hire: Currency<USD> per Person
+) -> Currency<USD> {
+  return num_hires * onboarding_cost_per_hire
+}
+
+/// Total talent acquisition cost
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+func total_talent_cost(
+  num_hires: Count<Person>,
+  cost_per_hire: Currency<USD> per Person,
+  annual_comp_per_hire: Currency<USD> per Person,
+  time_period: Duration<Year>
+) -> Currency<USD> {
+  var recruiting_cost = num_hires * cost_per_hire
+  var comp_cost = num_hires * annual_comp_per_hire * (time_period / 1yr)
+  
+  return recruiting_cost + comp_cost
+}
+
+/// Net return on investment for hiring
+///
+/// @param value_created_per_hire - Value/revenue generated per hire (annual)
+/// @param total_cost_per_hire - All-in cost per hire including recruiting,
+///        onboarding, and first-year compensation (must be > 0)
+/// @return Net ROI as fraction: (value - cost) / cost
+///         e.g., 4.0 means the hire generates 4× their cost in net value
+///
+/// @errors Returns 0.0 if total_cost_per_hire <= 0
+///
+/// @example hire_roi($500k, $100k) = 4.0 (net ROI: hire creates $400k
+///          above their $100k cost, so net return is 400%)
+///
+/// Net value created by hire vs total cost to acquire and employ
+/// Contracts: @Bounded(-1.0, Inf)
+func hire_roi(
+  value_created_per_hire: Currency<USD> per Person,
+  total_cost_per_hire: Currency<USD> per Person
+) -> Fraction {
+  // Input validation: prevent division by zero
+  if total_cost_per_hire <= $0 {
+    return 0.0  // Cannot compute ROI without valid cost
+  }
+  
+  return (value_created_per_hire - total_cost_per_hire) / total_cost_per_hire
+}

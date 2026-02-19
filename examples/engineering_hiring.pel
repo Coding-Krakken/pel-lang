@@ -1,0 +1,387 @@
+/// Engineering Team Growth Model
+/// Hiring funnel, ramp time, attrition, and capacity planning
+///
+/// This model uses stdlib modules (auto-loaded by compiler):
+///   - hiring/ - hiring_funnel, attrition_replacement, growth_hiring, hiring_plan,
+///               ramp_curve, effective_headcount, team_productivity, headcount_capacity,
+///               team_capacity, capacity_per_hire, hiring_lag_impact, recruiting_cost,
+///               onboarding_cost, total_talent_cost, hire_roi
+///
+/// Note: Import syntax not yet implemented - functions are automatically available
+
+model EngineeringTeamGrowth {
+  // =============================================================================
+  // Current Team State
+  // =============================================================================
+  
+  param current_engineers: Count<Person> = 85 {
+    source: "hr_system",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param fully_ramped_engineers: Count<Person> = 70 {
+    source: "hr_analytics",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param ramping_engineers: Count<Person> = 15 {
+    source: "hr_analytics",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // =============================================================================
+  // Growth Targets
+  // =============================================================================
+  
+  param target_headcount: Count<Person> = 150 {
+    source: "growth_plan",
+    method: "assumption",
+    confidence: 0.85
+  }
+  
+  param planning_horizon: Duration<Month> = 12mo {
+    source: "planning",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  // =============================================================================
+  // Attrition Modeling
+  // =============================================================================
+  
+  param annual_attrition_rate: Rate per Year = 0.15 / 1yr {
+    source: "hr_analytics",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  // Calculate replacement hires needed for attrition
+  var replacement_hires: Count<Person> 
+    = attrition_replacement(current_engineers, annual_attrition_rate)
+  
+  // =============================================================================
+  // Hiring Funnel Configuration
+  // =============================================================================
+  
+  param applicants_per_month: Count<Applicant> = 250 {
+    source: "ats",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Stage 1: Resume screen
+  param resume_screen_pass_rate: Fraction = 0.25 {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.92
+  }
+  
+  // Stage 2: Technical phone screen
+  param phone_screen_pass_rate: Fraction = 0.40 {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  // Stage 3: Onsite interview
+  param onsite_pass_rate: Fraction = 0.30 {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.88
+  }
+  
+  // Stage 4: Offer acceptance
+  param offer_acceptance_rate_value: Fraction = 0.75 {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  var funnel_conversion_rates: Array<Fraction> 
+    = [resume_screen_pass_rate, phone_screen_pass_rate, onsite_pass_rate, offer_acceptance_rate_value]
+  
+  // Calculate monthly hires from funnel
+  var hires_per_month_from_funnel: Count<Person> 
+    = hiring_funnel(applicants_per_month, funnel_conversion_rates)
+  
+  // =============================================================================
+  // Workforce Planning
+  // =============================================================================
+  
+  // Calculate growth hires (net new for expansion)
+  var growth_hires: Count<Person> 
+    = growth_hiring(current_engineers, target_headcount, planning_horizon)
+  
+  // Total hiring need (growth + attrition)
+  var total_annual_hiring_need: Count<Person> = replacement_hires + growth_hires
+  
+  // Generate hiring plan
+  param reporting_period: Duration<Month> = 1mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var required_hires_per_month: Count<Person> 
+    = hiring_plan(
+        current_engineers,
+        target_headcount + replacement_hires,
+        planning_horizon,
+        reporting_period
+      )
+  
+  // =============================================================================
+  // Ramp Time Modeling
+  // =============================================================================
+  
+  param engineer_ramp_duration: Duration<Month> = 4mo {
+    source: "engineering_leadership",
+    method: "assumption",
+    confidence: 0.80
+  }
+  
+  // Model different ramp progression curves
+  param month_1_elapsed: Duration<Month> = 1mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param month_2_elapsed: Duration<Month> = 2mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param month_3_elapsed: Duration<Month> = 3mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param ramp_shape: String = "s-curve" {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  // Calculate productivity at different time points
+  var month_1_productivity: Fraction 
+    = ramp_curve(month_1_elapsed, engineer_ramp_duration, ramp_shape)
+  
+  var month_2_productivity: Fraction 
+    = ramp_curve(month_2_elapsed, engineer_ramp_duration, ramp_shape)
+  
+  var month_3_productivity: Fraction 
+    = ramp_curve(month_3_elapsed, engineer_ramp_duration, ramp_shape)
+  
+  // Calculate average ramp progress for current ramping engineers
+  param average_ramp_progress: Fraction = 0.65 {
+    source: "hr_analytics",
+    method: "derived",
+    confidence: 0.75
+  }
+  
+  // Calculate effective headcount (accounting for ramp)
+  var effective_team_size: Count<Person> 
+    = effective_headcount(
+        fully_ramped_engineers,
+        ramping_engineers,
+        average_ramp_progress
+      )
+  
+  // =============================================================================
+  // Team Capacity Planning
+  // =============================================================================
+  
+  param story_points_per_engineer_per_sprint: Rate per Month = 8 / 1mo {
+    source: "engineering_metrics",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // Calculate current team productivity
+  var current_team_capacity: Rate per Month 
+    = team_productivity(effective_team_size, story_points_per_engineer_per_sprint)
+  
+  // Calculate target team capacity (at full headcount+ramp)
+  var target_team_capacity: Rate per Month 
+    = team_productivity(target_headcount, story_points_per_engineer_per_sprint)
+  
+  // Multi-role team capacity (engineering sub-teams)
+  param frontend_engineers: Count<Person> = 30 {
+    source: "org_chart",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param backend_engineers: Count<Person> = 40 {
+    source: "org_chart",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param platform_engineers: Count<Person> = 15 {
+    source: "org_chart",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param frontend_capacity_per_eng: Rate per Month = 6 / 1mo {
+    source: "engineering_metrics",
+    method: "derived",
+    confidence: 0.80
+  }
+  
+  param backend_capacity_per_eng: Rate per Month = 10 / 1mo {
+    source: "engineering_metrics",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  param platform_capacity_per_eng: Rate per Month = 8 / 1mo {
+    source: "engineering_metrics",
+    method: "derived",
+    confidence: 0.82
+  }
+  
+  var team_headcounts: Array<Count<Person>> 
+    = [frontend_engineers, backend_engineers, platform_engineers]
+  
+  var team_capacities: Array<Rate per Month> 
+    = [frontend_capacity_per_eng, backend_capacity_per_eng, platform_capacity_per_eng]
+  
+  var total_org_capacity: Rate per Month 
+    = team_capacity(team_headcounts, team_capacities)
+  
+  // =============================================================================
+  // Cost Modeling
+  // =============================================================================
+  
+  // Recruiting costs
+  param num_applicants: Count<Applicant> = 3000 {
+    source: "ats",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  param cost_per_applicant: Currency<USD> per Applicant = $50 {
+    source: "recruiting_finance",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  param num_interviews: Count<Interview> = 400 {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.92
+  }
+  
+  param cost_per_interview: Currency<USD> per Interview = $500 {
+    source: "recruiting_finance",
+    method: "derived",
+    confidence: 0.88
+  }
+  
+  var annual_recruiting_cost: Currency<USD> 
+    = recruiting_cost(
+        num_applicants,
+        cost_per_applicant,
+        num_interviews,
+        cost_per_interview
+      )
+  
+  // Per-hire costs
+  var cost_per_hire_value: Currency<USD> per Person 
+    = cost_per_hire(annual_recruiting_cost, hires_per_month_from_funnel)
+  
+  // Onboarding costs
+  param onboarding_cost_per_hire: Currency<USD> per Person = $15000 {
+    source: "hr_finance",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  var total_onboarding_cost: Currency<USD> 
+    = onboarding_cost(total_annual_hiring_need, onboarding_cost_per_hire)
+  
+  // Total talent acquisition cost
+  param annual_comp_per_engineer: Currency<USD> per Person = $175000 {
+    source: "compensation",
+    method: "assumption",
+    confidence: 0.90
+  }
+  
+  param fiscal_year: Duration<Year> = 1yr {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var total_talent_cost_annual: Currency<USD> 
+    = total_talent_cost(
+        total_annual_hiring_need,
+        cost_per_hire_value,
+        annual_comp_per_engineer,
+        fiscal_year
+      )
+  
+  // ROI calculation
+  param value_per_engineer: Currency<USD> per Person = $650000 {
+    source: "finance_model",
+    method: "derived",
+    confidence: 0.70
+  }
+  
+  var hiring_roi: Fraction = hire_roi(value_per_engineer, cost_per_hire_value)
+  
+  // =============================================================================
+  // Hiring Lag Impact
+  // =============================================================================
+  
+  // Planned vs actual first hire timing
+  param planned_first_hire: Duration<Month> = 1mo {
+    source: "recruiting_plan",
+    method: "assumption",
+    confidence: 0.90
+  }
+  
+  param actual_first_hire: Duration<Month> = 3mo {
+    source: "recruiting_analytics",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // Capacity lost per month due to delayed hiring
+  // Uses per-engineer output as the capacity gap per unfilled position
+  var capacity_loss_from_lag: Rate per Month 
+    = hiring_lag_impact(
+        story_points_per_engineer_per_sprint,
+        planned_first_hire,
+        actual_first_hire
+      )
+  
+  // =============================================================================
+  // Key Metrics (exported when export keyword is implemented)
+  // =============================================================================
+  
+  // current_engineers                 - Current headcount
+  // target_headcount                  - Target headcount
+  // replacement_hires                 - Hires needed for attrition
+  // growth_hires                      - Hires needed for growth
+  // total_annual_hiring_need          - Total hiring target
+  // hires_per_month_from_funnel       - Actual hiring rate from funnel
+  // required_hires_per_month          - Target hiring rate
+  // effective_team_size               - Headcount adjusted for ramp
+  // current_team_capacity             - Current output capacity
+  // target_team_capacity              - Target output capacity
+  // total_org_capacity                - Multi-role team capacity
+  // cost_per_hire_value               - Cost per successful hire
+  // total_onboarding_cost             - Total onboarding investment
+  // total_talent_cost_annual          - Total talent acquisition cost
+  // hiring_roi                        - Return on hiring investment
+  // capacity_loss_from_lag            - Capacity lost due to hiring delays
+}
