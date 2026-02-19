@@ -23,6 +23,7 @@ def test_runtime_main_writes_output_file(tmp_path: Path, monkeypatch: pytest.Mon
         "sys.argv",
         [
             "pel-runtime",
+            "run",
             str(ir_path),
             "--mode",
             "deterministic",
@@ -48,7 +49,7 @@ def test_runtime_main_prints_to_stdout_when_no_output(tmp_path: Path, monkeypatc
     ir_path = tmp_path / "m.ir.json"
     _write_json(ir_path, ir)
 
-    monkeypatch.setattr("sys.argv", ["pel-runtime", str(ir_path), "--time-horizon", "1"])
+    monkeypatch.setattr("sys.argv", ["pel-runtime", "run", str(ir_path), "--time-horizon", "1"])
 
     runtime_main()
 

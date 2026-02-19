@@ -626,37 +626,111 @@ def main():
         description="PEL Runtime - Execute compiled PEL-IR models"
     )
 
-    parser.add_argument('ir_file', type=Path, help='Compiled .ir.json file')
-    parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'], default='deterministic',
+    # Add subcommands
+    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+
+    # Run command (default execution)
+    run_parser = subparsers.add_parser('run', help='Execute a PEL-IR model')
+    run_parser.add_argument('ir_file', type=Path, help='Compiled .ir.json file')
+    run_parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'], default='deterministic',
                        help='Execution mode')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--runs', type=int, default=1000, help='Number of Monte Carlo runs')
-    parser.add_argument('--time-horizon', type=int, help='Override model time horizon')
-    parser.add_argument('-o', '--output', type=Path, help='Output JSON file')
+    run_parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    run_parser.add_argument('--runs', type=int, default=1000, help='Number of Monte Carlo runs')
+    run_parser.add_argument('--time-horizon', type=int, help='Override model time horizon')
+    run_parser.add_argument('-o', '--output', type=Path, help='Output JSON file')
+
+    # Calibrate command
+    calibrate_parser = subparsers.add_parser('calibrate', help='Calibrate model with data')
+    calibrate_parser.add_argument('config_file', type=Path, help='Calibration config YAML file')
+    calibrate_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 
     args = parser.parse_args()
 
-    # Configure runtime
-    config = RuntimeConfig(
-        mode=args.mode,
-        seed=args.seed,
-        num_runs=args.runs,
-        time_horizon=args.time_horizon
-    )
+    # Handle commands
+    if args.command == 'calibrate':
+        # Import calibration module (optional dependency)
+        try:
+            from runtime.calibration import CalibrationConfig, Calibrator
+        except ImportError:
+            print("Error: Calibration module not available.")
+            print("Install with: pip install pel-lang[calibration]")
+            return 1
 
-    runtime = PELRuntime(config)
+        # Load config and run calibration
+        try:
+            config = CalibrationConfig.from_yaml(args.config_file)
+            calibrator = Calibrator(config)
 
-    # Load and execute
-    ir_doc = runtime.load_ir(args.ir_file)
-    results = runtime.run(ir_doc)
+            print("Starting calibration...")
+            print(f"  Model: {config.model_path}")
+            print(f"  Data: {config.csv_path}")
+            print()
 
-    # Output
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(results, f, indent=2)
-        print(f"Results written to {args.output}")
+            result = calibrator.calibrate()
+
+            print("Calibration completed successfully!")
+            print()
+            print("Fitted parameters:")
+            for param_name, fit in result.parameters.items():
+                print(f"  {param_name} ({fit.distribution}):")
+                for pname, pvalue in fit.parameters.items():
+                    ci = fit.confidence_intervals[pname]
+                    print(f"    {pname}: {pvalue:.6f} (95% CI: [{ci[0]:.6f}, {ci[1]:.6f}])")
+
+            if result.drift_reports:
+                print()
+                print("Drift detection:")
+                for param_name, report in result.drift_reports.items():
+                    print(f"  {param_name}: MAPE={report.mape:.2%}, " +
+                          f"CUSUM={'detected' if report.cusum_detected else 'not detected'}")
+
+            if config.output_path:
+                print()
+                print(f"Reports saved to: {config.output_path}")
+
+            return 0
+
+        except Exception as e:
+            print(f"Error during calibration: {e}")
+            if args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
+
+    elif args.command == 'run' or args.command is None:
+        # Default: run model
+        if args.command is None:
+            # No subcommand provided - show help and exit
+            parser.print_help()
+            return 0
+
+        # Configure runtime
+        config = RuntimeConfig(
+            mode=args.mode,
+            seed=args.seed,
+            num_runs=args.runs,
+            time_horizon=args.time_horizon
+        )
+
+        runtime = PELRuntime(config)
+
+        # Load and execute
+        ir_doc = runtime.load_ir(args.ir_file)
+        results = runtime.run(ir_doc)
+
+        # Output
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(results, f, indent=2)
+            print(f"Results written to {args.output}")
+        else:
+            print(json.dumps(results, indent=2))
+
+        return 0
+
     else:
-        print(json.dumps(results, indent=2))
+        parser.print_help()
+        return 0
 
 
 if __name__ == '__main__':
