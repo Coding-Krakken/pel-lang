@@ -1177,7 +1177,7 @@ var total_revenue_usd: Currency<USD> = us_revenue + japan_revenue_usd
 
 - **Tutorial 3**: Learn how to model uncertainty with distributions (`Normal`, `Beta`, `LogNormal`)
 - **Tutorial 6**: Deep dive into time-series modeling patterns
-- **Reference**: See `spec/pel_type_system.md` and `spec/pel_language_spec.md` for complete type system specification
+- **Reference**: See [Type System](../../spec/pel_type_system.md) and [Language Spec](../../spec/pel_language_spec.md) for complete type system specification
 
 ## Additional Resources
 

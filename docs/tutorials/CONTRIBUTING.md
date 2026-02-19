@@ -70,11 +70,11 @@ Answer explanation.
 ## Next Steps
 
 - **Tutorial X**: Next topic
-- **Reference**: See `spec/file.md` for details
+- **Reference**: See [Language Specification](../../spec/pel_language_spec.md) for details
 
 ## Additional Resources
 
-- [Specification](../../spec/relevant_spec.md)
+- [Language Specification](../../spec/pel_language_spec.md)
 - [Examples](../../examples/)
 ```
 
@@ -114,18 +114,14 @@ param growth_rate: Rate per Month
   }
 ```
 
-### ❌ Invalid Syntax
+### ❌ Invalid Syntax (Do NOT Copy)
 
-```pel
-// Old correlation syntax - DO NOT USE
-param growth_rate: Rate per Month 
-  ~ Normal(μ=0.15/1mo, σ=0.05/1mo) 
-  with correlation(churn_rate: -0.3) {    // ❌ Invalid
-    source: "forecast",
-    method: "assumption",
-    confidence: 0.70
-  }
-```
+**Old correlation syntax is invalid:**
+- The old `with correlation` clause after distributions is not valid PEL
+- This syntax does not exist in PEL and will cause parse errors
+- Use `correlated_with: [...]` inside the provenance block instead
+
+**Correct approach**: See Tutorial 3 for proper correlation syntax using `correlated_with`
 
 ## Documentation Links
 
