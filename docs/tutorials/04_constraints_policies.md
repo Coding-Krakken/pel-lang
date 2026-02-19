@@ -717,7 +717,7 @@ Apply constraints only when certain conditions hold:
 
 ```pel
 model ConditionalValidation {
-  param is_profitable: Bool = true
+  param is_profitable: Boolean = true
   var net_income: TimeSeries<Currency<USD>>
   var marketing_spend: TimeSeries<Currency<USD>>
   

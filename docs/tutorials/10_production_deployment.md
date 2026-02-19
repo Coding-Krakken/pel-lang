@@ -914,7 +914,7 @@ Toggle model features without redeployment:
 
 ```pel
 model FeatureFlaggedModel {
-  param use_new_retention_model: Bool = false {
+  param use_new_retention_model: Boolean = false {
     source: "feature_flags",
     method: "config",
     confidence: 1.0,
