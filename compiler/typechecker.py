@@ -300,6 +300,18 @@ class TypeEnvironment:
 class TypeChecker:
     """Complete PEL type checker with dimensional analysis."""
 
+    # Type kinds that act as dimensionless scalars for multiplication shortcutting.
+    # These preserve the dimensioned operand's type when multiplied.
+    # e.g., Fraction × Currency → Currency, Int × Rate → Rate,
+    #        Count<Person> × Rate per Month → Rate per Month
+    #
+    # Count<T> is included because in PEL's business modelling domain,
+    # multiplying a headcount by a per-person rate should yield the rate type
+    # (e.g., 50 people × 20 tasks/mo = 1000 tasks/mo  ⟹  Rate per Month).
+    # The semantic entity tag (Person, Server, …) is metadata, not a
+    # physical dimension, so it should not produce a Product type.
+    DIMENSIONLESS_KINDS = frozenset({"Fraction", "Int", "Count"})
+
     def __init__(self) -> None:
         self.env = TypeEnvironment()
         self.errors: list[CompilerError] = []
@@ -379,9 +391,16 @@ class TypeChecker:
                     self.env.bind(stmt.name, var_type)
 
                     if stmt.value is not None and not isinstance(stmt.value, Distribution):
-                        value_type = self.infer_expression(stmt.value)
-                        if not self.types_compatible(var_type, value_type):
-                            self.errors.append(self.create_enhanced_type_error(var_type, value_type))
+                        # Empty array literal with a type annotation: coerce
+                        # to the declared type without inferring (avoids E0103).
+                        if (isinstance(stmt.value, ArrayLiteral)
+                                and not stmt.value.elements
+                                and var_type.type_kind == "Array"):
+                            pass  # empty [] coerced to annotated Array type
+                        else:
+                            value_type = self.infer_expression(stmt.value)
+                            if not self.types_compatible(var_type, value_type):
+                                self.errors.append(self.create_enhanced_type_error(var_type, value_type))
 
                 elif isinstance(stmt, Assignment):
                     target_type = self.infer_expression(stmt.target)
@@ -391,6 +410,12 @@ class TypeChecker:
 
                 elif isinstance(stmt, Return):
                     if stmt.value is None:
+                        return
+                    # Empty array literal coerces to expected Array return type
+                    # without triggering inference (avoids E0103).
+                    if (isinstance(stmt.value, ArrayLiteral)
+                            and not stmt.value.elements
+                            and expected_return_type.type_kind == "Array"):
                         return
                     value_type = self.infer_expression(stmt.value)
                     if not self.types_compatible(expected_return_type, value_type):
@@ -667,12 +692,27 @@ class TypeChecker:
 
         # Multiplication: dimensional multiplication
         elif operator == '*':
-            # Duration * scalar = Duration
+            # ORDERING DEPENDENCY: Duration shortcut MUST precede dimensionless shortcut
+            # to avoid fragile interaction when both conditions match (e.g., Fraction × Duration)
+
+            # Duration × scalar = Duration (commutativity handled by both branches)
             if left_type.type_kind == "Duration" and not right_type.dimension.units:
                 return left_type
             if right_type.type_kind == "Duration" and not left_type.dimension.units:
                 return right_type
 
+            # Dimensionless scalar × dimensioned type = dimensioned type (preserves kind)
+            # This enables clean PEL code like: efficiency * capacity, count * rate
+            # Examples:
+            #   Fraction × Rate per Month → Rate per Month
+            #   Int × Currency<USD> → Currency<USD>
+            #   Count<Person> × Rate per Month → Rate per Month
+            if left_type.type_kind in self.DIMENSIONLESS_KINDS and right_type.type_kind not in self.DIMENSIONLESS_KINDS:
+                return right_type
+            if right_type.type_kind in self.DIMENSIONLESS_KINDS and left_type.type_kind not in self.DIMENSIONLESS_KINDS:
+                return left_type
+
+            # Generic dimensional multiplication: compute result dimension
             result_dim = left_type.dimension.multiply(right_type.dimension)
 
             # Determine result type kind
@@ -823,6 +863,72 @@ class TypeChecker:
                 return arg_type.params.get("element_type", PELType.fraction())
             return arg_type
 
+        elif expr.function_name == 'len':
+            # len(array) → Int (number of elements)
+            if len(expr.arguments) != 1:
+                self.errors.append(
+                    TypeError("E0100", f"len expects 1 argument, got {len(expr.arguments)}"),
+                )
+            else:
+                self.infer_expression(expr.arguments[0])
+            return PELType.fraction()  # dimensionless count
+
+        elif expr.function_name == 'max':
+            # max(a, b) → type of first argument   OR   max(array) → element type
+            if len(expr.arguments) == 0:
+                self.errors.append(TypeError("E0100", "max expects at least 1 argument"))
+                return PELType.fraction()
+            arg_type = self.infer_expression(expr.arguments[0])
+            if len(expr.arguments) == 1 and arg_type.type_kind == "Array":
+                return arg_type.params.get("element_type", PELType.fraction())
+            for arg in expr.arguments[1:]:
+                self.infer_expression(arg)
+            return arg_type
+
+        elif expr.function_name == 'min':
+            # min(a, b) → type of first argument   OR   min(array) → element type
+            if len(expr.arguments) == 0:
+                self.errors.append(TypeError("E0100", "min expects at least 1 argument"))
+                return PELType.fraction()
+            arg_type = self.infer_expression(expr.arguments[0])
+            if len(expr.arguments) == 1 and arg_type.type_kind == "Array":
+                return arg_type.params.get("element_type", PELType.fraction())
+            for arg in expr.arguments[1:]:
+                self.infer_expression(arg)
+            return arg_type
+
+        elif expr.function_name == 'abs':
+            # abs(x) → same type as x
+            if len(expr.arguments) != 1:
+                self.errors.append(
+                    TypeError("E0100", f"abs expects 1 argument, got {len(expr.arguments)}"),
+                )
+            arg_type = self.infer_expression(expr.arguments[0])
+            return arg_type
+
+        elif expr.function_name == 'pow':
+            # pow(base, exponent) → type of base
+            if len(expr.arguments) != 2:
+                self.errors.append(
+                    TypeError("E0100", f"pow expects 2 arguments, got {len(expr.arguments)}"),
+                )
+                if expr.arguments:
+                    return self.infer_expression(expr.arguments[0])
+                return PELType.fraction()
+            base_type = self.infer_expression(expr.arguments[0])
+            self.infer_expression(expr.arguments[1])  # exponent
+            return base_type
+
+        elif expr.function_name == 'round':
+            # round(x) → same type as x (rounds to nearest integer)
+            if len(expr.arguments) == 0:
+                self.errors.append(TypeError("E0100", "round expects 1 argument"))
+                return PELType.fraction()
+            arg_type = self.infer_expression(expr.arguments[0])
+            for arg in expr.arguments[1:]:
+                self.infer_expression(arg)
+            return arg_type
+
         else:
             # User-defined function: look up in stdlib-registered functions
             sig = self.functions.get(expr.function_name)
@@ -959,7 +1065,10 @@ class TypeChecker:
     def infer_array_literal(self, expr: ArrayLiteral) -> PELType:
         """Infer type of array literal."""
         if not expr.elements:
-            # Empty array: cannot infer element type without annotation
+            # Empty array: cannot infer element type without annotation.
+            # Callers that provide contextual type info (typed VarDecl,
+            # Return with declared return type) skip this path entirely,
+            # so this error only fires for truly ambiguous empty arrays.
             self.errors.append(TypeError("E0103", "Cannot infer type of empty array"))
             # Fallback to array of fraction to continue checking
             return PELType(type_kind="Array", params={"element_type": PELType.fraction()}, dimension=Dimension.dimensionless())
@@ -1102,21 +1211,21 @@ class TypeChecker:
         if t1.type_kind == "Count" and t2.type_kind == "Int" and t1.params.get("per") is None:
             return True
 
+        # Allow Count to be assigned to Int (Count is a semantic wrapper around Int)
+        if t1.type_kind == "Int" and t2.type_kind == "Count":
+            return True
+
         # Allow generic Count to be compatible with specific Count<Entity>
+        # Entity tags are semantic metadata (Person, Applicant, Server, ...),
+        # not physical dimensions.  A function that converts Count<Applicant>
+        # to Count<Person> is valid (e.g. hiring funnel).  We still require
+        # the "per" parameter to match (it carries temporal dimension).
         if t1.type_kind == "Count" and t2.type_kind == "Count":
-            # If either is generic (no entity param), allow the assignment
-            entity1 = t1.params.get("entity")
-            entity2 = t2.params.get("entity")
             per1 = t1.params.get("per")
             per2 = t2.params.get("per")
-
             if per1 != per2:
                 return False
-
-            if entity1 is None or entity2 is None:
-                return True
-            # Otherwise, entities must match
-            return entity1 == entity2
+            return True
 
         # Allow Int literals to be coerced to dimensionless types like Fraction
         if t1.dimension.units == {} and t2.type_kind == "Int":
@@ -1130,6 +1239,20 @@ class TypeChecker:
         # Allow Product types to be assignable to Currency when explicitly typed
         # This handles: var revenue: Currency<USD> = count * rate (where rate has currency dimension)
         if t1.type_kind == "Currency" and t2.type_kind == "Product":
+            return True
+
+        # Allow Product types to be assignable to Rate when explicitly typed
+        # This handles: var alloc: Rate per Month = demand * ratio
+        if t1.type_kind == "Rate" and t2.type_kind == "Product":
+            return True
+
+        # Allow Product types to be assignable to Fraction when explicitly typed
+        # This handles: var ratio: Fraction = a * b (both dimensionless)
+        if t1.type_kind == "Fraction" and t2.type_kind == "Product":
+            return True
+
+        # Allow Product types to be assignable to Duration when explicitly typed
+        if t1.type_kind == "Duration" and t2.type_kind == "Product":
             return True
 
         # Allow Fraction to be assignable to Count when explicitly typed
@@ -1153,6 +1276,16 @@ class TypeChecker:
         # This handles: var churn_rate: Rate per Month = churned / total
         # Semantic contract: RateNormalization, QuotientNormalization
         if t1.type_kind == "Rate" and t2.type_kind == "Quotient":
+            return True
+
+        # Allow Quotient types to be assignable to Duration when explicitly typed
+        # This handles: var lead_time: Duration<Month> = total_time / stages
+        if t1.type_kind == "Duration" and t2.type_kind == "Quotient":
+            return True
+
+        # Allow Quotient types to be assignable to Int when explicitly typed
+        # This handles: var idx: Int = total / divisor
+        if t1.type_kind == "Int" and t2.type_kind == "Quotient":
             return True
 
         # Allow Quotient types to be assignable to Count when explicitly typed
