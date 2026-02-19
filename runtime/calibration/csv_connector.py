@@ -11,9 +11,8 @@ CSV Data Connector for PEL Calibration.
 Loads CSV data, validates types, handles missing values and outliers.
 """
 
-import csv
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +22,7 @@ import yaml
 class CSVConnector:
     """
     CSV data connector for PEL calibration.
-    
+
     Features:
     - Load CSV files with configurable encoding
     - Map CSV columns to PEL parameters
@@ -32,20 +31,20 @@ class CSVConnector:
     - Outlier detection and filtering
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """
         Initialize CSV connector.
-        
+
         Args:
             config_path: Path to YAML configuration file
         """
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         if config_path:
             self.load_config(config_path)
 
     def load_config(self, config_path: Path) -> None:
         """Load configuration from YAML file."""
-        with open(config_path, 'r') as f:
+        with open(config_path) as f:
             self.config = yaml.safe_load(f)
 
     def load_data(
@@ -56,12 +55,12 @@ class CSVConnector:
     ) -> pd.DataFrame:
         """
         Load CSV file into DataFrame.
-        
+
         Args:
             csv_path: Path to CSV file
             encoding: Character encoding (default: utf-8)
             delimiter: Column delimiter (default: comma)
-            
+
         Returns:
             DataFrame with loaded data
         """
@@ -74,20 +73,20 @@ class CSVConnector:
             )
             return df
         except Exception as e:
-            raise ValueError(f"Failed to load CSV from {csv_path}: {e}")
+            raise ValueError(f"Failed to load CSV from {csv_path}: {e}") from e
 
     def map_columns(
         self,
         df: pd.DataFrame,
-        mapping: Dict[str, str],
+        mapping: dict[str, str],
     ) -> pd.DataFrame:
         """
         Map CSV columns to PEL parameter names.
-        
+
         Args:
             df: Input DataFrame
             mapping: Dict mapping PEL param names to CSV column names
-            
+
         Returns:
             DataFrame with renamed columns
         """
@@ -95,34 +94,34 @@ class CSVConnector:
         missing = [col for col in mapping.values() if col not in df.columns]
         if missing:
             raise ValueError(f"Missing columns in CSV: {missing}")
-        
+
         # Create reverse mapping (CSV col -> PEL param)
         rename_map = {csv_col: pel_param for pel_param, csv_col in mapping.items()}
-        
+
         # Select and rename columns
         return df[list(mapping.values())].rename(columns=rename_map)
 
     def convert_types(
         self,
         df: pd.DataFrame,
-        type_map: Dict[str, str],
+        type_map: dict[str, str],
     ) -> pd.DataFrame:
         """
         Convert column types.
-        
+
         Args:
             df: Input DataFrame
             type_map: Dict mapping column names to types (float, int, str, date)
-            
+
         Returns:
             DataFrame with converted types
         """
         df = df.copy()
-        
+
         for col, dtype in type_map.items():
             if col not in df.columns:
                 continue
-                
+
             try:
                 if dtype == 'float':
                     df[col] = pd.to_numeric(df[col], errors='coerce').astype('float64')
@@ -133,29 +132,29 @@ class CSVConnector:
                 elif dtype == 'str':
                     df[col] = df[col].astype(str)
             except Exception as e:
-                raise ValueError(f"Failed to convert column '{col}' to {dtype}: {e}")
-        
+                raise ValueError(f"Failed to convert column '{col}' to {dtype}: {e}") from e
+
         return df
 
     def handle_missing_values(
         self,
         df: pd.DataFrame,
         strategy: str = 'drop',
-        fill_value: Optional[float] = None,
+        fill_value: float | None = None,
     ) -> pd.DataFrame:
         """
         Handle missing values.
-        
+
         Args:
             df: Input DataFrame
             strategy: 'drop', 'mean', 'median', 'forward_fill', or 'fill'
             fill_value: Value to use if strategy='fill'
-            
+
         Returns:
             DataFrame with missing values handled
         """
         df = df.copy()
-        
+
         if strategy == 'drop':
             df = df.dropna()
         elif strategy == 'mean':
@@ -168,7 +167,7 @@ class CSVConnector:
             df = df.fillna(fill_value)
         else:
             raise ValueError(f"Unknown missing value strategy: {strategy}")
-        
+
         return df
 
     def detect_outliers(
@@ -180,18 +179,18 @@ class CSVConnector:
     ) -> pd.Series:
         """
         Detect outliers in a column.
-        
+
         Args:
             df: Input DataFrame
             column: Column name to check
             method: 'iqr' or 'zscore'
             threshold: Threshold for outlier detection
-            
+
         Returns:
             Boolean Series indicating outliers
         """
         data = df[column].dropna()
-        
+
         if method == 'iqr':
             Q1 = data.quantile(0.25)
             Q3 = data.quantile(0.75)
@@ -199,13 +198,13 @@ class CSVConnector:
             lower = Q1 - threshold * IQR
             upper = Q3 + threshold * IQR
             return (df[column] < lower) | (df[column] > upper)
-        
+
         elif method == 'zscore':
             mean = data.mean()
             std = data.std()
             z_scores = np.abs((df[column] - mean) / std)
             return z_scores > threshold
-        
+
         else:
             raise ValueError(f"Unknown outlier detection method: {method}")
 
@@ -218,13 +217,13 @@ class CSVConnector:
     ) -> pd.DataFrame:
         """
         Remove outliers from DataFrame.
-        
+
         Args:
             df: Input DataFrame
             column: Column name to filter
             method: 'iqr' or 'zscore'
             threshold: Threshold for outlier detection
-            
+
         Returns:
             DataFrame with outliers removed
         """
@@ -234,35 +233,35 @@ class CSVConnector:
     def load_and_prepare(
         self,
         csv_path: Path,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Full pipeline: load, map, convert, clean.
-        
+
         Args:
             csv_path: Path to CSV file
             config: Configuration dict (overrides loaded config)
-            
+
         Returns:
             Cleaned and prepared DataFrame
         """
         cfg = config or self.config
-        
+
         # Load data
         df = self.load_data(
             csv_path,
             encoding=cfg.get('encoding', 'utf-8'),
             delimiter=cfg.get('delimiter', ','),
         )
-        
+
         # Map columns
         if 'column_mapping' in cfg:
             df = self.map_columns(df, cfg['column_mapping'])
-        
+
         # Convert types
         if 'type_mapping' in cfg:
             df = self.convert_types(df, cfg['type_mapping'])
-        
+
         # Handle missing values
         if 'missing_values' in cfg:
             mv_cfg = cfg['missing_values']
@@ -271,7 +270,7 @@ class CSVConnector:
                 strategy=mv_cfg.get('strategy', 'drop'),
                 fill_value=mv_cfg.get('fill_value'),
             )
-        
+
         # Filter outliers
         if 'outlier_filtering' in cfg:
             for col_cfg in cfg['outlier_filtering']:
@@ -281,21 +280,21 @@ class CSVConnector:
                     method=col_cfg.get('method', 'iqr'),
                     threshold=col_cfg.get('threshold', 3.0),
                 )
-        
+
         return df
 
     def extract_column(self, df: pd.DataFrame, column: str) -> np.ndarray:
         """
         Extract a single column as numpy array.
-        
+
         Args:
             df: Input DataFrame
             column: Column name
-            
+
         Returns:
             Numpy array of values
         """
         if column not in df.columns:
             raise ValueError(f"Column '{column}' not found in DataFrame")
-        
+
         return df[column].dropna().values

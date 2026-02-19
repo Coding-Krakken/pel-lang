@@ -10,7 +10,6 @@ Integration tests for Calibration.
 """
 
 import json
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -19,7 +18,7 @@ import pytest
 import yaml
 
 try:
-    from runtime.calibration import Calibrator, CalibrationConfig
+    from runtime.calibration import CalibrationConfig, Calibrator
 except ImportError:
     pytest.skip("calibration module not installed", allow_module_level=True)
 
@@ -69,11 +68,11 @@ class TestCalibrationIntegration:
                 ]
             }
         }
-        
+
         model_path = tmp_path / "model.ir.json"
         with open(model_path, 'w') as f:
             json.dump(model, f, indent=2)
-        
+
         return model_path
 
     @pytest.fixture
@@ -82,17 +81,17 @@ class TestCalibrationIntegration:
         # Generate synthetic data
         np.random.seed(42)
         n = 50
-        
+
         data = {
             'month': [f"2025-{i+1:02d}" for i in range(n)],
             'churn': np.random.beta(10, 120, n),  # Mean ~0.077
             'lifetime_months': np.random.lognormal(2.6, 0.15, n),  # Median ~13.5
         }
-        
+
         df = pd.DataFrame(data)
         csv_path = tmp_path / "data.csv"
         df.to_csv(csv_path, index=False)
-        
+
         return csv_path
 
     @pytest.fixture
@@ -132,17 +131,17 @@ class TestCalibrationIntegration:
                 'cusum_threshold': 5.0,
             },
         }
-        
+
         config_path = tmp_path / "config.yaml"
         with open(config_path, 'w') as f:
             yaml.dump(config, f)
-        
+
         return config_path
 
     def test_calibration_config_from_yaml(self, calibration_config):
         """Test loading CalibrationConfig from YAML."""
         config = CalibrationConfig.from_yaml(calibration_config)
-        
+
         assert config.csv_path is not None
         assert config.model_path is not None
         assert 'churn_rate' in config.parameters
@@ -154,12 +153,12 @@ class TestCalibrationIntegration:
             model_path="model.json",
             parameters={'param1': {'distribution': 'normal'}}
         )
-        
+
         yaml_path = tmp_path / "config.yaml"
         config.to_yaml(yaml_path)
-        
+
         assert yaml_path.exists()
-        
+
         # Reload and verify
         loaded = CalibrationConfig.from_yaml(yaml_path)
         assert loaded.csv_path == "data.csv"
@@ -169,21 +168,21 @@ class TestCalibrationIntegration:
         """Test complete calibration pipeline."""
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
-        
+
         result = calibrator.calibrate()
-        
+
         # Check result structure
         assert result.model_name == "test_model"
         assert len(result.parameters) == 2
         assert 'churn_rate' in result.parameters
         assert 'lifetime' in result.parameters
-        
+
         # Check fitted parameters
         churn_fit = result.parameters['churn_rate']
         assert churn_fit.distribution == 'beta'
         assert 'alpha' in churn_fit.parameters
         assert 'beta' in churn_fit.parameters
-        
+
         lifetime_fit = result.parameters['lifetime']
         assert lifetime_fit.distribution == 'lognormal'
         assert 'mu' in lifetime_fit.parameters
@@ -193,32 +192,32 @@ class TestCalibrationIntegration:
         """Test that calibration updates model parameters."""
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
-        
+
         # Load original model
-        original_model = calibrator.load_model(Path(config.model_path))
-        
+        calibrator.load_model(Path(config.model_path))
+
         # Calibrate
         result = calibrator.calibrate()
-        
+
         # Check updated model
         updated_model = result.updated_model
-        
+
         # Find churn_rate parameter
         churn_param = None
         for node in updated_model['model']['nodes']:
             if node.get('name') == 'churn_rate':
                 churn_param = node
                 break
-        
+
         assert churn_param is not None
-        
+
         # Check parameters were updated
         original_alpha = 2.0
         updated_alpha = churn_param['value']['params']['alpha']
-        
+
         # Should be different from original assumption
         assert updated_alpha != original_alpha
-        
+
         # Check provenance was updated
         assert churn_param['provenance']['source'] == 'calibrated'
         assert churn_param['provenance']['method'] == 'mle'
@@ -228,28 +227,28 @@ class TestCalibrationIntegration:
         """Test that calibration saves output files."""
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
-        
-        result = calibrator.calibrate()
-        
+
+        calibrator.calibrate()
+
         output_path = Path(config.output_path)
-        
+
         # Check output files exist
         model_path = output_path.parent / f"{output_path.stem}_calibrated.ir.json"
         json_path = output_path.parent / f"{output_path.stem}_report.json"
         md_path = output_path.parent / f"{output_path.stem}_report.md"
-        
+
         assert model_path.exists()
         assert json_path.exists()
         assert md_path.exists()
-        
+
         # Verify JSON report content
-        with open(json_path, 'r') as f:
+        with open(json_path) as f:
             report = json.load(f)
-        
+
         assert 'model_name' in report
         assert 'parameters' in report
         assert 'timestamp' in report
-        
+
         # Verify markdown report content
         md_content = md_path.read_text()
         assert "Calibration Report" in md_content
@@ -278,10 +277,10 @@ class TestCalibrationIntegration:
                 },
             },
         )
-        
+
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         # Check bootstrap CI was computed
         churn_fit = result.parameters['churn_rate']
         assert 'alpha' in churn_fit.confidence_intervals
@@ -292,14 +291,14 @@ class TestCalibrationIntegration:
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         result_dict = result.to_dict()
-        
+
         assert isinstance(result_dict, dict)
         assert 'model_name' in result_dict
         assert 'parameters' in result_dict
         assert 'timestamp' in result_dict
-        
+
         # Check parameters are serializable
         assert 'churn_rate' in result_dict['parameters']
         churn = result_dict['parameters']['churn_rate']
@@ -319,9 +318,9 @@ class TestCalibrationIntegration:
                 },
             },
         )
-        
+
         calibrator = Calibrator(config)
-        
+
         # Should raise error about missing column
         with pytest.raises(ValueError, match="not found"):
             calibrator.calibrate()
@@ -336,7 +335,7 @@ class TestCalibrationIntegration:
         df = pd.DataFrame(data)
         csv_path = tmp_path / "data_outliers.csv"
         df.to_csv(csv_path, index=False)
-        
+
         config = CalibrationConfig(
             csv_path=str(csv_path),
             model_path=str(sample_model),
@@ -362,10 +361,10 @@ class TestCalibrationIntegration:
                 },
             },
         )
-        
+
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         # Should successfully calibrate (outliers filtered)
         assert 'churn_rate' in result.parameters
 
@@ -376,10 +375,10 @@ class TestCalibrationIntegration:
             model_path=str(sample_model),
             parameters={},  # Empty
         )
-        
+
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         # Should complete without errors, but no parameters fitted
         assert len(result.parameters) == 0
 
@@ -390,10 +389,10 @@ class TestCalibrationIntegration:
             model_path=str(sample_model),
             parameters=None,
         )
-        
+
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         # Should complete without errors
         assert len(result.parameters) == 0
 
@@ -402,21 +401,21 @@ class TestCalibrationIntegration:
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         md_path = tmp_path / "test_report.md"
         result.to_markdown(md_path)
-        
+
         content = md_path.read_text()
-        
+
         # Check structure
         assert "# Calibration Report" in content
         assert "## Data Source" in content
         assert "## Fitted Parameters" in content
-        
+
         # Check parameter sections
         assert "### churn_rate" in content
         assert "### lifetime" in content
-        
+
         # Check statistical info
         assert "AIC:" in content
         assert "BIC:" in content
@@ -427,18 +426,18 @@ class TestCalibrationIntegration:
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         json_path = tmp_path / "test_report.json"
         result.to_json(json_path)
-        
-        with open(json_path, 'r') as f:
+
+        with open(json_path) as f:
             report = json.load(f)
-        
+
         # Check structure
         assert 'model_name' in report
         assert 'timestamp' in report
         assert 'parameters' in report
-        
+
         # Check parameter details
         assert 'churn_rate' in report['parameters']
         churn = report['parameters']['churn_rate']
@@ -452,18 +451,18 @@ class TestCalibrationIntegration:
         config = CalibrationConfig.from_yaml(calibration_config)
         calibrator = Calibrator(config)
         result = calibrator.calibrate()
-        
+
         # Check updated model provenance
         churn_param = None
         for node in result.updated_model['model']['nodes']:
             if node.get('name') == 'churn_rate':
                 churn_param = node
                 break
-        
+
         # Original confidence was 0.3
         # Calibrated confidence should be based on goodness of fit
         new_confidence = churn_param['provenance']['confidence']
-        
+
         # Should be higher than original (assuming good fit)
         # Confidence = 1 - ks_pvalue, typically > 0.3 for good fits
         assert new_confidence >= 0.3

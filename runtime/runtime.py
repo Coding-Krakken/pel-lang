@@ -625,10 +625,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="PEL Runtime - Execute compiled PEL-IR models"
     )
-    
+
     # Add subcommands
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
-    
+
     # Run command (default execution)
     run_parser = subparsers.add_parser('run', help='Execute a PEL-IR model')
     run_parser.add_argument('ir_file', type=Path, help='Compiled .ir.json file')
@@ -638,7 +638,7 @@ def main():
     run_parser.add_argument('--runs', type=int, default=1000, help='Number of Monte Carlo runs')
     run_parser.add_argument('--time-horizon', type=int, help='Override model time horizon')
     run_parser.add_argument('-o', '--output', type=Path, help='Output JSON file')
-    
+
     # Calibrate command
     calibrate_parser = subparsers.add_parser('calibrate', help='Calibrate model with data')
     calibrate_parser.add_argument('config_file', type=Path, help='Calibration config YAML file')
@@ -650,24 +650,24 @@ def main():
     if args.command == 'calibrate':
         # Import calibration module (optional dependency)
         try:
-            from runtime.calibration import Calibrator, CalibrationConfig
+            from runtime.calibration import CalibrationConfig, Calibrator
         except ImportError:
             print("Error: Calibration module not available.")
             print("Install with: pip install pel-lang[calibration]")
             return 1
-        
+
         # Load config and run calibration
         try:
             config = CalibrationConfig.from_yaml(args.config_file)
             calibrator = Calibrator(config)
-            
-            print(f"Starting calibration...")
+
+            print("Starting calibration...")
             print(f"  Model: {config.model_path}")
             print(f"  Data: {config.csv_path}")
             print()
-            
+
             result = calibrator.calibrate()
-            
+
             print("Calibration completed successfully!")
             print()
             print("Fitted parameters:")
@@ -676,27 +676,27 @@ def main():
                 for pname, pvalue in fit.parameters.items():
                     ci = fit.confidence_intervals[pname]
                     print(f"    {pname}: {pvalue:.6f} (95% CI: [{ci[0]:.6f}, {ci[1]:.6f}])")
-            
+
             if result.drift_reports:
                 print()
                 print("Drift detection:")
                 for param_name, report in result.drift_reports.items():
                     print(f"  {param_name}: MAPE={report.mape:.2%}, " +
                           f"CUSUM={'detected' if report.cusum_detected else 'not detected'}")
-            
+
             if config.output_path:
                 print()
                 print(f"Reports saved to: {config.output_path}")
-            
+
             return 0
-            
+
         except Exception as e:
             print(f"Error during calibration: {e}")
             if args.verbose:
                 import traceback
                 traceback.print_exc()
             return 1
-    
+
     elif args.command == 'run' or args.command is None:
         # Default: run model
         # Support legacy usage: pel <ir_file> ...
@@ -708,12 +708,12 @@ def main():
                     description="PEL Runtime - Execute compiled PEL-IR models"
                 )
                 legacy_parser.add_argument('ir_file', type=Path, help='Compiled .ir.json file')
-                legacy_parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'], 
+                legacy_parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'],
                                          default='deterministic', help='Execution mode')
                 legacy_parser.add_argument('--seed', type=int, default=42, help='Random seed')
-                legacy_parser.add_argument('--runs', type=int, default=1000, 
+                legacy_parser.add_argument('--runs', type=int, default=1000,
                                          help='Number of Monte Carlo runs')
-                legacy_parser.add_argument('--time-horizon', type=int, 
+                legacy_parser.add_argument('--time-horizon', type=int,
                                          help='Override model time horizon')
                 legacy_parser.add_argument('-o', '--output', type=Path, help='Output JSON file')
                 args = legacy_parser.parse_args()
@@ -742,9 +742,9 @@ def main():
             print(f"Results written to {args.output}")
         else:
             print(json.dumps(results, indent=2))
-        
+
         return 0
-    
+
     else:
         parser.print_help()
         return 0
