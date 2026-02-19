@@ -653,6 +653,462 @@ pel run model.ir.json --mode deterministic --steps 36  # 36 months
    Each time step samples a new growth rate.
    </details>
 
+## Advanced Time-Series Patterns
+
+### Multi-Variable Dependencies
+
+Complex models have multiple time series that depend on each other:
+
+```pel
+model SaaSEcosystem {
+  // Inputs
+  param initial_customers: Fraction = 1000.0
+  param monthly_growth_rate: Rate per Month = 0.15 / 1mo
+  param monthly_churn_rate: Probability = 0.05
+  param avg_revenue_per_user: Currency<USD> = $99
+  
+  // Time series 1: Customers
+  var customers: TimeSeries<Fraction>
+  customers[0] = initial_customers
+  customers[t+1] = customers[t] * (1 + monthly_growth_rate - monthly_churn_rate)
+  
+  // Time series 2: Revenue (depends on customers)
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[t] = customers[t] * avg_revenue_per_user
+  
+  // Time series 3: Costs (depends on revenue)
+  var costs: TimeSeries<Currency<USD>>
+  costs[t] = $50_000 + (0.30 * revenue[t])  // Fixed + variable
+  
+  // Time series 4: Cash (depends on revenue and costs)
+  var cash_balance: TimeSeries<Currency<USD>>
+  cash_balance[0] = $500_000
+  cash_balance[t+1] = cash_balance[t] + revenue[t] - costs[t]
+  
+  // Time series 5: Runway (depends on cash and costs)
+  var runway: TimeSeries<Duration>
+  runway[t] = (cash_balance[t] / costs[t]) * 1mo
+}
+```
+
+**Execution order**: PEL automatically determines correct evaluation order using dependency graph.
+
+### Moving Averages and Smoothing
+
+```pel
+model MovingAverages {
+  var daily_sales: TimeSeries<Currency<USD>>
+  // ... populate daily_sales ...
+  
+  // 7-day moving average
+  var sales_ma7: TimeSeries<Currency<USD>>
+  sales_ma7[t] = if t < 6
+    then daily_sales[t]  // Not enough history yet
+    else (
+      daily_sales[t] + daily_sales[t-1] + daily_sales[t-2] +
+      daily_sales[t-3] + daily_sales[t-4] + daily_sales[t-5] +
+      daily_sales[t-6]
+    ) / 7.0
+  
+  // Exponential moving average (EMA)
+  var sales_ema: TimeSeries<Currency<USD>>
+  param alpha: Fraction = 0.3  // Smoothing factor
+  sales_ema[0] = daily_sales[0]
+  sales_ema[t+1] = alpha * daily_sales[t+1] + (1 - alpha) * sales_ema[t]
+}
+```
+
+### Seasonal Patterns
+
+```pel
+model SeasonalRevenue {
+  param base_revenue: Currency<USD> = $100_000 / 1mo
+  
+  // Monthly seasonality factors (retail example)
+  param seasonality: List<Fraction> = [
+    0.80,  // Jan (post-holiday slump)
+    0.85,  // Feb
+    0.95,  // Mar
+    1.00,  // Apr
+    1.05,  // May
+    1.10,  // Jun
+    1.05,  // Jul
+    1.00,  // Aug
+    0.95,  // Sep
+    1.00,  // Oct
+    1.10,  // Nov (pre-holiday)
+    1.40   // Dec (holiday peak)
+  ]
+  
+  var monthly_revenue: TimeSeries<Currency<USD>>
+  monthly_revenue[t] = base_revenue * seasonality[t % 12]
+  // Uses modulo to cycle through 12-month pattern
+}
+```
+
+### Cohort-Based Modeling
+
+```pel
+model CohortRetention {
+  // Track users by acquisition month
+  var cohort_size: TimeSeries<Fraction>
+  param monthly_new_users: Fraction = 1000.0
+  
+  cohort_size[t] = monthly_new_users  // New cohort each month
+  
+  // Retention curve: percentage of cohort still active after k months
+  param retention_curve: List<Probability> = [
+    1.00,  // Month 0 (100% active)
+    0.60,  // Month 1 (60% retained)
+    0.40,  // Month 2
+    0.30,  // Month 3
+    0.25,  // Month 4
+    0.22,  // Month 5+
+  ]
+  
+  // Active users at time t = sum of all cohorts, weighted by retention
+  var active_users: TimeSeries<Fraction>
+  active_users[t] = sum(
+    cohort_size[t-k] * retention_curve[min(k, 5)]
+    for k in 0..t
+  )
+}
+```
+
+### State Transitions (Markov Chains)
+
+```pel
+model CustomerStates {
+  // State: Trial, Active, Churned
+  var trial: TimeSeries<Fraction>
+  var active: TimeSeries<Fraction>
+  var churned: TimeSeries<Fraction>
+  
+  // Initial state
+  trial[0] = 1000.0
+  active[0] = 5000.0
+  churned[0] = 0.0
+  
+  // Transition probabilities
+  param trial_to_active: Probability = 0.40
+  param trial_to_churned: Probability = 0.60
+  param active_to_churned: Probability = 0.05
+  
+  // State transitions
+  trial[t+1] = 1000.0  // New trials each month
+  
+  active[t+1] = active[t] * (1 - active_to_churned) + 
+                trial[t] * trial_to_active
+  
+  churned[t+1] = churned[t] + 
+                 trial[t] * trial_to_churned + 
+                 active[t] * active_to_churned
+  
+  // Validation: total should be conserved
+  constraint conservation {
+    trial[t] + active[t] + churned[t] == 
+    trial[0] + active[0] + churned[0] + 1000.0 * t
+      with severity(fatal)
+  }
+}
+```
+
+## Performance Optimization
+
+### Limiting Time Horizon
+
+```pel
+model PerformanceAware {
+  // ❌ Expensive: 120-month forecast
+  var revenue: TimeSeries<Currency<USD>>[0..119]
+  
+  // ✅ Efficient: 36-month forecast (3 years)
+  var revenue: TimeSeries<Currency<USD>>[0..35]
+  
+  // Tradeoff: Longer horizons = more execution time
+  // Rule of thumb: Use minimum horizon needed for decision
+}
+```
+
+### Sparse Time Series
+
+```pel
+model QuarterlyReporting {
+  // Only compute quarterly values, not monthly
+  var quarterly_revenue: TimeSeries<Currency<USD>>
+  
+  quarterly_revenue[t] = if (t % 3 == 0)
+    then compute_revenue(t)  // Only quarters
+    else $0  // Skip off-quarter months
+}
+```
+
+### Memoization (Avoiding Recomputation)
+
+```pel
+model Memoization {
+  // ❌ Inefficient: Recomputes sum each time
+  var cumulative_revenue: TimeSeries<Currency<USD>>
+  cumulative_revenue[t] = sum(revenue[k] for k in 0..t)
+  // O(t²) complexity!
+  
+  // ✅ Efficient: Incremental update
+  var cumulative_revenue: TimeSeries<Currency<USD>>
+  cumulative_revenue[0] = revenue[0]
+  cumulative_revenue[t+1] = cumulative_revenue[t] + revenue[t+1]
+  // O(t) complexity
+}
+```
+
+## Debugging Time-Series Models
+
+### Tracing Execution
+
+```bash
+# Enable detailed tracing
+pel run model.ir.json --mode deterministic --trace revenue,customers,costs
+```
+
+Output:
+```
+t=0:  revenue=$100K, customers=1000, costs=$80K
+t=1:  revenue=$115K (+15%), customers=1150 (+15%), costs=$84.5K (+5.6%)
+t=2:  revenue=$132K (+15%), customers=1322 (+15%), costs=$89.6K (+6.0%)
+...
+```
+
+### Plotting Time Series
+
+```python
+import json
+import matplotlib.pyplot as plt
+
+with open('results.json') as f:
+    data = json.load(f)
+
+# Extract time series
+revenue = data['variables']['revenue']['time_series']
+costs = data['variables']['costs']['time_series']
+
+t = list(range(len(revenue)))
+
+plt.figure(figsize=(10, 6))
+plt.plot(t, revenue, label='Revenue', linewidth=2)
+plt.plot(t, costs, label='Costs', linewidth=2)
+plt.fill_between(t, 0, revenue, alpha=0.2)
+plt.xlabel('Month')
+plt.ylabel('USD')
+plt.title('Revenue vs Costs Over Time')
+plt.legend()
+plt.grid(True)
+plt.savefig('revenue_vs_costs.png')
+```
+
+### Identifying Divergence
+
+```pel
+model DivergenceDetection {
+  var x: TimeSeries<Fraction>
+  x[0] = 1.0
+  x[t+1] = x[t] * 1.10  // 10% growth
+  
+  // Constraint: Detect if growth becomes unbounded
+  constraint no_divergence {
+    x[t] <= 1_000_000.0
+      with severity(warning)
+      with message("x[{t}] = {x[t]} is growing unbounded")
+  }
+}
+```
+
+## Real-World Case Studies
+
+### Case Study 1: Supply Chain Inventory
+
+```pel
+model InventoryManagement {
+  // Input parameters
+  param daily_demand_mean: Fraction = 100.0
+  param daily_demand_std: Fraction = 20.0
+  param lead_time: Duration = 7day
+  param reorder_point: Fraction = 800.0
+  param reorder_quantity: Fraction = 1000.0
+  
+  // Time series
+  var demand: TimeSeries<Fraction>
+  demand[t] = ~Normal(μ=daily_demand_mean, σ=daily_demand_std)
+  
+  var orders_placed: TimeSeries<Fraction>
+  var orders_arriving: TimeSeries<Fraction>
+  var inventory: TimeSeries<Fraction>
+  
+  // Initial inventory
+  inventory[0] = 2000.0
+  
+  // Ordering logic
+  orders_placed[t] = if inventory[t] < reorder_point
+    then reorder_quantity
+    else 0.0
+  
+  // Orders arrive after lead time
+  orders_arriving[t] = if t >= 7
+    then orders_placed[t-7]
+    else 0.0
+  
+  // Inventory evolution
+  inventory[t+1] = max(0.0, inventory[t] - demand[t] + orders_arriving[t])
+  
+  // Service level: avoid stockouts
+  var stockout: TimeSeries<Bool>
+  stockout[t] = inventory[t] < demand[t]
+  
+  var service_level: Fraction = 
+    (1.0 - sum(stockout[t] for t in 0..365) / 365.0)
+  
+  constraint target_service_level {
+    service_level >= 0.95
+      with severity(warning)
+      with message("Service level {service_level} below 95% target")
+  }
+}
+```
+
+### Case Study 2: Workforce Planning
+
+```pel
+model WorkforcePlanning {
+  var headcount: TimeSeries<Fraction>
+  var hiring: TimeSeries<Fraction>
+  var attrition: TimeSeries<Fraction>
+  var capacity: TimeSeries<Fraction>
+  var revenue_capacity: TimeSeries<Currency<USD>>
+  
+  param avg_attrition_rate: Probability = 0.10 / 12.0  // Annual → monthly
+  param revenue_per_employee: Currency<USD> = $150_000 / 12.0
+  param hiring_ramp_time: Duration = 3mo
+  
+  // Initialize
+  headcount[0] = 100.0
+  
+  // Attrition: lose some employees each month
+  attrition[t] = headcount[t] * avg_attrition_rate
+  
+  // Hiring plan: grow 10% per quarter
+  hiring[t] = if (t % 3 == 0) 
+    then headcount[t] * 0.10
+    else 0.0
+  
+  // Headcount evolution
+  headcount[t+1] = headcount[t] + hiring[t] - attrition[t]
+  
+  // Capacity: new hires take 3 months to be fully productive
+  var productive_headcount: TimeSeries<Fraction>
+  productive_headcount[t] = headcount[t] - (
+    if t >= 3 then 0.0
+    else if t >= 2 then 0.33 * hiring[t-2]
+    else if t >= 1 then 0.67 * hiring[t-1]
+    else hiring[t]
+  )
+  
+  // Revenue capacity
+  revenue_capacity[t] = productive_headcount[t] * revenue_per_employee
+}
+```
+
+## Practice Exercises
+
+### Exercise 1: Compound Growth with Cap
+
+Model customer growth with 15% monthly growth, capped at 10,000 customers:
+
+```pel
+model Exercise1 {
+  var customers: TimeSeries<Fraction>
+  customers[0] = 1000.0
+  
+  // TODO: Add recurrence with growth cap
+  customers[t+1] = ???
+}
+```
+
+<details>
+<summary>Solution</summary>
+
+```pel
+customers[t+1] = min(10_000.0, customers[t] * 1.15)
+// Grows 15% per month until hitting 10K cap
+```
+</details>
+
+### Exercise 2: Revenue with Expansion
+
+Model revenue where existing customers expand 5% per year:
+
+```pel
+model Exercise2 {
+  var customers: TimeSeries<Fraction>
+  var arpu: TimeSeries<Currency<USD>>  // Average revenue per user
+  var revenue: TimeSeries<Currency<USD>>
+  
+  customers[0] = 1000.0
+  customers[t+1] = customers[t] * 1.10  // 10% customer growth
+  
+  arpu[0] = $100
+  // TODO: ARPU grows 5% annually (0.41% monthly)
+  arpu[t+1] = ???
+  
+  revenue[t] = customers[t] * arpu[t]
+}
+```
+
+<details>
+<summary>Solution</summary>
+
+```pel
+arpu[t+1] = arpu[t] * 1.0041  // (1.05)^(1/12) ≈ 1.0041
+// 5% annual growth = 0.41% monthly compound growth
+
+// Alternative: Exact calculation
+param annual_expansion: Fraction = 0.05
+param monthly_expansion: Fraction = (1 + annual_expansion) ** (1/12) - 1
+arpu[t+1] = arpu[t] * (1 + monthly_expansion)
+```
+</details>
+
+### Exercise 3: Cash Runway Calculation
+
+Calculate how many months of runway remain:
+
+```pel
+model Exercise3 {
+  var cash: TimeSeries<Currency<USD>>
+  var burn_rate: TimeSeries<Currency<USD>>
+  var runway: TimeSeries<Duration>
+  
+  cash[0] = $500_000
+  burn_rate[t] = $50_000 / 1mo  // Constant burn
+  
+  cash[t+1] = cash[t] - burn_rate[t]
+  
+  // TODO: Calculate runway (months until cash = 0)
+  runway[t] = ???
+}
+```
+
+<details>
+<summary>Solution</summary>
+
+```pel
+runway[t] = (cash[t] / burn_rate[t]) * 1mo
+// Example: $500K / $50K/mo = 10 months
+
+// Alternative: Account for time passing
+runway[t] = if cash[t] > $0
+  then (cash[t] / burn_rate[t]) * 1mo
+  else 0mo  // Out of cash
+```
+</details>
+
 ## Key Takeaways
 
 1. **Time series are declared**: `var name: TimeSeries<Type>`

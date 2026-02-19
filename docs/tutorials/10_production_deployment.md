@@ -784,6 +784,774 @@ Before deploying to production:
    Without risking production systems.
    </details>
 
+## Advanced Deployment Patterns
+
+### Blue-Green Deployment
+
+Run two identical production environments (blue and green). Deploy new model version to inactive environment, then switch traffic.
+
+```yaml
+# deploy.yml
+name: Blue-Green Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Compile Model
+        run: pel compile model.pel -o model.ir.json
+      
+      - name: Deploy to Green Environment
+        run: |
+          scp model.ir.json server@green-env:/opt/pel/models/
+          ssh server@green-env 'systemctl restart pel-service'
+      
+      - name: Smoke Test Green
+        run: |
+          curl https://green-env.example.com/health
+          curl https://green-env.example.com/api/forecast | jq '.revenue[12]'
+      
+      - name: Switch Traffic to Green
+        run: |
+          # Update load balancer
+          aws elbv2 modify-target-group \
+            --target-group-arn $TG_ARN \
+            --targets Id=green-server
+      
+      - name: Monitor for 10 minutes
+        run: |
+          sleep 600
+          # Check error rates
+          if [[ $(check_error_rate) -gt 1% ]]; then
+            echo "High error rate, rolling back"
+            aws elbv2 modify-target-group \
+              --target-group-arn $TG_ARN \
+              --targets Id=blue-server
+            exit 1
+          fi
+      
+      - name: Decommission Blue
+        run: ssh server@blue-env 'systemctl stop pel-service'
+```
+
+### Canary Releases
+
+Deploy to small percentage of traffic first:
+
+```yaml
+# canary-deploy.yml
+name: Canary Deployment
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Canary (10% traffic)
+        run: |
+          kubectl set image deployment/pel-service \
+            pel-service=pel:v2.0.0 \
+            --record
+          
+          kubectl scale deployment/pel-service-canary --replicas=1
+          kubectl scale deployment/pel-service-stable --replicas=9
+      
+      - name: Monitor Canary for 1 hour
+        run: |
+          sleep 3600
+          
+          # Check metrics
+          ERROR_RATE=$(prometheus_query 'error_rate{deployment="canary"}')
+          LATENCY_P99=$(prometheus_query 'latency_p99{deployment="canary"}')
+          
+          if [[ $ERROR_RATE > 0.01 || $LATENCY_P99 > 500 ]]; then
+            echo "Canary metrics poor, rolling back"
+            kubectl scale deployment/pel-service-canary --replicas=0
+            exit 1
+          fi
+      
+      - name: Promote Canary to 50%
+        run: |
+          kubectl scale deployment/pel-service-canary --replicas=5
+          kubectl scale deployment/pel-service-stable --replicas=5
+      
+      - name: Monitor for 1 hour
+        run: sleep 3600
+      
+      - name: Full Rollout
+        run: |
+          kubectl scale deployment/pel-service-canary --replicas=10
+          kubectl scale deployment/pel-service-stable --replicas=0
+```
+
+### Feature Flags
+
+Toggle model features without redeployment:
+
+```pel
+model FeatureFlaggedModel {
+  param use_new_retention_model: Bool = false {
+    source: "feature_flags",
+    method: "config",
+    confidence: 1.0,
+    notes: "Toggle for new retention curve calculation"
+  }
+  
+  var retention_rate: Probability = if use_new_retention_model
+    then new_retention_logic()
+    else old_retention_logic()
+  
+  // ...
+}
+```
+
+Control via configuration:
+```bash
+# Enable new model for 10% of users
+pel run model.ir.json \
+  --set use_new_retention_model=$(randomly_true_10_percent)
+```
+
+## Monitoring and Observability
+
+### Structured Logging
+
+```python
+# pel_service.py
+import logging
+import json
+from datetime import datetime
+
+logger = logging.getLogger('pel_service')
+
+def run_model(model_path, params):
+    start_time = datetime.now()
+    
+    logger.info(json.dumps({
+        'event': 'model_execution_start',
+        'model': model_path,
+        'params': params,
+        'timestamp': start_time.isoformat()
+    }))
+    
+    try:
+        result = pel.run(model_path, params)
+        
+        duration = (datetime.now() - start_time).total_seconds()
+        
+        logger.info(json.dumps({
+            'event': 'model_execution_success',
+            'model': model_path,
+            'duration_seconds': duration,
+            'output_summary': {
+                'revenue_t12': result['revenue'][12],
+                'constraints_passed': len(result['constraints_passed']),
+                'constraints_violated': len(result['constraints_violated'])
+            },
+            'timestamp': datetime.now().isoformat()
+        }))
+        
+        return result
+    
+    except Exception as e:
+        logger.error(json.dumps({
+            'event': 'model_execution_error',
+            'model': model_path,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }))
+        raise
+```
+
+### Prometheus Metrics
+
+```python
+# metrics.py
+from prometheus_client import Counter, Histogram, Gauge
+
+# Counters
+model_executions_total = Counter(
+    'pel_model_executions_total',
+    'Total number of model executions',
+    ['model_name', 'status']
+)
+
+constraint_violations_total = Counter(
+    'pel_constraint_violations_total',
+    'Total constraint violations',
+    ['model_name', 'constraint_name']
+)
+
+# Histograms
+model_execution_duration = Histogram(
+    'pel_model_execution_duration_seconds',
+    'Model execution duration',
+    ['model_name', 'mode']
+)
+
+# Gauges
+last_forecast_value = Gauge(
+    'pel_last_forecast_value',
+    'Last forecasted value',
+    ['model_name', 'variable', 'time_step']
+)
+
+def track_execution(model_name, mode, result):
+    model_executions_total.labels(
+        model_name=model_name,
+        status='success'
+    ).inc()
+    
+    model_execution_duration.labels(
+        model_name=model_name,
+        mode=mode
+    ).observe(result['execution_time'])
+    
+    for constraint in result.get('constraints_violated', []):
+        constraint_violations_total.labels(
+            model_name=model_name,
+            constraint_name=constraint['name']
+        ).inc()
+    
+    # Track forecast values
+    last_forecast_value.labels(
+        model_name=model_name,
+        variable='revenue',
+        time_step='12'
+    ).set(result['variables']['revenue']['time_series'][12])
+```
+
+### Grafana Dashboard
+
+```json
+{
+  "dashboard": {
+    "title": "PEL Model Monitoring",
+    "panels": [
+      {
+        "title": "Model Execution Rate",
+        "targets": [
+          {
+            "expr": "rate(pel_model_executions_total[5m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Execution Duration (P99)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, pel_model_execution_duration_seconds_bucket)"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Constraint Violations (Last Hour)",
+        "targets": [
+          {
+            "expr": "sum(increase(pel_constraint_violations_total[1h])) by (constraint_name)"
+          }
+        ],
+        "type": "bar"
+      },
+      {
+        "title": "Revenue Forecast Trend",
+        "targets": [
+          {
+            "expr": "pel_last_forecast_value{variable='revenue', time_step='12'}"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}
+```
+
+### Alerting Rules
+
+```yaml
+# prometheus-alerts.yml
+groups:
+  - name: pel_alerts
+    rules:
+      - alert: HighConstraintViolationRate
+        expr: |
+          rate(pel_constraint_violations_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High constraint violation rate"
+          description: "Model {{ $labels.model_name }} has {{ $value }} violations/sec"
+      
+      - alert: ModelExecutionSlow
+        expr: |
+          histogram_quantile(0.99,
+            pel_model_execution_duration_seconds_bucket
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model execution slow"
+          description: "P99 latency is {{ $value }} seconds"
+      
+      - alert: ModelExecutionFailing
+        expr: |
+          rate(pel_model_executions_total{status="error"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model executions failing"
+          description: "Error rate: {{ $value }} executions/sec"
+```
+
+## Scaling Strategies
+
+### Horizontal Scaling (Kubernetes)
+
+```yaml
+# deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pel-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pel-service
+  template:
+    metadata:
+      labels:
+        app: pel-service
+    spec:
+      containers:
+      - name: pel-service
+        image: pel:v2.0.0
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        env:
+        - name: PEL_WORKERS
+          value: "4"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pel-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pel-service
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+```
+
+### Caching Results
+
+```python
+# cache.py
+import hashlib
+import json
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379)
+
+def cache_key(model_path, params):
+    """Generate cache key from model + params"""
+    content = f"{model_path}:{json.dumps(params, sort_keys=True)}"
+    return hashlib.sha256(content.encode()).hexdigest()
+
+def get_cached_result(model_path, params):
+    key = cache_key(model_path, params)
+    cached = redis_client.get(key)
+    
+    if cached:
+        return json.loads(cached)
+    return None
+
+def cache_result(model_path, params, result, ttl=3600):
+    """Cache result for ttl seconds (default 1 hour)"""
+    key = cache_key(model_path, params)
+    redis_client.setex(
+        key,
+        ttl,
+        json.dumps(result)
+    )
+
+def run_model_cached(model_path, params):
+    # Check cache first
+    cached = get_cached_result(model_path, params)
+    if cached:
+        logger.info(f"Cache hit for {model_path}")
+        return cached
+    
+    # Cache miss: execute model
+    logger.info(f"Cache miss for {model_path}, executing...")
+    result = pel.run(model_path, params)
+    
+    # Store in cache
+    cache_result(model_path, params, result)
+    
+    return result
+```
+
+### Async Task Queues
+
+For long-running Monte Carlo simulations:
+
+```python
+# tasks.py
+from celery import Celery
+import pel
+
+app = Celery('pel_tasks', broker='redis://localhost:6379')
+
+@app.task
+def run_monte_carlo(model_path, samples, request_id):
+    """Run Monte Carlo simulation async"""
+    result = pel.run(
+        model_path,
+        mode='monte_carlo',
+        samples=samples
+    )
+    
+    # Store result
+    store_result(request_id, result)
+    
+    # Notify completion
+    send_notification(request_id, status='complete')
+    
+    return result
+
+# API endpoint
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+@app.route('/api/forecast/async', methods=['POST'])
+def forecast_async():
+    request_id = generate_request_id()
+    
+    # Queue task
+    task = run_monte_carlo.delay(
+        model_path='model.ir.json',
+        samples=10000,
+        request_id=request_id
+    )
+    
+    return jsonify({
+        'request_id': request_id,
+        'task_id': task.id,
+        'status': 'queued',
+        'status_url': f'/api/status/{request_id}'
+    }), 202
+
+@app.route('/api/status/<request_id>')
+def check_status(request_id):
+    status = get_task_status(request_id)
+    return jsonify(status)
+```
+
+## Security Best Practices
+
+### Input Validation
+
+```python
+# validation.py
+from jsonschema import validate, ValidationError
+
+PARAM_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "initial_customers": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+        },
+        "growth_rate": {
+            "type": "number",
+            "minimum": -1.0,
+            "maximum": 10.0
+        }
+    },
+    "required": ["initial_customers", "growth_rate"]
+}
+
+def validate_params(params):
+    try:
+        validate(instance=params, schema=PARAM_SCHEMA)
+    except ValidationError as e:
+        raise ValueError(f"Invalid parameters: {e.message}")
+    
+    return True
+
+# In API
+@app.route('/api/forecast', methods=['POST'])
+def forecast():
+    params = request.json
+    
+    # Validate inputs
+    try:
+        validate_params(params)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    
+    result = pel.run('model.ir.json', params)
+    return jsonify(result)
+```
+
+### Rate Limiting
+
+```python
+# rate_limit.py
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour"]
+)
+
+@app.route('/api/forecast', methods=['POST'])
+@limiter.limit("10 per minute")
+def forecast():
+    # ... implementation
+    pass
+```
+
+### API Authentication
+
+```python
+# auth.py
+from functools import wraps
+from flask import request, jsonify
+import jwt
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        
+        if not token:
+            return jsonify({'error': 'No token provided'}), 401
+        
+        try:
+            # Verify JWT token
+            payload = jwt.decode(
+                token.replace('Bearer ', ''),
+                SECRET_KEY,
+                algorithms=['HS256']
+            )
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        return f(*args, **kwargs)
+    
+    return decorated
+
+@app.route('/api/forecast', methods=['POST'])
+@require_auth
+@limiter.limit("10 per minute")
+def forecast():
+    # ... implementation
+    pass
+```
+
+## Disaster Recovery
+
+### Backup Strategy
+
+```bash
+#!/bin/bash
+# backup.sh
+
+BACKUP_DIR="/backups/pel-models"
+DATE=$(date +%Y-%m-%d)
+
+# Backup models
+mkdir -p "$BACKUP_DIR/$DATE"
+cp -r /opt/pel/models/* "$BACKUP_DIR/$DATE/"
+
+# Backup configuration
+cp /etc/pel/config.yml "$BACKUP_DIR/$DATE/"
+
+# Compress
+tar -czf "$BACKUP_DIR/pel-backup-$DATE.tar.gz" "$BACKUP_DIR/$DATE"
+
+# Upload to S3
+aws s3 cp "$BACKUP_DIR/pel-backup-$DATE.tar.gz" \
+  s3://company-backups/pel/
+
+# Cleanup old backups (keep 30 days)
+find "$BACKUP_DIR" -name "*.tar.gz" -mtime +30 -delete
+```
+
+Schedule with cron:
+```cron
+0 2 * * * /opt/scripts/backup.sh
+```
+
+### Rollback Procedure
+
+```bash
+#!/bin/bash
+# rollback.sh
+
+VERSION=$1  # e.g., v2.0.0
+
+if [ -z "$VERSION" ]; then
+  echo "Usage: ./rollback.sh <version>"
+  exit 1
+fi
+
+echo "Rolling back to $VERSION..."
+
+# Stop service
+systemctl stop pel-service
+
+# Restore model from Git
+git checkout "$VERSION" model.pel
+pel compile model.pel -o /opt/pel/models/model.ir.json
+
+# Restart service
+systemctl start pel-service
+
+# Verify health
+sleep 5
+curl -f http://localhost:8000/health || {
+  echo "Health check failed, rolling back failed"
+  exit 1
+}
+
+echo "Rollback to $VERSION complete"
+```
+
+## Practice Exercises
+
+### Exercise 1: Create GitHub Actions CI
+
+Write a GitHub Actions workflow that:
+1. Compiles the model
+2. Runs deterministic mode
+3. Checks no constraints violated
+4. Uploads IR as artifact
+
+<details>
+<summary>Solution</summary>
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install PEL
+        run: pip install pel-lang
+      
+      - name: Compile Model
+        run: pel compile model.pel -o model.ir.json
+      
+      - name: Run Deterministic
+        run: |
+          pel run model.ir.json --mode deterministic -o results.json
+      
+      - name: Check Constraints
+        run: |
+          VIOLATIONS=$(cat results.json | jq '.constraints_violated | length')
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "ERROR: $VIOLATIONS constraints violated"
+            cat results.json | jq '.constraints_violated'
+            exit 1
+          fi
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: model-ir
+          path: model.ir.json
+```
+</details>
+
+### Exercise 2: Add Prometheus Metrics
+
+Instrument a Flask API with Prometheus metrics for model execution.
+
+<details>
+<summary>Solution</summary>
+
+```python
+from flask import Flask, jsonify, request
+from prometheus_client import Counter, Histogram, generate_latest
+import pel
+import time
+
+app = Flask(__name__)
+
+# Metrics
+executions = Counter('model_executions_total', 'Total executions', ['status'])
+duration = Histogram('model_execution_duration_seconds', 'Execution duration')
+
+@app.route('/api/forecast', methods=['POST'])
+def forecast():
+    start = time.time()
+    
+    try:
+        params = request.json
+        result = pel.run('model.ir.json', params)
+        
+        executions.labels(status='success').inc()
+        duration.observe(time.time() - start)
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        executions.labels(status='error').inc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest()
+
+if __name__ == '__main__':
+    app.run(port=8000)
+```
+</details>
+
 ## Key Takeaways
 
 1. **Use Git for version control**: Commit models, not Excel files

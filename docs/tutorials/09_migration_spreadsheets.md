@@ -538,6 +538,622 @@ Before declaring migration complete:
    Skip one-off calculations and simple data tables.
    </details>
 
+## Advanced Migration Techniques
+
+### Complex Excel Formulas Translation
+
+#### IF() Statements
+
+Excel:
+```excel
+=IF(B2>10000, B2*0.2, B2*0.3)
+```
+
+PEL:
+```pel
+var result = if customers > 10_000
+  then revenue * 0.2
+  else revenue * 0.3
+```
+
+#### Nested IF()
+
+Excel:
+```excel
+=IF(B2<5000, "Small", IF(B2<20000, "Medium", "Large"))
+```
+
+PEL:
+```pel
+var segment = if customers < 5_000
+  then "Small"
+  else if customers < 20_000
+    then "Medium"
+    else "Large"
+```
+
+#### SUMIF() and Array Formulas
+
+Excel:
+```excel
+=SUMIF(A2:A100, ">100", B2:B100)
+```
+
+PEL (using time series):
+```pel
+var filtered_sum = sum(
+  revenue[t] for t in 0..99 if customers[t] > 100
+)
+```
+
+#### VLOOKUP() Replacement
+
+Excel:
+```excel
+=VLOOKUP(A2, PricingTable, 2, FALSE)
+```
+
+PEL (using parameters or CSVs):
+```pel
+// Option 1: Hard-code lookup table
+param pricing_tier_1: Currency<USD> = $99
+param pricing_tier_2: Currency<USD> = $199
+param pricing_tier_3: Currency<USD> = $399
+
+var price = if tier == "basic"
+  then pricing_tier_1
+  else if tier == "pro"
+    then pricing_tier_2
+    else pricing_tier_3
+
+// Option 2: Import from CSV (future feature)
+// import pricing_table from "pricing.csv"
+// var price = lookup(pricing_table, tier)
+```
+
+#### NPV() and IRR()
+
+Excel:
+```excel
+=NPV(10%, B2:B10)
+```
+
+PEL:
+```pel
+use stdlib.cashflow
+
+var project_npv = npv(
+  cash_flows: [revenue[t] - costs[t] for t in 0..8],
+  discount_rate: 0.10
+)
+```
+
+### Circular References and Iteration
+
+Excel often has circular references (e.g., debt depends on interest, interest depends on debt).
+
+**Excel approach** (with iteration enabled):
+```excel
+// Cell A1: Debt
+=B1*12  // Interest × 12 months
+
+// Cell B1: Annual Interest
+=A1*0.05  // Debt × 5% rate
+```
+
+**PEL approach** (break circular dependency):
+
+```pel
+model DebtModel {
+  // Option 1: Iterative solver (manual)
+  param initial_debt_guess: Currency<USD> = $1_000_000
+  param interest_rate: Probability = 0.05
+  
+  var debt: Currency<USD> = initial_debt_guess
+  var annual_interest: Currency<USD> = debt * interest_rate
+  
+  // Debt = Interest × 20 (solve: D = 0.05D × 20 → D = D)
+  // This creates circular dependency - must refactor
+  
+  // Option 2: Explicit formula (break circularity)
+  // If Debt = f(Interest) and Interest = g(Debt),
+  // solve algebraically: D = 0.05D × 20 → D = D (trivial)
+  // If more complex, solve manually:
+  
+  // Example: Debt = Operating_Cash - Interest, Interest = Debt × 0.05
+  // Substitute: Debt = OC - (Debt × 0.05)
+  // Solve: Debt = OC / 1.05
+  
+  param operating_cash: Currency<USD> = $1_000_000
+  var debt_solved: Currency<USD> = operating_cash / 1.05
+  var interest_solved: Currency<USD> = debt_solved * interest_rate
+}
+```
+
+**Best practice**: Refactor circular dependencies into explicit time-series or algebraic solutions.
+
+### Migrating Scenario Analysis
+
+Excel scenario manager:
+```excel
+// Scenario 1: Base Case
+Revenue_Growth = 15%
+Churn_Rate = 5%
+
+// Scenario 2: Pessimistic
+Revenue_Growth = 5%
+Churn_Rate = 10%
+
+// Scenario 3: Optimistic
+Revenue_Growth = 25%
+Churn_Rate = 3%
+```
+
+PEL approach:
+
+```pel
+// Option 1: Multiple model files
+// base_case.pel
+param revenue_growth: Rate per Month = 0.15 / 1mo
+param churn_rate: Probability = 0.05
+
+// pessimistic.pel
+param revenue_growth: Rate per Month = 0.05 / 1mo
+param churn_rate: Probability = 0.10
+
+// optimistic.pel
+param revenue_growth: Rate per Month = 0.25 / 1mo
+param churn_rate: Probability = 0.03
+
+// Option 2: Distributions (Monte Carlo replaces scenarios)
+param revenue_growth: Rate per Month ~ Normal(μ=0.15/1mo, σ=0.05/1mo)
+param churn_rate: Probability ~ Beta(alpha: 10, beta: 190)
+// Monte Carlo samples thousands of scenarios automatically
+
+// Option 3: Command-line overrides
+// pel run model.ir.json --set revenue_growth=0.05/1mo --set churn_rate=0.10
+```
+
+### Migrating Data Tables (Goal Seek)
+
+Excel Data Table:
+```
+        | CAC=$400 | CAC=$500 | CAC=$600
+--------|----------|----------|----------
+Churn=3%|  $4,000  |  $5,000  |  $6,000
+Churn=5%|  $2,400  |  $3,000  |  $3,600
+Churn=7%|  $1,714  |  $2,143  |  $2,571
+```
+
+PEL approach (sensitivity sweep):
+
+```bash
+#!/bin/bash
+# sensitivity_sweep.sh
+
+for cac in 400 500 600; do
+  for churn in 0.03 0.05 0.07; do
+    echo "CAC=$cac, Churn=$churn"
+    pel run model.ir.json \
+      --set cac=$cac \
+      --set churn_rate=$churn \
+      | jq '.variables.ltv.deterministic'
+  done
+done
+```
+
+### Handling Macros (VBA Code)
+
+Excel macros cannot be directly migrated. Options:
+
+1. **Rewrite logic in PEL**:
+   ```vba
+   ' VBA: Custom copmputation
+   Function CustomMetric(revenue As Double, costs As Double) As Double
+     CustomMetric = (revenue - costs) / revenue * 100
+   End Function
+   ```
+   
+   ```pel
+   // PEL equivalent
+   var custom_metric: Fraction = (revenue - costs) / revenue
+   ```
+
+2. **Python/external scripts** for data preprocessing:
+   ```python
+   # preprocess.py
+   import pandas as pd
+   
+   df = pd.read_excel('raw_data.xlsx')
+   df['computed_field'] = df['revenue'] * 1.15
+   df.to_csv('cleaned_data.csv')
+   ```
+   
+   Then import CSV into PEL model.
+
+3. **API integration** for complex external logic:
+   ```bash
+   # Call external service for complex calculation
+   curl -X POST https://api.example.com/compute \
+     -d '{"revenue": 100000}' > result.json
+   
+   # Use result in PEL model
+   # (future: PEL may support API calls natively)
+   ```
+
+## Migration Case Studies
+
+### Case Study 1: Revenue Forecast Model
+
+**Original Excel** (simplified):
+
+| Month | Customers | ARPU  | Revenue  |
+|-------|-----------|-------|----------|
+| Jan   | 1,000     | $50   | $50,000  |
+| Feb   | =A2\*1.1  | =$50  | =B3\*C3  |
+| Mar   | =A3\*1.1  | =$50  | =B4\*C4  |
+| ...   | ...       | ...   | ...      |
+
+**Migration steps**:
+
+1. **Audit**:
+   - Growth rate: 10%/month (hard-coded in formula)
+   - ARPU: $50 (fixed reference)
+   - No error handling, no uncertainty
+
+2. **Extract**:
+   ```pel
+   model RevenueForecas
+
+t {
+     param initial_customers: Fraction = 1000.0
+     param growth_rate: Probability = 0.10
+     param arpu: Currency<USD> = $50
+   }
+   ```
+
+3. **Type**:
+   ```pel
+   var customers: TimeSeries<Fraction>
+   var revenue: TimeSeries<Currency<USD>>
+   ```
+
+4. **Provenance**:
+   ```pel
+   param initial_customers: Fraction = 1000.0 {
+     source: "crm_export_jan_2026",
+     method: "observed",
+     confidence: 0.99
+   }
+   
+   param growth_rate: Probability = 0.10 {
+     source: "marketing_estimate",
+     method: "assumption",
+     confidence: 0.50,
+     notes: "Based on Q4 2025 trend, but unvalidated"
+   }
+   
+   param arpu: Currency<USD> = $50 {
+     source: "billing_system_avg_jan_2026",
+     method: "observed",
+     confidence: 0.95
+   }
+   ```
+
+5. **Validate**:
+   ```pel
+   customers[0] = initial_customers
+   customers[t+1] = customers[t] * (1 + growth_rate)
+   
+   revenue[t] = customers[t] * arpu
+   ```
+   
+   ```bash
+   pel compile model.pel -o model.ir.json
+   pel run model.ir.json --mode deterministic --trace revenue
+   ```
+   
+   Compare with Excel:
+   ```
+   t=0: PEL=$50K, Excel=$50K ✅
+   t=1: PEL=$55K, Excel=$55K ✅
+   t=2: PEL=$60.5K, Excel=$60.5K ✅
+   ```
+
+6. **Enhance**:
+   ```pel
+   // Add uncertainty
+   param growth_rate: Probability ~ Beta(alpha: 10, beta: 90) {
+     source: "historical_growth_range",
+     method: "fitted",
+     confidence: 0.70,
+     notes: "Fitted to 12 months of data: mean=10%, range=[5%, 18%]"
+   }
+   
+   // Add constraint
+   constraint reasonable_growth {
+     revenue[t] <= $10_000_000
+       with severity(warning)
+       with message("Revenue exceeds $10M at t={t}, validate assumptions")
+   }
+   
+   // Add churn
+   param churn_rate: Probability = 0.05 {
+     source: "analytics",
+     method: "observed",
+     confidence: 0.85
+   }
+   
+   customers[t+1] = customers[t] * (1 + growth_rate - churn_rate)
+   ```
+
+### Case Study 2: Cash Flow Statement
+
+**Original Excel**:
+
+| Line Item                 | Jan     | Feb     | Mar     |
+|---------------------------|---------|---------|-------|
+| Revenue                   | $100K   | $105K   | $110K |
+| COGS                      | $30K    | $31.5K  | $33K  |
+| Gross Profit              | $70K    | $73.5K  | $77K  |
+| Operating Expenses        | $60K    | $60K    | $60K  |
+| EBITDA                    | $10K    | $13.5K  | $17K  |
+| Cash (Beginning)          | $500K   | $510K   | $523.5K |
+| Cash (Ending)             | $510K   | $523.5K | $540.5K |
+
+**PEL migration**:
+
+```pel
+model CashFlowStatement {
+  // Revenue assumption
+  param initial_revenue: Currency<USD> = $100_000 {
+    source: "stripe_jan_2026",
+    method: "observed",
+    confidence: 0.99
+  }
+  
+  param revenue_growth: Rate per Month = 0.05 / 1mo {
+    source: "sales_forecast",
+    method: "assumption",
+    confidence: 0.60
+  }
+  
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[0] = initial_revenue
+  revenue[t+1] = revenue[t] * (1 + revenue_growth)
+  
+  // COGS (30% of revenue)
+  param cogs_margin: Probability = 0.30 {
+    source: "finance_records",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  var cogs: TimeSeries<Currency<USD>>
+  cogs[t] = revenue[t] * cogs_margin
+  
+  // Gross profit
+  var gross_profit: TimeSeries<Currency<USD>>
+  gross_profit[t] = revenue[t] - cogs[t]
+  
+  // Operating expenses (fixed)
+  param opex: Currency<USD> = $60_000 / 1mo {
+    source: "accounting",
+    method: "observed",
+    confidence: 0.99
+  }
+  
+  var operating_expenses: TimeSeries<Currency<USD>>
+  operating_expenses[t] = opex
+  
+  // EBITDA
+  var ebitda: TimeSeries<Currency<USD>>
+  ebitda[t] = gross_profit[t] - operating_expenses[t]
+  
+  // Cash balance
+  param initial_cash: Currency<USD> = $500_000 {
+    source: "bank_statement_dec_2025",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  var cash_balance: TimeSeries<Currency<USD>>
+  cash_balance[0] = initial_cash
+  cash_balance[t+1] = cash_balance[t] + ebitda[t]
+  
+  // Constraint: Cash never negative
+  constraint solvency {
+    cash_balance[t] >= $0
+      with severity(fatal)
+      with message("Cash negative at t={t}: {cash_balance[t]}")
+  }
+}
+```
+
+## Common Migration Pitfalls
+
+### Pitfall 1: Hidden Assumptions
+
+**Problem**: Excel formulas hide assumptions.
+
+```excel
+=B2*1.15  // What is 1.15? Growth? Markup? Tax?
+```
+
+**Solution**: Make explicit in PEL with provenance.
+
+```pel
+param growth_rate: Probability = 0.15 {
+  source: "marketing_plan_q1_2026",
+  method: "assumption",
+  confidence: 0.60,
+  notes: "15% monthly customer growth target"
+}
+
+var next_customers: Fraction = current_customers * (1 + growth_rate)
+```
+
+### Pitfall 2: Inconsistent Unit
+
+**Problem**: Excel mixes units freely.
+
+```excel
+=A1+B1  // Is A1 in $ and B1 in %? Excel doesn't check.
+```
+
+**Solution**: PEL type system enforces correctness.
+
+```pel
+var total = $100 + 0.15  // ❌ Compilation error
+var total = $100 * (1 + 0.15)  // ✅ Correct
+```
+
+### Pitfall 3: Copy-Paste Errors
+
+**Problem**: Dragging formulas breaks references.
+
+```excel
+// Intended: =A$2*B2 (lock row 2)
+// Actual after drag: =A4*B4 (oops, row isn't locked)
+```
+
+**Solution**: PEL has no copy-paste—formulas are explicit.
+
+```pel
+var revenue[t] = customers[t] * arpu  // No dragging, no errors
+```
+
+### Pitfall 4: Version Chaos
+
+**Problem**: Excel files proliferate.
+
+```
+model_v1.xlsx
+model_v2_final.xlsx
+model_v2_final_UPDATED.xlsx
+model_FEB_2026_approved.xlsx
+```
+
+**Solution**: Use Git.
+
+```bash
+git init
+git add model.pel
+git commit -m "Initial model"
+
+# Later
+git add model.pel
+git commit -m "Updated growth rate to 12%"
+
+# View history
+git log --oneline
+# 3a2f1b4 Updated growth rate to 12%
+# c7e8d92 Initial model
+```
+
+## Migration Validation Checklist
+
+☐ **Output Match**: PEL deterministic mode == Excel outputs (within 0.1%)
+☐ **Provenance Complete**: All parameters have source/method/confidence
+☐ **Types Correct**: No mixing currencies, fractions, rates
+☐ **Constraints Added**: Business rules enforced (cash ≥ 0, etc.)
+☐ **Git Initialized**: Model under version control
+☐ **Documentation**: README explains model purpose and assumptions
+☐ **Tests Written**: At least one regression test
+☐ **Uncertainty Modeled**: Distributions for key uncertain parameters
+
+## Automated Migration Tools (Future)
+
+While not yet available, future PEL tooling may include:
+
+```bash
+# Hypothetical Excel importer
+pel import model.xlsx --output model.pel --auto-type
+
+# Would generate:
+# - Parameter extraction
+# - Basic type inference
+# - Provenance stubs (to be filled in)
+# - Time-series detection
+```
+
+Until then, migration is manual—but worth the investment for critical models.
+
+## Practice Exercises
+
+### Exercise 1: Migrate Simple Growth
+
+Excel:
+```
+| Month | Customers |
+|-------|---------- |
+| Jan   | 100       |
+| Feb   | =A2*1.10  |
+| Mar   | =A3*1.10  |
+```
+
+**Task**: Migrate to PEL with provenance.
+
+<details>
+<summary>Solution</summary>
+
+```pel
+model CustomerGrowth {
+  param initial_customers: Fraction = 100.0 {
+    source: "crm_jan_2026",
+    method: "observed",
+    confidence: 0.99
+  }
+  
+  param growth_rate: Probability = 0.10 {
+    source: "sales_target",
+    method: "assumption",
+    confidence: 0.50
+  }
+  
+  var customers: TimeSeries<Fraction>
+  customers[0] = initial_customers
+  customers[t+1] = customers[t] * (1 + growth_rate)
+}
+```
+</details>
+
+### Exercise 2: Translate VLOOKUP
+
+Excel:
+```excel
+=VLOOKUP(A2, $E$2:$F$5, 2, FALSE)
+```
+
+Where lookup table is:
+```
+Tier   | Price
+-------|-------
+Basic  | $49
+Pro    | $99
+Enterprise | $299
+```
+
+**Task**: Implement in PEL.
+
+<details>
+<summary>Solution</summary>
+
+```pel
+param tier: String = "Pro" {
+  source: "customer_record",
+  method: "observed",
+  confidence: 1.0
+}
+
+var price: Currency<USD> = 
+  if tier == "Basic" then $49
+  else if tier == "Pro" then $99
+  else if tier == "Enterprise" then $299
+  else $0  // Default
+```
+</details>
+
 ## Key Takeaways
 
 1. **Migration is a 6-step process**: Audit → Extract → Type → Provenance → Validate → Enhance

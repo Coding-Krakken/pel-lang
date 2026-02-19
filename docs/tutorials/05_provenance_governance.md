@@ -602,6 +602,614 @@ model SaasFinancials2026 {
    - When confidence changes (new evidence)
    </details>
 
+## Advanced Provenance Techniques
+
+### Provenance Inheritance and Transformation Rules
+
+When deriving variables, how does provenance propagate?
+
+```pel
+model ProvenanceInheritance {
+  param monthly_revenue: Currency<USD> = $100_000 {
+    source: "stripe_dashboard",
+    method: "observed",
+    confidence: 0.99,
+    notes: "January 2026 actual MRR"
+  }
+  
+  param churn_rate: Probability = 0.05 {
+    source: "analytics_cohort_analysis",
+    method: "fitted",
+    confidence: 0.85,
+    notes: "3-month rolling average, n=2,500 customers"
+  }
+  
+  // Derived variable: LTV
+  var ltv: Currency<USD> = monthly_revenue / churn_rate {
+    // Provenance is derived automatically:
+    // - source: combination of parent sources
+    // - method: "derived"
+    // - confidence: min(0.99, 0.85) = 0.85 (weakest link)
+    // - note: Auto-generated dependency graph
+  }
+}
+```
+
+**Rule**: Derived variable confidence ≤ min(confidence of inputs).
+
+**Manual override with justification**:
+
+```pel
+var ltv: Currency<USD> = monthly_revenue / churn_rate {
+  source: "ltv_calculation",
+  method: "derived",
+  confidence: 0.80,  // Lower than inputs due to formula assumptions
+  notes: "LTV = MRR / churn assumes: (1) churn is stable, (2) no expansion revenue, (3) no cohort effects. Each assumption reduces confidence by ~5%."
+}
+```
+
+### Multi-Source Provenance
+
+When combining data from multiple sources:
+
+```pel
+model BlendedData {
+  // Source 1: CRM system
+  param customers_crm: Fraction = 10_500 {
+    source: "salesforce_crm",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Active customer count as of 2026-02-19"
+  }
+  
+  // Source 2: Billing system
+  param customers_billing: Fraction = 10_450 {
+    source: "stripe_subscriptions",
+    method: "observed",
+    confidence: 0.99,
+    notes: "Active subscription count as of 2026-02-19"
+  }
+  
+  // Reconciliation: Average with documented discrepancy
+  var customers_actual: Fraction = (customers_crm + customers_billing) / 2.0 {
+    source: "crm_billing_reconciliation",
+    method: "derived",
+    confidence: 0.85,
+    notes: "50-customer discrepancy (0.5%) between CRM and billing. Likely cause: trial users in CRM but not yet billed. Using average as conservative estimate."
+  }
+}
+```
+
+### Time-Based Provenance Decay
+
+Confidence degrades as data ages:
+
+```pel
+model ProvenanceDecay {
+  param conversion_rate_q4_2025: Probability = 0.12 {
+    source: "google_analytics_q4_2025",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Q4 2025 actual conversion rate (holiday season)"
+  }
+  
+  // Q1 2026: Same value, but lower confidence (context changed)
+  param conversion_rate_q1_2026: Probability = 0.12 {
+    source: "google_analytics_q4_2025",  // Stale source
+    method: "assumption",  // No longer observed (now assumed)
+    confidence: 0.60,  // Confidence degraded
+    notes: "Assumed Q1 2026 rate = Q4 2025 rate. Confidence reduced due to: (1) seasonal effects (holiday vs normal), (2) product changes since Q4, (3) market conditions may differ."
+  }
+}
+```
+
+**Best practice**: Document when and why historical data becomes less reliable.
+
+### Provenance for Calibrated Distributions
+
+When fitting distributions to data:
+
+```pel
+model CalibratedProvenance {
+  param revenue: Currency<USD> ~ LogNormal(μ=11.5, σ=0.35) {
+    source: "revenue_history_2023-2025_csv",
+    method: "fitted",
+    confidence: 0.85,
+    notes: "Fitted LogNormal to 36 months of revenue data (2023-01 to 2025-12) using scipy.stats.lognorm.fit(). Goodness-of-fit: Kolmogorov-Smirnov p=0.42 (good fit). Parameters: μ=11.5 (median=$99K), σ=0.35 (P05=$62K, P95=$157K)."
+  }
+}
+```
+
+**Include in notes**:
+- Data source (CSV file, database, API)
+- Date range
+- Sample size (n=36 above)
+- Fitting method (library, algorithm)
+- Goodness-of-fit test results
+- Interpretation of parameters
+
+### Provenance Audit Trails
+
+Track changes to parameters over time:
+
+```markdown
+# assumption_changelog.md
+
+## 2026-01-15: Initial Model
+- `param conversion_rate = 0.10` (source: "industry_benchmark", confidence: 0.40)
+
+## 2026-02-10: Updated with A/B test results
+- `param conversion_rate = 0.12` (source: "ab_test_week_1-4", confidence: 0.70)
+- Note: n=5,000 visitors, 600 conversions, 95% CI: [0.11, 0.13]
+
+## 2026-03-05: Refined with additional cohorts
+- `param conversion_rate = 0.115` (source: "ab_test_week_1-8", confidence: 0.85)
+- Note: n=12,000 visitors, 1,380 conversions, tighter CI: [0.110, 0.120]
+```
+
+Automate with version control:
+
+```bash
+# Commit each change to parameter files
+git log -p params.pel | grep "param conversion_rate"
+```
+
+### Provenance-Driven Model Refinement
+
+**Governance process**:
+
+1. **Identify low-confidence parameters**
+   ```bash
+   pel compile model.pel --provenance-report -o provenance.json
+   cat provenance.json | jq '.parameters | sort_by(.confidence) | .[0:5]'
+   ```
+   Output:
+   ```json
+   [
+     {"name": "viral_coefficient", "confidence": 0.30},
+     {"name": "enterprise_conversion_rate", "confidence": 0.40},
+     {"name": "expansion_revenue_rate", "confidence": 0.45},
+     {"name": "support_cost_per_customer", "confidence": 0.50},
+     {"name": "market_size", "confidence": 0.55}
+   ]
+   ```
+
+2. **Prioritize data collection**
+   - Focus on high-impact, low-confidence parameters
+   - Run experiments, query databases, survey customers
+
+3. **Update model with new evidence**
+   ```pel
+   // Before
+   param viral_coefficient: Fraction = 1.5 {
+     source: "founder_intuition",
+     method: "assumption",
+     confidence: 0.30
+   }
+   
+   // After: Ran referral program
+   param viral_coefficient: Fraction = 0.65 {
+     source: "referral_program_jan_2026",
+     method: "observed",
+     confidence: 0.80,
+     notes: "3,000 customers, 1,950 referrals, 65% viral coefficient"
+   }
+   ```
+
+4. **Monitor confidence improvement**
+   ```bash
+   # Track average confidence over time
+   pel compile model.pel --provenance-report \
+     | jq '.parameters | map(.confidence) | add / length'
+   ```
+   - Model v1: 0.52 average confidence
+   - Model v2: 0.68 average confidence (+30%)
+   - Model v3: 0.79 average confidence (+52% from v1)
+
+## Provenance in Different Organizational Roles
+
+### For Data Analysts
+
+**Responsibility**: Document data transformations clearly.
+
+```pel
+param customers: Fraction = 8_450 {
+  source: "customers_query_v3.sql",
+  method: "derived",
+  confidence: 0.90,
+  notes: "Query definition: SELECT COUNT(DISTINCT customer_id) FROM subscriptions WHERE status='active' AND created_at < '2026-02-01'. Excludes: trial users, churned accounts, internal test accounts. Last run: 2026-02-19 14:32 UTC."
+}
+```
+
+**What to include**:
+- SQL/code snippet or reference
+- Data exclusions/filters
+- Timestamp of query execution
+- Database/table versions
+
+### For Finance Teams
+
+**Responsibility**: Link to accounting sources, ensure audit trail.
+
+```pel
+param q4_2025_revenue: Currency<USD> = $1_245_000 {
+  source: "quickbooks_income_statement_q4_2025",
+  method: "observed",
+  confidence: 0.99,
+  notes: "Audited financial statement, line item 'Total Revenue', page 3. Signed by CFO on 2026-01-15. Ref: QB-2025-Q4-REV."
+}
+```
+
+**What to include**:
+- Document reference ID
+- Line item number/name
+- Sign-off authority (CFO, auditor)
+- Auditability (enable external verification)
+
+### For Product Managers
+
+**Responsibility**: Document product assumptions and rationale.
+
+```pel
+param feature_adoption_rate: Probability = 0.35 {
+  source: "pm_estimate_based_on_similar_feature",
+  method: "expert_estimate",
+  confidence: 0.50,
+  notes: "Estimated based on previous feature launch similarity. Previous feature ('dashboard_v2') had 40% adoption in 6 months. New feature is simpler, so estimating 35% ± 10%. Will measure via analytics after launch."
+}
+```
+
+**What to include**:
+- Analogies to past features
+- Adjustment rationale
+- Measurement plan (how to validate)
+
+### For Executives/Board
+
+**Responsibility**: High-level strategic assumptions with decision context.
+
+```pel
+param market_penetration_target: Probability = 0.05 {
+  source: "strategic_plan_2026-2028",
+  method: "assumption",
+  confidence: 0.60,
+  notes: "Board-approved target: Capture 5% of $2B TAM by 2028. Based on: (1) competitor analysis (leader has 12% share), (2) sales capacity model (3-year ramp), (3) product-market fit evidence (NPS 65, 40% WoM growth). Board meeting 2026-01-20, motion approved 7-0."
+}
+```
+
+**What to include**:
+- Strategic context
+- Board/committee approval
+- Supporting evidence summary
+- Decision date
+
+## Confidence Scoring Frameworks
+
+### Framework 1: Evidence-Based Scoring
+
+| Confidence | Evidence Level | Example |
+|------------|----------------|---------|
+| 0.95 - 1.00 | Audited, certified data | Financial statements, regulatory filings |
+| 0.85 - 0.94 | Directly measured, high sample | Analytics (n>1000), A/B tests, transaction logs |
+| 0.70 - 0.84 | Measured, moderate sample | Surveys (n=200-1000), cohort analysis |
+| 0.50 - 0.69 | Small sample or expert estimate | Pilot program (n<200), SME consensus |
+| 0.30 - 0.49 | Weak analogy or single expert | "Similar company did X", founder intuition |
+| 0.10 - 0.29 | Guess with minimal basis | "Industry seems to be ~Y%" |
+| 0.00 - 0.09 | Pure speculation | Placeholder values |
+
+### Framework 2: Uncertainty Intervals
+
+Confidence derived from statistical precision:
+
+```
+95% CI width = high - low
+Confidence = 1 - (CI_width / mean)
+```
+
+**Example**:
+- Mean conversion rate: 0.12
+- 95% CI: [0.10, 0.14]
+- CI width: 0.04
+- Confidence: 1 - (0.04 / 0.12) = 0.67 (67%)
+
+**Interpretation**: Narrower intervals → higher confidence.
+
+### Framework 3: Consensus-Based (Multiple Experts)
+
+```
+Confidence = 1 - (std_dev_of_estimates / mean_of_estimates)
+```
+
+**Example**:
+- 5 experts estimate conversion rate: [0.10, 0.12, 0.11, 0.13, 0.09]
+- Mean: 0.11
+- Std dev: 0.015
+- Confidence: 1 - (0.015 / 0.11) = 0.86 (86%)
+
+**Interpretation**: High agreement → high confidence.
+
+## Governance Workflow Example
+
+### Monthly Assumption Review Meeting
+
+**Agenda**:
+
+1. **Review low-confidence parameters** (< 0.60)
+   - Identify 3-5 highest-impact parameters
+   - Assign owners to collect better data
+
+2. **Update provenance for changed parameters**
+   - Example: Marketing ran new campaign → update CAC
+
+3. **Validate recently updated parameters**
+   - Did new data match assumptions?
+   - Adjust confidence accordingly
+
+4. **Document decisions**
+   - Commit changes to version control
+   - Update changelog
+
+**Example meeting notes**:
+
+```markdown
+# Assumption Review Meeting - 2026-02-20
+
+## Attendees
+- CFO, Head of Analytics, VP Product, Lead Engineer
+
+## Low-Confidence Parameters
+1. **viral_coefficient** (0.30) → Assigned to Product (run referral analysis)
+2. **enterprise_CAC** (0.40) → Assigned to Sales (pull CRM data)
+3. **churn_cohort_2** (0.45) → Assigned to Analytics (fit Beta distribution)
+
+## Updated Parameters (since last meeting)
+- **monthly_revenue**: $1.2M → $1.35M (Stripe data, confidence 0.99)
+- **conversion_rate**: 0.10 → 0.115 (A/B test complete, confidence 0.85)
+
+## Validation Results
+- Predicted Q1 revenue: $3.6M (P50), Actual: $3.9M (within P75, model calibrated well)
+- Churn rate forecast: 5% (deterministic), Actual: 4.8% (close, no adjustment needed)
+
+## Action Items
+- [ ] Product: Analyze referral data by 2026-03-05
+- [ ] Sales: Extract enterprise deal data by 2026-03-10
+- [ ] Analytics: Fit churn distribution by 2026-03-12
+
+## Next Meeting
+2026-03-20, 2pm PT
+```
+
+## Automated Provenance Validation
+
+### Pre-Commit Hooks
+
+Enforce provenance quality before code merges:
+
+```bash
+# .git/hooks/pre-commit
+#!/bin/bash
+
+# Compile model and check provenance
+pel compile model.pel --provenance-report -o /tmp/prov.json
+
+# Check: No parameters have confidence < 0.30
+low_conf=$(cat /tmp/prov.json | jq '[.parameters[] | select(.confidence < 0.30)] | length')
+
+if [ "$low_conf" -gt 0 ]; then
+  echo "ERROR: $low_conf parameters have confidence < 0.30 (too low)"
+  echo "Run: pel compile model.pel --provenance-report | jq '.parameters[] | select(.confidence < 0.30)'"
+  exit 1
+fi
+
+echo "Provenance validation passed"
+exit 0
+```
+
+### CI/CD Pipeline Checks
+
+```yaml
+# .github/workflows/model-validation.yml
+name: Model Provenance Validation
+
+on: [push, pull_request]
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install PEL
+        run: pip install pel-lang
+      
+      - name: Generate Provenance Report
+        run: pel compile model.pel --provenance-report -o provenance.json
+      
+      - name: Check Average Confidence
+        run: |
+          avg_conf=$(cat provenance.json | jq '.parameters | map(.confidence) | add / length')
+          echo "Average confidence: $avg_conf"
+          
+          # Fail if avg confidence < 0.60
+          if (( $(echo "$avg_conf < 0.60" | bc -l) )); then
+            echo "ERROR: Average confidence too low ($avg_conf < 0.60)"
+            exit 1
+          fi
+      
+      - name: Upload Provenance Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: provenance-report
+          path: provenance.json
+```
+
+## Provenance Report Examples
+
+### HTML Report Template
+
+```html
+<!-- provenance_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Model Provenance Report</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+    .high-conf { background-color: #d4edda; }
+    .med-conf { background-color: #fff3cd; }
+    .low-conf { background-color: #f8d7da; }
+  </style>
+</head>
+<body>
+  <h1>Provenance Report: SaaS Revenue Model</h1>
+  <p>Generated: 2026-02-20 14:30 UTC</p>
+  <p>Model Version: v2.3.1</p>
+  
+  <h2>Summary Statistics</h2>
+  <ul>
+    <li>Total Parameters: 42</li>
+    <li>Average Confidence: 0.72</li>
+    <li>High Confidence (≥0.80): 18 (43%)</li>
+    <li>Medium Confidence (0.50-0.79): 20 (48%)</li>
+    <li>Low Confidence (<0.50): 4 (9%)</li>
+  </ul>
+  
+  <h2>Parameter Details</h2>
+  <table>
+    <tr>
+      <th>Parameter</th>
+      <th>Value</th>
+      <th>Confidence</th>
+      <th>Source</th>
+      <th>Method</th>
+      <th>Notes</th>
+    </tr>
+    <tr class="high-conf">
+      <td>monthly_revenue</td>
+      <td>$1,350,000</td>
+      <td>0.99</td>
+      <td>stripe_dashboard</td>
+      <td>observed</td>
+      <td>January 2026 MRR</td>
+    </tr>
+    <tr class="med-conf">
+      <td>churn_rate</td>
+      <td>0.05</td>
+      <td>0.75</td>
+      <td>analytics</td>
+      <td>fitted</td>
+      <td>Beta(95, 1805) from 3-month cohort</td>
+    </tr>
+    <tr class="low-conf">
+      <td>viral_coefficient</td>
+      <td>1.5</td>
+      <td>0.30</td>
+      <td>assumption</td>
+      <td>expert_estimate</td>
+      <td>⚠️ LOW CONFIDENCE - needs data</td>
+    </tr>
+    <!-- ... more rows ... -->
+  </table>
+  
+  <h2>Recommendations</h2>
+  <ul class="low-conf">
+    <li><strong>viral_coefficient</strong>: Run referral program analysis to measure actual k-factor</li>
+    <li><strong>enterprise_CAC</strong>: Extract CRM data for large deal cycles</li>
+    <li><strong>expansion_revenue_rate</strong>: Analyze upsell cohorts from billing system</li>
+  </ul>
+</body>
+</html>
+```
+
+## Practice Exercises
+
+### Exercise 1: Write Complete Provenance
+
+Add provenance to this parameter:
+
+```pel
+param monthly_churn_rate: Probability = 0.048
+```
+
+**Requirements**:
+- Data comes from your analytics system
+- Based on last 90 days
+- 2,000 customers, 96 churned
+- You're fairly confident in this number
+
+<details>
+<summary>Solution</summary>
+
+```pel
+param monthly_churn_rate: Probability = 0.048 {
+  source: "google_analytics_cohort_analysis_2025-11_to_2026-01",
+  method: "observed",
+  confidence: 0.90,
+  notes: "96 churned out of 2,000 customers over 90-day period (Nov 2025 - Jan 2026). Churn rate = 96/2000 = 4.8%. High confidence due to large sample size and recent data."
+}
+```
+</details>
+
+### Exercise 2: Assess Confidence
+
+An expert estimates conversion rate will be "around 12%, give or take 5%".
+
+**Question**: What confidence score would you assign?
+
+<details>
+<summary>Answer</summary>
+
+**Confidence: 0.40-0.50** (weak expert estimate)
+
+**Rationale**:
+- No data, just expert opinion → Not observed
+- Wide uncertainty (±5% = ±42% relative error) → Low precision
+- Single source (one expert) → No validation
+- "Give or take" suggests low certainty
+
+**Better approach**: Get estimates from 3-5 experts, compute consensus.
+</details>
+
+### Exercise 3: Provenance Audit
+
+You inherit this code:
+
+```pel
+param revenue: Currency<USD> = $500_000 {
+  source: "spreadsheet",
+  method: "observed",
+  confidence: 0.95
+}
+```
+
+**Task**: What questions would you ask to validate this provenance?
+
+<details>
+<summary>Answer</summary>
+
+1. **Which spreadsheet?** (file name, version, sheet name, cell reference)
+2. **Who created it?** (author, reviewer, approver)
+3. **When was it last updated?** (date, is it current?)
+4. **What's the data source for the spreadsheet?** (where did $500K come from? Billing system? Bank statement?)
+5. **Why confidence=0.95?** (seems high for "spreadsheet" - was it reconciled with financial system?)
+6. **Is it audited?** (reviewed by finance/accounting?)
+
+**Red flags**:
+- "spreadsheet" is too vague (not auditable)
+- confidence=0.95 seems unjustified for manual data entry
+
+**Recommended fix**:
+```pel
+param revenue: Currency<USD> = $500_000 {
+  source: "stripe_dashboard_mrr_jan_2026",
+  method: "observed",
+  confidence: 0.99,
+  notes: "MRR as of 2026-01-31, verified against Stripe API. Matches financial records. Ref: revenue_q4_2025_report.pdf, page 2."
+}
+```
+</details>
+
 ## Key Takeaways
 
 1. **Provenance is mandatory**: PEL enforces documentation at compile time

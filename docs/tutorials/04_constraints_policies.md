@@ -614,6 +614,754 @@ constraint conditional_check {
    In 30% of the simulated scenarios (e.g., 3,000 out of 10,000 samples), the constraint was violated. Indicates significant risk.
    </details>
 
+## Advanced Constraint Patterns
+
+### Multi-Condition Constraints
+
+Check compound conditions using logical operators:
+
+```pel
+model SaaSOpsAdvanced {
+  var revenue: TimeSeries<Currency<USD>>
+  var costs: TimeSeries<Currency<USD>>
+  var gross_margin: TimeSeries<Probability>
+  
+  gross_margin[t] = (revenue[t] - costs[t]) / revenue[t]
+  
+  // Constraint: Margin between 30% and 80% (outside this is suspicious)
+  constraint reasonable_margin {
+    (gross_margin[t] >= 0.30) and (gross_margin[t] <= 0.80)
+      with severity(warning)
+      with message("Gross margin {gross_margin[t]} at t={t} is outside 30-80% range")
+  }
+  
+  // Constraint: Revenue growth year-over-year must be positive
+  constraint yoy_growth {
+    (t >= 12) implies (revenue[t] > revenue[t-12])
+      with severity(warning)
+      with message("YoY revenue declined: {revenue[t]} vs {revenue[t-12]}")
+  }
+  
+  // Constraint: No single month can drop more than 20%
+  constraint month_over_month_stability {
+    (t >= 1) implies (revenue[t] >= 0.80 * revenue[t-1])
+      with severity(fatal)
+      with message("Revenue dropped {(revenue[t-1] - revenue[t])/revenue[t-1]} from t={t-1} to t={t}")
+  }
+}
+```
+
+### Aggregation Constraints
+
+Check properties of entire time series:
+
+```pel
+model AggregateChecks {
+  var headcount: TimeSeries<Fraction>
+  var revenue_per_employee: TimeSeries<Currency<USD>>
+  
+  revenue_per_employee[t] = revenue[t] / headcount[t]
+  
+  // Constraint: Average revenue per employee over 36 months must exceed $150K
+ constraint productivity_target {
+    sum(revenue[t] for t in 0..35) / sum(headcount[t] for t in 0..35) >= $150_000
+      with severity(warning)
+      with message("Average RPE over 36 months is below target")
+  }
+  
+  // Constraint: Maximum headcount never exceeds 500
+  constraint headcount_cap {
+    max(headcount[t] for t in 0..120) <= 500.0
+      with severity(fatal)
+      with message("Headcount cap exceeded")
+  }
+  
+  // Constraint: Minimum cash balance across all periods > $100K
+  constraint cash_reserve {
+    min(cash_balance[t] for t in 0..60) >= $100_000
+      with severity(fatal)
+      with message("Cash reserve breached: min was {min(cash_balance[t] for t in 0..60)}")
+  }
+}
+```
+
+**Note**: `sum()`, `max()`, `min()` are hypothetical stdlib functions. Current PEL may require explicit loops or manual checks.
+
+### Threshold Constraints with Soft Boundaries
+
+Use warnings for "yellow zone" and fatal for "red zone":
+
+```pel
+model RiskZones {
+  var debt_to_equity: TimeSeries<Fraction>
+  
+  // Yellow zone: D/E ratio above 1.5 (warning)
+  constraint leverage_warning {
+    debt_to_equity[t] <= 1.5
+      with severity(warning)
+      with message("Leverage ratio {debt_to_equity[t]} exceeds 1.5 (caution zone)")
+  }
+  
+  // Red zone: D/E ratio above 3.0 (fatal)
+  constraint leverage_fatal {
+    debt_to_equity[t] <= 3.0
+      with severity(fatal)
+      with message("Leverage ratio {debt_to_equity[t]} exceeds 3.0 (critical zone)")
+  }
+}
+```
+
+### Conditional Constraints
+
+Apply constraints only when certain conditions hold:
+
+```pel
+model ConditionalValidation {
+  param is_profitable: Bool = true
+  var net_income: TimeSeries<Currency<USD>>
+  var marketing_spend: TimeSeries<Currency<USD>>
+  
+  // Only enforce marketing cap if we're profitable
+  constraint marketing_cap {
+    is_profitable implies (marketing_spend[t] <= 0.30 * revenue[t])
+      with severity(warning)
+      with message("Marketing spend exceeds 30% of revenue while profitable")
+  }
+  
+  // Different constraint if not profitable: stricter cap
+  constraint burn_control {
+    (not is_profitable) implies (marketing_spend[t] <= 0.15 * revenue[t])
+      with severity(fatal)
+      with message("Marketing spend exceeds 15% of revenue while unprofitable")
+  }
+}
+```
+
+### Rate-of-Change Constraints
+
+Limit how fast variables can change:
+
+```pel
+model GrowthLimits {
+  var customers: TimeSeries<Fraction>
+  
+  // Maximum 50% month-over-month growth (prevents unrealistic scaling)
+  constraint realistic_growth_cap {
+    (t >= 1) implies (customers[t] <= 1.50 * customers[t-1])
+      with severity(warning)
+      with message("Customer growth exceeds 50% MoM at t={t}")
+  }
+  
+  // Minimum 95% retention (max 5% MoM decline)
+  constraint minimum_retention {
+    (t >= 1) implies (customers[t] >= 0.95 * customers[t-1])
+      with severity(fatal)
+      with message("Customer decline exceeds 5% at t={t}")
+  }
+}
+```
+
+### Cross-Variable Ratio Constraints
+
+Enforce relationships between multiple variables:
+
+```pel
+model UnitEconomics {
+  var ltv: TimeSeries<Currency<USD>>
+  var cac: TimeSeries<Currency<USD>>
+  
+  // LTV:CAC ratio must be at least 3:1 for healthy SaaS
+  constraint ltv_cac_ratio {
+    ltv[t] >= 3.0 * cac[t]
+      with severity(warning)
+      with message("LTV:CAC ratio is {ltv[t]/cac[t]} at t={t}, below 3:1 target")
+  }
+  
+  // Payback period must be under 18 months
+  var payback_months: TimeSeries<Fraction>
+  payback_months[t] = cac[t] / (revenue_per_customer[t] / 12.0)
+  
+  constraint payback_period {
+    payback_months[t] <= 18.0
+      with severity(warning)
+      with message("Payback period is {payback_months[t]} months at t={t}")
+  }
+}
+```
+
+## Debugging Constraint Failures
+
+### Step-by-Step Debugging Process
+
+When a constraint fails:
+
+```bash
+$ pel run model.ir.json --mode deterministic
+
+ERROR: Constraint 'positive_cash' violated
+  At time step: t=14
+  Condition: cash_balance[14] >= $0
+  Actual: cash_balance[14] = -$23,450
+  Message: Bankruptcy: cash balance is negative at t=14
+```
+
+**Debugging workflow**:
+
+#### 1. Identify the Time of Failure
+
+```
+t=14 → Month 14 (February of Year 2)
+```
+
+#### 2. Inspect Variable Values at That Time
+
+```bash
+pel run model.ir.json --mode deterministic --trace cash_balance,revenue,costs
+```
+
+Output:
+```
+t=0:  cash_balance=$500K, revenue=$100K, costs=$80K
+t=1:  cash_balance=$520K, revenue=$105K, costs=$82K
+...
+t=13: cash_balance=$15K, revenue=$120K, costs=$125K  ← Warning: costs > revenue
+t=14: cash_balance=-$23.5K, revenue=$115K, costs=$153.5K  ← Failure
+```
+
+#### 3. Trace Dependencies
+
+"Why are costs so high at t=14?"
+
+```pel
+var costs[t] = fixed_costs + variable_costs[t] + marketing_spend[t]
+
+// Inspect components at t=14:
+// fixed_costs = $50K (param)
+// variable_costs[14] = ???
+// marketing_spend[14] = ???
+```
+
+```bash
+pel run model.ir.json --mode deterministic --trace fixed_costs,variable_costs,marketing_spend
+```
+
+Output:
+```
+t=14: 
+  fixed_costs = $50K
+  variable_costs[14] = $45K
+  marketing_spend[14] = $58.5K  ← Suspicious spike!
+```
+
+#### 4. Investigate Root Cause
+
+```pel
+var marketing_spend[t] = revenue[t] * marketing_spend_pct
+
+// Why did marketing_spend_pct spike?
+param marketing_spend_pct: Probability = 0.50  ← HERE: 50% is too high!
+```
+
+**Fix**: Adjust parameter to reasonable level (e.g., 0.20).
+
+### Using Assertions for Intermediate Validation
+
+```pel
+model DebugFriendly {
+  var revenue: TimeSeries<Currency<USD>>
+  var costs: TimeSeries<Currency<USD>>
+  var cash_balance: TimeSeries<Currency<USD>>
+  
+  // Intermediate assertion: revenue should never be zero
+  constraint revenue_nonzero {
+    revenue[t] > $0
+      with severity(fatal)
+      with message("Revenue is zero at t={t} (data error?)")
+  }
+  
+  // Intermediate assertion: costs should be less than 2× revenue
+  constraint costs_sanity {
+    costs[t] <= 2.0 * revenue[t]
+      with severity(warning)
+      with message("Costs ({costs[t]}) > 2× revenue ({revenue[t]}) at t={t}")
+  }
+  
+  // Main constraint: cash must be positive
+  cash_balance[0] = initial_cash
+  cash_balance[t+1] = cash_balance[t] + revenue[t] - costs[t]
+  
+  constraint positive_cash {
+    cash_balance[t] >= $0
+      with severity(fatal)
+      with message("Cash negative at t={t}: {cash_balance[t]}")
+  }
+}
+```
+
+**Benefit**: Earlier failure with more specific message (easier to debug).
+
+### Constraint Violation Reports
+
+After a failed run, PEL outputs detailed reports:
+
+```json
+{
+  "status": "constraint_violated",
+  "constraint": "positive_cash",
+  "severity": "fatal",
+  "time_step": 14,
+  "message": "Cash negative at t=14: $-23,450",
+  "context": {
+    "cash_balance[14]": -23450,
+    "revenue[14]": 115000,
+    "costs[14]": 153500,
+    "marketing_spend[14]": 58500,
+    "marketing_spend_pct": 0.50
+  }
+}
+```
+
+**Use for**:
+- Automated testing (CI/CD)
+- Audit trails (compliance)
+- Debugging logs (copy-paste into issues)
+
+## Monte Carlo Risk Analysis
+
+### Constraint Violation Rates
+
+In Monte Carlo mode, constraints are checked across all samples:
+
+```bash
+pel run model.ir.json --mode monte_carlo --samples 5000 -o results.json
+```
+
+Output:
+```json
+{
+  "constraints": {
+    "positive_cash": {
+      "violations": 1250,
+      "total_samples": 5000,
+      "violation_rate": 0.25,
+      "severity": "fatal",
+      "first_violation_time": {
+        "min_t": 8,
+        "max_t": 24,
+        "mean_t": 14.3
+      }
+    },
+    "ltv_cac_ratio": {
+      "violations": 3200,
+      "total_samples": 5000,
+      "violation_rate": 0.64,
+      "severity": "warning"
+    }
+  }
+}
+```
+
+**Interpretation**:
+- **positive_cash**: 25% of scenarios lead to bankruptcy (high risk!)
+- **Failure occurs between t=8 and t=24** (average t=14.3)
+- **ltv_cac_ratio**: 64% of scenarios have poor unit economics (warning)
+
+### Adjusting Parameters to Reduce Risk
+
+**Goal**: Reduce bankruptcy risk to < 5%.
+
+**Approach 1**: Increase initial cash
+
+```pel
+// Before
+param initial_cash: Currency<USD> = $500_000
+
+// After
+param initial_cash: Currency<USD> = $800_000  // +60% buffer
+```
+
+Re-run:
+```json
+{
+  "positive_cash": {
+    "violation_rate": 0.04  // ← Now 4% (below 5% target)
+  }
+}
+```
+
+**Approach 2**: Reduce costs
+
+```pel
+// Before
+param fixed_costs: Currency<USD> = $50_000 / 1mo
+
+// After
+param fixed_costs: Currency<USD> = $40_000 / 1mo  // -20% costs
+```
+
+**Approach 3**: Add risk mitigation constraint
+
+```pel
+model RiskMitigation {
+  var cash_balance: TimeSeries<Currency<USD>>
+  var emergency_funding: Currency<USD> = $200_000
+  
+  // Trigger emergency funding if cash falls below $100K
+  var cash_with_backup[t] = 
+    if cash_balance[t] < $100_000
+      then cash_balance[t] + emergency_funding
+      else cash_balance[t]
+  
+  constraint positive_cash {
+    cash_with_backup[t] >= $0
+      with severity(fatal)
+  }
+}
+```
+
+### Sensitivity Analysis with Constraints
+
+Identify which parameters most impact constraint violations:
+
+```bash
+# Test parameter ranges
+pel run model.ir.json --mode monte_carlo --samples 2000 \
+  --set revenue_growth=Normal(μ=0.10/1mo,σ=0.02/1mo) \
+  -o results_low_growth.json
+
+pel run model.ir.json --mode monte_carlo --samples 2000 \
+  --set revenue_growth=Normal(μ=0.15/1mo,σ=0.02/1mo) \
+  -o results_med_growth.json
+
+pel run model.ir.json --mode monte_carlo --samples 2000 \
+  --set revenue_growth=Normal(μ=0.20/1mo,σ=0.02/1mo) \
+  -o results_high_growth.json
+
+# Compare violation rates
+python3 << EOF
+import json
+
+files = ['results_low_growth.json', 'results_med_growth.json', 'results_high_growth.json']
+for f in files:
+    with open(f) as fp:
+        data = json.load(fp)
+    vr = data['constraints']['positive_cash']['violation_rate']
+    print(f"{f}: {vr*100:.1f}% bankruptcy risk")
+EOF
+```
+
+Output:
+```
+results_low_growth.json: 45.2% bankruptcy risk
+results_med_growth.json: 18.3% bankruptcy risk
+results_high_growth.json: 3.1% bankruptcy risk
+```
+
+**Conclusion**: Revenue growth is the most sensitive parameter.
+
+## Real-World Constraint Examples
+
+### Example 1: Regulatory Compliance (Financial Services)
+
+```pel
+model BankCapitalRequirements {
+  var tier1_capital: TimeSeries<Currency<USD>>
+  var risk_weighted_assets: TimeSeries<Currency<USD>>
+  var tier1_ratio: TimeSeries<Probability>
+  
+  tier1_ratio[t] = tier1_capital[t] / risk_weighted_assets[t]
+  
+  // Basel III: Tier 1 capital ratio must be ≥ 6%
+  constraint basel_iii_tier1 {
+    tier1_ratio[t] >= 0.06
+      with severity(fatal)
+      with message("Tier 1 capital ratio {tier1_ratio[t]} violates Basel III minimum at t={t}")
+  }
+  
+  // Internal policy: maintain 8% buffer (above regulatory minimum)
+  constraint internal_capital_policy {
+    tier1_ratio[t] >= 0.08
+      with severity(warning)
+      with message("Tier 1 ratio {tier1_ratio[t]} below internal policy at t={t}")
+  }
+}
+```
+
+### Example 2: SaaS Board Targets
+
+```pel
+model SaaSBoardMetrics {
+  var arr: TimeSeries<Currency<USD>>  // Annual Recurring Revenue
+  var revenue_retention: TimeSeries<Probability>  // Net Revenue Retention
+  var rule_of_40: TimeSeries<Fraction>
+  
+  // Rule of 40: growth% + profit_margin% >= 40%
+  rule_of_40[t] = ((arr[t] - arr[t-12]) / arr[t-12]) + profit_margin[t]
+  
+  constraint rule_of_40_compliance {
+    (t >= 12) implies (rule_of_40[t] >= 0.40)
+      with severity(warning)
+      with message("Rule of 40 is {rule_of_40[t]*100}% at t={t}, below 40%")
+  }
+  
+  // Net Revenue Retention (NRR) >= 100% (no net churn)
+  constraint nrr_target {
+    revenue_retention[t] >= 1.00
+      with severity(warning)
+      with message("NRR is {revenue_retention[t]*100}% at t={t}, below 100%")
+  }
+  
+  // Annual growth rate >= 100% (T2D3 path: triple-triple-double-double-double)
+  constraint t2d3_growth {
+    (t == 12) implies (arr[t] >= 3.0 * arr[0])  // Year 1: Triple
+      with severity(warning)
+    
+    (t == 24) implies (arr[t] >= 9.0 * arr[0])  // Year 2: Triple again (3×3=9×)
+      with severity(warning)
+    
+    (t == 36) implies (arr[t] >= 18.0 * arr[0])  // Year 3: Double (9×2=18×)
+      with severity(warning)
+  }
+}
+```
+
+### Example 3: E-commerce Inventory Management
+
+```pel
+model InventoryConstraints {
+  var inventory_units: TimeSeries<Fraction>
+  var days_of_inventory: TimeSeries<Duration>
+  var stockout_risk: TimeSeries<Probability>
+  
+  days_of_inventory[t] = inventory_units[t] / daily_sales_rate[t]
+  
+  // Minimum inventory: 14 days of stock
+  constraint min_inventory {
+    days_of_inventory[t] >= 14day
+      with severity(warning)
+      with message("Inventory is only {days_of_inventory[t]} at t={t}, risk of stockout")
+  }
+  
+  // Maximum inventory: 90 days (avoid overstock)
+  constraint max_inventory {
+    days_of_inventory[t] <= 90day
+      with severity(warning)
+      with message("Inventory is {days_of_inventory[t]} at t={t}, risk of obsolescence")
+  }
+  
+  // Stockout risk must be < 5%
+  constraint stockout_risk_limit {
+    stockout_risk[t] <= 0.05
+      with severity(fatal)
+      with message("Stockout risk {stockout_risk[t]} exceeds 5% at t={t}")
+  }
+}
+```
+
+## Constraint Testing Strategies
+
+### 1. Boundary Testing
+
+Test edge cases:
+
+```pel
+model BoundaryTests {
+  var ltv: Currency<USD> = $1000
+  var cac: Currency<USD> = $333.33
+  
+  constraint ltv_cac {
+    ltv >= 3.0 * cac
+      with severity(fatal)
+  }
+  
+  // Test cases:
+  // ltv=$1000, cac=$333.33 → ratio=3.00 → PASS (boundary)
+  // ltv=$1000, cac=$333.34 → ratio=2.999 → FAIL
+  // ltv=$1000, cac=$333.32 → ratio=3.001 → PASS
+}
+```
+
+### 2. Regression Testing
+
+Add constraints as tests:
+
+```pel
+// tests/regression/cash_flow_regression.pel
+model CashFlowRegression {
+  // Known-good scenario from 2025-Q4
+  param initial_cash: Currency<USD> = $500_000
+  param monthly_revenue: Currency<USD> = $100_000 / 1mo
+  param monthly_costs: Currency<USD> = $80_000 / 1mo
+  
+  var cash[0] = initial_cash
+  var cash[t+1] = cash[t] + monthly_revenue - monthly_costs
+  
+  // Regression: Cash at t=12 should be $740K (verified in previous model)
+  constraint regression_cash_t12 {
+    cash[12] == $740_000
+      with severity(fatal)
+      with message("Regression failed: expected $740K, got {cash[12]}")
+  }
+}
+```
+
+Run in CI/CD:
+```bash
+pel compile tests/regression/*.pel -o regression.ir.json
+pel run regression.ir.json --mode deterministic || exit 1
+```
+
+### 3. Fuzz Testing
+
+Generate random parameters, check constraints hold:
+
+```bash
+# Generate 100 random parameter sets
+python3 generate_fuzz_params.py --count 100 --output fuzz_params.json
+
+# Run model with each parameter set
+for params in $(cat fuzz_params.json | jq -c '.[]'); do
+  pel run model.ir.json --mode deterministic --params "$params" || echo "FAIL: $params"
+done
+```
+
+## Constraint Performance Considerations
+
+### Constraint Evaluation Cost
+
+```pel
+// ❌ Expensive: Checks t² conditions
+constraint expensive {
+  for all t1 in 0..120:
+    for all t2 in 0..120:
+      revenue[t1] != revenue[t2]  // All revenues are unique (slow!)
+  with severity(warning)
+}
+
+// ✅ Cheap: Checks t conditions
+constraint cheap {
+  revenue[t] > $0
+    with severity(fatal)
+}
+```
+
+**Rule of thumb**: Constraints with nested loops over time steps are expensive.
+
+### Lazy Evaluation
+
+PEL evaluates constraints lazily in some mode:
+
+```pel
+model LazyConstraints {
+  constraint early_fail {
+    cash[t] >= $0
+      with severity(fatal)
+  }
+  
+  constraint late_check {
+    ltv[t] >= 3.0 * cac[t]
+      with severity(warning)
+  }
+}
+```
+
+If `early_fail` triggers at t=10, `late_check` may not be evaluated for t>10 (execution stopped).
+
+## Practice Exercises
+
+### Exercise 1: Write a Profitability Constraint
+
+Ensure gross profit margin stays above 40%:
+
+```pel
+model Exercise1 {
+  var revenue: TimeSeries<Currency<USD>>
+  var cogs: TimeSeries<Currency<USD>>
+  var gross_margin: TimeSeries<Probability>
+  
+  gross_margin[t] = (revenue[t] - cogs[t]) / revenue[t]
+  
+  // TODO: Write constraint
+  constraint ??? {
+    ???
+      with severity(???)
+      with message("???")
+  }
+}
+```
+
+<details>
+<summary>Solution</summary>
+
+```pel
+constraint min_gross_margin {
+  gross_margin[t] >= 0.40
+    with severity(warning)
+    with message("Gross margin {gross_margin[t]} below 40% target at t={t}")
+}
+```
+</details>
+
+### Exercise 2: Debug a Constraint Failure
+
+Given error message:
+```
+ERROR: Constraint 'headcount_cap' violated
+  At time step: t=28
+  Actual: headcount[28] = 523
+  Expected: headcount[t] <= 500
+```
+
+**Task**: Which parameter(s) would you investigate?
+
+<details>
+<summary>Solution</summary>
+
+1. Check hiring rate: `param monthly_hires` or `param hiring_rate`
+2. Check initial headcount: `headcount[0]`
+3. Check attrition: `param monthly_attrition_rate`
+4. Check growth formula: `headcount[t+1] = headcount[t] * (1 + hiring_rate - attrition_rate)`
+
+Likely cause: `hiring_rate` too high or `attrition_rate` too low.
+</details>
+
+### Exercise 3: Model a Debt Covenant
+
+Senior lenders require:
+- Debt Service Coverage Ratio (DSCR) ≥ 1.25
+- Total debt < 3× EBITDA
+
+```pel
+model DebtCovenant {
+  var ebitda: TimeSeries<Currency<USD>>
+  var debt_principal: TimeSeries<Currency<USD>>
+  var debt_interest: TimeSeries<Currency<USD>>
+  var dscr: TimeSeries<Fraction>
+  
+  dscr[t] = ebitda[t] / (debt_principal[t] + debt_interest[t])
+  
+  // TODO: Write two constraints for the covenants above
+}
+```
+
+<details>
+<summary>Solution</summary>
+
+```pel
+constraint dscr_covenant {
+  dscr[t] >= 1.25
+    with severity(fatal)
+    with message("DSCR {dscr[t]} violates covenant (min 1.25) at t={t}")
+}
+
+constraint leverage_covenant {
+  debt_principal[t] <= 3.0 * ebitda[t]
+    with severity(fatal)
+    with message("Debt {debt_principal[t]} exceeds 3× EBITDA {ebitda[t]} at t={t}")
+}
+```
+</details>
+
 ## Key Takeaways
 
 1. **Constraints encode business rules**: Make assumptions explicit and enforceable
