@@ -13,6 +13,7 @@ and report generation.
 """
 
 import json
+import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +24,8 @@ import yaml
 from .csv_connector import CSVConnector
 from .drift_detection import DriftDetector, DriftReport
 from .parameter_estimation import FitResult, ParameterEstimator
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -39,6 +42,7 @@ class CalibrationConfig:
     parameters: dict[str, dict[str, Any]] | None = None  # param_name -> config
     csv_config: dict[str, Any] | None = None
     drift_config: dict[str, Any] | None = None
+    bootstrap_seed: int = 42
 
     @classmethod
     def from_yaml(cls, yaml_path: Path) -> 'CalibrationConfig':
@@ -256,6 +260,7 @@ class Calibrator:
                     data,
                     distribution,
                     n_bootstrap=param_config.get('bootstrap_samples', 1000),
+                    seed=param_config.get('bootstrap_seed', self.config.bootstrap_seed),
                 )
             else:
                 fit_result = self.param_estimator.fit_distribution(data, distribution)
@@ -360,10 +365,12 @@ class Calibrator:
                     }
 
                 # Add calibration metadata
+                # High KS p-value means data fits well (distribution not rejected),
+                # so we use p-value directly as a confidence indicator.
                 node['provenance'] = {
                     'source': 'calibrated',
                     'method': 'mle',
-                    'confidence': 1.0 - fit.ks_pvalue,  # Inverse of p-value
+                    'confidence': min(1.0, fit.ks_pvalue),
                     'calibration_timestamp': datetime.now().isoformat(),
                     'aic': fit.aic,
                     'bic': fit.bic,

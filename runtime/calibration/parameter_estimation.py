@@ -16,10 +16,16 @@ Maximum Likelihood Estimation (MLE) for distributions:
 Includes goodness-of-fit tests and confidence intervals.
 """
 
+import logging
 from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
+
+logger = logging.getLogger(__name__)
+
+# Z-score for 95% confidence interval (two-tailed)
+_Z_SCORE_95 = 1.96
 
 
 @dataclass
@@ -75,11 +81,24 @@ class ParameterEstimator:
 
         n = len(data)
 
+        # Guard against zero standard deviation (constant data)
+        if std == 0:
+            return FitResult(
+                distribution='normal',
+                parameters={'mean': float(mean), 'std': 0.0},
+                confidence_intervals={'mean': (float(mean), float(mean)), 'std': (0.0, 0.0)},
+                log_likelihood=0.0 if n == 0 else float('-inf'),
+                aic=float('inf'),
+                bic=float('inf'),
+                ks_statistic=0.0,
+                ks_pvalue=1.0,
+            )
+
         # Confidence intervals (95%)
         se_mean = std / np.sqrt(n)
         ci_mean = (
-            mean - 1.96 * se_mean,
-            mean + 1.96 * se_mean,
+            mean - _Z_SCORE_95 * se_mean,
+            mean + _Z_SCORE_95 * se_mean,
         )
 
         # Std confidence interval using chi-squared
@@ -137,8 +156,8 @@ class ParameterEstimator:
         # Confidence intervals
         se_mu = sigma / np.sqrt(n)
         ci_mu = (
-            mu - 1.96 * se_mu,
-            mu + 1.96 * se_mu,
+            mu - _Z_SCORE_95 * se_mu,
+            mu + _Z_SCORE_95 * se_mu,
         )
 
         chi2_lower = stats.chi2.ppf(0.025, n - 1)
@@ -188,17 +207,12 @@ class ParameterEstimator:
 
         n = len(data)
 
-        # Approximate confidence intervals using Fisher information
-        # (simplified - full CI requires numerical Hessian)
-        np.mean(data)
-        np.var(data, ddof=1)
-
         # Method of moments for CI approximation
         se_alpha = alpha / np.sqrt(n)
         se_beta = beta / np.sqrt(n)
 
-        ci_alpha = (max(0.01, alpha - 1.96 * se_alpha), alpha + 1.96 * se_alpha)
-        ci_beta = (max(0.01, beta - 1.96 * se_beta), beta + 1.96 * se_beta)
+        ci_alpha = (max(0.01, alpha - _Z_SCORE_95 * se_alpha), alpha + _Z_SCORE_95 * se_alpha)
+        ci_beta = (max(0.01, beta - _Z_SCORE_95 * se_beta), beta + _Z_SCORE_95 * se_beta)
 
         # Log-likelihood
         log_likelihood = np.sum(stats.beta.logpdf(data, alpha, beta))
@@ -268,7 +282,7 @@ class ParameterEstimator:
                 results[dist] = self.fit_distribution(data, dist)
             except ValueError as e:
                 # Skip distributions that can't fit the data
-                print(f"Warning: Could not fit {dist}: {e}")
+                logger.warning("Could not fit %s: %s", dist, e)
                 continue
 
         # Sort by AIC (lower is better)
@@ -282,6 +296,7 @@ class ParameterEstimator:
         distribution: str,
         n_bootstrap: int = 1000,
         confidence_level: float = 0.95,
+        seed: int = 42,
     ) -> FitResult:
         """
         Fit distribution with bootstrap confidence intervals.
@@ -291,6 +306,7 @@ class ParameterEstimator:
             distribution: Distribution name
             n_bootstrap: Number of bootstrap samples
             confidence_level: Confidence level for intervals
+            seed: Random seed for reproducibility
 
         Returns:
             FitResult with bootstrap confidence intervals
@@ -302,7 +318,7 @@ class ParameterEstimator:
         n = len(data)
         param_samples: dict[str, list[float]] = {key: [] for key in result.parameters.keys()}
 
-        rng = np.random.RandomState(42)
+        rng = np.random.RandomState(seed)
         for _ in range(n_bootstrap):
             # Resample with replacement
             bootstrap_sample = rng.choice(data, size=n, replace=True)

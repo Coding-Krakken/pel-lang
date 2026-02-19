@@ -699,27 +699,10 @@ def main():
 
     elif args.command == 'run' or args.command is None:
         # Default: run model
-        # Support legacy usage: pel <ir_file> ...
         if args.command is None:
-            # No subcommand - check if first arg looks like a file
-            if len(parser.parse_known_args()[1]) > 0:
-                # Parse as legacy format
-                legacy_parser = argparse.ArgumentParser(
-                    description="PEL Runtime - Execute compiled PEL-IR models"
-                )
-                legacy_parser.add_argument('ir_file', type=Path, help='Compiled .ir.json file')
-                legacy_parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'],
-                                         default='deterministic', help='Execution mode')
-                legacy_parser.add_argument('--seed', type=int, default=42, help='Random seed')
-                legacy_parser.add_argument('--runs', type=int, default=1000,
-                                         help='Number of Monte Carlo runs')
-                legacy_parser.add_argument('--time-horizon', type=int,
-                                         help='Override model time horizon')
-                legacy_parser.add_argument('-o', '--output', type=Path, help='Output JSON file')
-                args = legacy_parser.parse_args()
-            else:
-                parser.print_help()
-                return 0
+            # No subcommand provided - show help and exit
+            parser.print_help()
+            return 0
 
         # Configure runtime
         config = RuntimeConfig(

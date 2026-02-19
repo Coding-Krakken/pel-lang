@@ -20,14 +20,18 @@ MVP v0.2.0 supports:
 - Basic drift detection (MAPE, RMSE, CUSUM)
 """
 
-from .calibrator import Calibrator
+from .calibrator import CalibrationConfig, CalibrationResult, Calibrator
 from .csv_connector import CSVConnector
-from .drift_detection import DriftDetector
-from .parameter_estimation import ParameterEstimator
+from .drift_detection import DriftDetector, DriftReport
+from .parameter_estimation import FitResult, ParameterEstimator
 
 __all__ = [
+    "CalibrationConfig",
+    "CalibrationResult",
     "Calibrator",
     "CSVConnector",
     "DriftDetector",
+    "DriftReport",
+    "FitResult",
     "ParameterEstimator",
 ]

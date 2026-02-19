@@ -11,12 +11,15 @@ CSV Data Connector for PEL Calibration.
 Loads CSV data, validates types, handles missing values and outliers.
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class CSVConnector:
