@@ -1,0 +1,56 @@
+# Calibration configuration for SaaS Churn model
+# This file specifies how to calibrate the model using historical data
+
+csv_path: "examples/calibration_saas_churn_data.csv"
+model_path: "examples/saas_churn.ir.json"
+output_path: "examples/calibration_saas_churn_calibrated"
+
+# CSV data configuration
+csv_config:
+  encoding: "utf-8"
+  delimiter: ","
+  
+  # Map PEL parameter names to CSV column names
+  column_mapping:
+    churn_rate: "monthly_churn_rate"
+    customer_lifetime: "avg_lifetime_months"
+  
+  # Specify column types
+  type_mapping:
+    churn_rate: "float"
+    customer_lifetime: "float"
+  
+  # Handle missing values
+  missing_values:
+    strategy: "drop"  # Options: drop, mean, median, forward_fill, fill
+  
+  # Filter outliers (optional)
+  outlier_filtering:
+    - column: "churn_rate"
+      method: "iqr"  # Options: iqr, zscore
+      threshold: 3.0
+    - column: "customer_lifetime"
+      method: "iqr"
+      threshold: 3.0
+
+# Parameters to calibrate
+parameters:
+  # Monthly churn rate - fit Beta distribution
+  monthly_churn_rate:
+    data_column: "churn_rate"
+    distribution: "beta"  # Beta is appropriate for rates in [0, 1]
+    use_bootstrap: true
+    bootstrap_samples: 1000
+  
+  # Average customer lifetime - fit LogNormal distribution
+  avg_customer_lifetime_months:
+    data_column: "customer_lifetime"
+    distribution: "lognormal"  # LogNormal for positive durations
+    use_bootstrap: true
+    bootstrap_samples: 1000
+
+# Drift detection configuration
+drift_config:
+  mape_threshold: 0.15  # Alert if MAPE > 15%
+  cusum_threshold: 5.0  # CUSUM decision threshold
+  cusum_slack: 0.5      # CUSUM slack parameter

@@ -1,0 +1,73 @@
+// Copyright 2026 PEL Project Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+model saas_churn_calibration {
+    // Time horizon for the model
+    time_horizon = 12  // months
+
+    // Customer acquisition parameters
+    param initial_customers: Count = 1000
+
+    param monthly_new_customers: Count ~ Normal(mean: 100, std: 20)
+
+    // Churn rate - to be calibrated from data
+    param monthly_churn_rate: Probability ~ Beta(alpha: 2, beta: 20)
+        with provenance(
+            source: "assumption",
+            method: "expert_estimate", 
+            confidence: 0.3
+        )
+
+    // Average customer lifetime - to be calibrated
+    param avg_customer_lifetime_months: Duration ~ LogNormal(mu: 2.5, sigma: 0.5)
+        with provenance(
+            source: "assumption",
+            method: "expert_estimate",
+            confidence: 0.3
+        )
+
+    // Revenue parameters
+    param monthly_revenue_per_customer: Money ~ Normal(mean: 50, std: 10)
+
+    // State variables
+    var total_customers: Count = initial_customers
+    var churned_customers: Count = 0
+    var total_revenue: Money = 0
+
+    // Dynamics
+    flow customer_growth {
+        for month in 1..time_horizon {
+            // Add new customers
+            let new_cust = monthly_new_customers
+            total_customers = total_customers + new_cust
+
+            // Apply churn
+            let churn_count = total_customers * monthly_churn_rate
+            churned_customers = churned_customers + churn_count
+            total_customers = total_customers - churn_count
+
+            // Calculate revenue
+            let monthly_rev = total_customers * monthly_revenue_per_customer
+            total_revenue = total_revenue + monthly_rev
+        }
+    }
+
+    // Constraints
+    constraint positive_customers {
+        condition: total_customers >= 0
+        severity: fatal
+        message: "Customer count cannot be negative"
+    }
+
+    constraint churn_rate_bounds {
+        condition: monthly_churn_rate >= 0 and monthly_churn_rate <= 1
+        severity: fatal
+        message: "Churn rate must be between 0 and 1"
+    }
+
+    // Outputs
+    output final_customers = total_customers
+    output total_churned = churned_customers
+    output total_revenue_12m = total_revenue
+    output avg_revenue_per_month = total_revenue / time_horizon
+}
