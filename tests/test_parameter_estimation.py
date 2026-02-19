@@ -9,10 +9,11 @@
 Tests for Parameter Estimation (MLE).
 """
 
-import numpy as np
 import pytest
 
 try:
+    import numpy as np
+
     from runtime.calibration.parameter_estimation import FitResult, ParameterEstimator
 except ImportError:
     pytest.skip("calibration module not installed", allow_module_level=True)

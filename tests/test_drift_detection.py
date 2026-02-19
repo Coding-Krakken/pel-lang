@@ -9,10 +9,11 @@
 Tests for Drift Detection.
 """
 
-import numpy as np
 import pytest
 
 try:
+    import numpy as np
+
     from runtime.calibration.drift_detection import DriftDetector, DriftReport
 except ImportError:
     pytest.skip("calibration module not installed", allow_module_level=True)

@@ -12,12 +12,13 @@ Integration tests for Calibration.
 import json
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import pytest
-import yaml
 
 try:
+    import numpy as np
+    import pandas as pd
+    import yaml
+
     from runtime.calibration import CalibrationConfig, Calibrator
 except ImportError:
     pytest.skip("calibration module not installed", allow_module_level=True)

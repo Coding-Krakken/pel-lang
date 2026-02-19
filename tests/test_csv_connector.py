@@ -11,12 +11,13 @@ Tests for CSV Data Connector.
 
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import pytest
-import yaml
 
 try:
+    import numpy as np
+    import pandas as pd
+    import yaml
+
     from runtime.calibration.csv_connector import CSVConnector
 except ImportError:
     pytest.skip("calibration module not installed", allow_module_level=True)
