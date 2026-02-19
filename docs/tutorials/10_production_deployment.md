@@ -473,9 +473,12 @@ develop (pre-production)
 from flask import Flask, request, jsonify
 import subprocess
 import json
+import logging
 import os
+import tempfile
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 MODEL_DIR = os.environ.get("MODEL_DIR", "./models")
 
@@ -492,6 +495,7 @@ def run_pel_model(model_name, params=None, mode="deterministic", seed=42):
     """Run PEL model with optional parameter overrides.
     
     Security: Validates model_name against allowlist and ensures path stays within MODEL_DIR.
+    Uses a temporary file for output to support concurrent requests.
     """
     
     # Enforce an allowlist of known models
@@ -510,11 +514,17 @@ def run_pel_model(model_name, params=None, mode="deterministic", seed=42):
     if not os.path.exists(model_path_abs):
         raise ValueError(f"Model {model_name} not found")
     
+    # Use a temp file for output (safe for concurrent requests)
+    fd, output_file = tempfile.mkstemp(suffix=".json", prefix="pel_")
+    os.close(fd)
+    
+    try:
+    
     cmd = [
         "pel", "run", model_path_abs,
         "--mode", mode,
         "--seed", str(seed),
-        "-o", "/tmp/pel_output.json"
+        "-o", output_file
     ]
     
     # TODO: Add parameter override support when CLI supports it
@@ -524,8 +534,12 @@ def run_pel_model(model_name, params=None, mode="deterministic", seed=42):
     if result.returncode != 0:
         raise RuntimeError(f"Model execution failed: {result.stderr}")
     
-    with open("/tmp/pel_output.json") as f:
+    with open(output_file) as f:
         return json.load(f)
+    finally:
+        # Always clean up the temp file
+        if os.path.exists(output_file):
+            os.unlink(output_file)
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -548,10 +562,15 @@ def run_model(model_name):
     try:
         results = run_pel_model(model_name, mode=mode, seed=seed)
         return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        logger.exception("Model execution failed for %s", model_name)
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
+    # WARNING: Use a production WSGI server (e.g., gunicorn) in production.
+    # Example: gunicorn -w 4 -b 0.0.0.0:8000 api.model_server:app
     app.run(host='0.0.0.0', port=8000)
 ```
 
@@ -1374,6 +1393,10 @@ def forecast():
 from functools import wraps
 from flask import request, jsonify
 import jwt
+import os
+
+# Load secret key from environment — never hardcode secrets
+SECRET_KEY = os.environ["PEL_SECRET_KEY"]
 
 def require_auth(f):
     @wraps(f)
@@ -1557,9 +1580,10 @@ def forecast():
         
         return jsonify(result)
     
-    except Exception as e:
+    except Exception:
         executions.labels(status='error').inc()
-        return jsonify({'error': str(e)}), 500
+        app.logger.exception("Forecast execution failed")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/metrics')
 def metrics():
@@ -1583,14 +1607,14 @@ if __name__ == '__main__':
 - **Practice**: Set up a Git repo for your PEL models
 - **Experiment**: Build a CI/CD pipeline with GitHub Actions
 - **Explore**: Deploy a model as an API using Flask
-- **Reference**: See `/docs/deployment/` for advanced patterns
+- **Reference**: See the [Language Specification](../../spec/pel_language_spec.md) for advanced patterns
 
 ## Additional Resources
 
-- [CI/CD Examples](/docs/deployment/ci_cd_examples.md)
-- [Docker Deployment Guide](/docs/deployment/docker.md)
-- [Monitoring Best Practices](/docs/deployment/monitoring.md)
-- [Rollback Strategies](/docs/deployment/rollback.md)
+- [Language Specification](../../spec/pel_language_spec.md)
+- [Example Models](../../examples/)
+- [Contributing Guide](../../CONTRIBUTING.md)
+- [Standard Library Reference](../../stdlib/README.md)
 
 ---
 

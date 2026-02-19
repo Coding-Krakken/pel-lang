@@ -103,19 +103,19 @@ class TutorialTracker:
         "spreadsheet_migration": {
             "name": "Spreadsheet Migration",
             "tutorials": ["01", "02", "05", "06", "09", "04"],
-            "time": 180,
+            "time": 150,
             "outcome": "Can migrate Excel models to PEL",
         },
         "production_ready": {
             "name": "Production-Ready",
             "tutorials": ["01", "02", "03", "04", "05", "06", "07", "08", "10"],
-            "time": 300,
+            "time": 225,
             "outcome": "Can build, test, and deploy production models",
         },
         "full_mastery": {
             "name": "Full Mastery",
             "tutorials": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"],
-            "time": 270,
+            "time": 265,
             "outcome": "Complete PEL expertise",
         },
     }
@@ -130,8 +130,11 @@ class TutorialTracker:
     def _load_progress(self) -> Dict:
         """Load progress from file."""
         if self.progress_file.exists():
-            with open(self.progress_file) as f:
-                return json.load(f)
+            try:
+                with open(self.progress_file) as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, ValueError):
+                print(f"\u26a0\ufe0f  Progress file corrupted, starting fresh: {self.progress_file}")
         return {
             "completed": [],
             "started_at": datetime.now().isoformat(),

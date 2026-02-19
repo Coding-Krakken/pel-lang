@@ -49,22 +49,22 @@ ltv_with_discount(
 
 // 3. Payback period (months to recover CAC)
 payback_period(
-  cac: Currency<USD>,
+  cac: Currency<USD> per Customer,
   monthly_margin: Currency<USD> per Month
-) -> Duration
+) -> Duration<Month>
 
 // 4. LTV:CAC ratio
-ltv_to_cac_ratio(ltv: Currency<USD>, cac: Currency<USD>) -> Fraction
+ltv_to_cac_ratio(ltv: Currency<USD> per Customer, cac: Currency<USD> per Customer) -> Fraction
 
 // 5. SaaS Magic Number (sales efficiency)
 magic_number(
-  net_new_arr: Currency<USD>,
-  prior_quarter_sales_marketing: Currency<USD>
+  net_new_arr_this_quarter: Currency<USD> per Quarter,
+  sales_marketing_spend_last_quarter: Currency<USD> per Quarter
 ) -> Fraction
 
 // 6. Rule of 40 (growth + profitability)
 rule_of_40(
-  revenue_growth_rate: Fraction,
+  revenue_growth_rate: Rate per Year,
   profit_margin: Fraction
 ) -> Fraction
 ```
@@ -301,8 +301,8 @@ runway_months(
 
 // 4. Burn multiple (capital efficiency)
 burn_multiple(
-  net_burn: Currency<USD>,
-  net_new_arr: Currency<USD>
+  net_burn: Currency<USD> per Month,
+  net_new_arr: Currency<USD> per Month
 ) -> Fraction
 ```
 
@@ -479,9 +479,9 @@ model InfrastructureCapacity {
 ```pel
 // 1. Hiring funnel (multi-stage conversion)
 hiring_funnel(
-  top_of_funnel: Fraction,
+  applicants: Count<Applicant>,
   stage_conversion_rates: Array<Fraction>
-) -> Fraction
+) -> Count<Person>
 
 // 2. Ramp curve (new hire productivity)
 ramp_curve(
@@ -492,10 +492,10 @@ ramp_curve(
 
 // 3. Effective headcount (accounting for ramps)
 effective_headcount(
-  total_headcount: Fraction,
+  total_headcount: Count<Person>,
   avg_tenure: Duration,
   ramp_duration: Duration
-) -> Fraction
+) -> Count<Person>
 ```
 
 ### Example: Engineering Team Growth
@@ -504,7 +504,7 @@ effective_headcount(
 model EngineeringHiring {
   // --- Hiring Funnel ---
   
-  param monthly_applicants: Fraction = 200.0 {
+  param monthly_applicants: Count<Applicant> = 200 {
     source: "greenhouse_ats",
     method: "observed",
     confidence: 0.90
@@ -517,7 +517,7 @@ model EngineeringHiring {
     confidence: 0.75
   }
   
-  var monthly_hires: Fraction
+  var monthly_hires: Count<Person>
     = hiring_funnel(monthly_applicants, funnel_stages)
   // Result: 200 × 0.4 × 0.5 × 0.6 × 0.8 = 19.2 hires/month
   
@@ -540,7 +540,7 @@ model EngineeringHiring {
   
   // --- Effective Headcount ---
   
-  param total_engineers: Fraction = 50.0 {
+  param total_engineers: Count<Person> = 50 {
     source: "hr_system",
     method: "observed",
     confidence: 1.0
@@ -1234,9 +1234,9 @@ var funnel = conversion_funnel(
 
 ## Additional Resources
 
-- [Stdlib Reference](/stdlib/README.md)
-- [Stdlib Source Code](/stdlib/) (see implementation details)
-- [Contributing a Stdlib Module](/CONTRIBUTING.md#stdlib-contributions)
+- [Stdlib Reference](../../stdlib/README.md)
+- [Stdlib Source Code](../../stdlib/) (see implementation details)
+- [Contributing a Stdlib Module](../../CONTRIBUTING.md#stdlib-contributions)
 
 ---
 

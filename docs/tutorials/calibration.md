@@ -559,10 +559,10 @@ You've learned how to:
 
 ## Further Reading
 
-- [Calibration Module README](../runtime/calibration/README.md)
-- [Calibration Examples](../examples/CALIBRATION_EXAMPLES.md)
+- [Calibration Module README](../../runtime/calibration/README.md)
+- [Calibration Examples](../../examples/CALIBRATION_EXAMPLES.md)
 - [Issue #25: Calibration MVP Specification](https://github.com/pel-lang/pel/issues/25)
-- [ROADMAP.md](../ROADMAP.md) - Phase 7: Digital Twin
+- [ROADMAP.md](../../ROADMAP.md) - Phase 7: Digital Twin
 
 ## Exercises
 

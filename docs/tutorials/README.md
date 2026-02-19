@@ -230,7 +230,7 @@ For users who want to get productive fast:
 
 ---
 
-### Path 2: Spreadsheet Migration (3 hours)
+### Path 2: Spreadsheet Migration (~2.5 hours)
 For analysts converting Excel models:
 
 1. Tutorial 1: Your First Model (15 min)
@@ -244,7 +244,7 @@ For analysts converting Excel models:
 
 ---
 
-### Path 3: Production-Ready (5 hours)
+### Path 3: Production-Ready (~4 hours)
 For teams deploying models in critical workflows:
 
 1. Tutorial 1: Your First Model (15 min)
@@ -273,8 +273,8 @@ All tutorials 1-10 in order.
 ## 📖 Additional Learning Resources
 
 ### Documentation
-- [Language Specification](../spec/) - Complete PEL syntax reference
-- [Type System](../model/types.md) - Detailed type system docs
+- [Language Specification](../../spec/) - Complete PEL syntax reference
+- [Type System](../../spec/pel_type_system.md) - Detailed type system docs
 - [Standard Library](../../stdlib/README.md) - Stdlib function reference
 - [Migration Guide](../MIGRATION_GUIDE.md) - Extended migration examples
 
@@ -338,7 +338,7 @@ Track your progress:
 | 6. Time-Series Modeling | 30min | Intermediate | Tutorials 1-2 | ✅ Complete |
 | 7. Stdlib Functions | 25min | Intermediate | Tutorials 1-6 | ✅ Complete |
 | 8. Calibration Basics | 30min | Advanced | Tutorials 1-7 | ✅ Complete |
-| 9. Migration from Spreadsheets | 40min | Advanced | Tutorials 1-8 | ✅ Complete |
+| 9. Migration from Spreadsheets | 40min | Advanced | Tutorials 1-7 | ✅ Complete |
 | 10. Production Deployment | 35min | Advanced | Tutorials 1-9 | ✅ Complete |
 
 **Total time**: ~4.5 hours (Quick Start: 1 hour, Full Path: 4.5 hours)

@@ -350,7 +350,7 @@ pel report model.ir.json --type assumptions --format json -o assumptions.json
     },
     {
       "name": "churn_rate",
-      "type": "Probability",
+      "type": "Fraction",
       "value": "0.05",
       "provenance": {
         "source": "assumption",

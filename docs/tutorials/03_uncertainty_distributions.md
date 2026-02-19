@@ -1179,7 +1179,7 @@ param drowning_incidents: Fraction ~
 |--------------|------|----------|-------------------|
 | `Normal(μ, σ)` | Any | Symmetric uncertainty, can go negative | μ = mean, σ = std dev |
 | `LogNormal(μ, σ)` | Positive | Revenue, costs (must be > 0) | μ, σ in log-space (use fitting tool) |
-| `Beta(α, β)` | Probability | Conversion rates, churn, probabilities | Higher α,β = tighter dist |
+| `Beta(α, β)` | Fraction [0,1] | Conversion rates, churn, probabilities | Higher α,β = tighter dist |
 | `Uniform(min, max)` | Any | No prior knowledge, bounded range | Lazy: use when you don't know shape |
 
 ### Distribution Selection Flowchart

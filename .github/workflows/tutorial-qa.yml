@@ -29,13 +29,6 @@ jobs:
       - name: Validate PEL code in tutorials
         run: |
           python scripts/validate_tutorial_code.py --verbose
-      
-      - name: Check validation status
-        if: failure()
-        run: |
-          echo "❌ Tutorial validation failed!"
-          echo "Please fix the issues reported above."
-          exit 1
 
   check-broken-links:
     name: Check for Broken Links
@@ -46,26 +39,28 @@ jobs:
       
       - name: Check internal links
         run: |
+          set -euo pipefail
           echo "🔍 Checking for broken internal links..."
+          errors=0
           
-          # Check for non-existent /docs/ references
-          if grep -r '/docs/model/' docs/tutorials/ README.md 2>/dev/null; then
-            echo "❌ Found references to non-existent /docs/model/ directory"
-            exit 1
-          fi
+          # Check for non-existent directory references (absolute paths)
+          for dir in '/docs/model/' '/docs/runtime/' '/docs/patterns/' '/docs/troubleshooting/' '/docs/deployment/'; do
+            if grep -rn "$dir" docs/tutorials/ README.md 2>/dev/null; then
+              echo "❌ Found references to non-existent ${dir} directory"
+              errors=$((errors + 1))
+            fi
+          done
           
-          if grep -r '/docs/runtime/' docs/tutorials/ 2>/dev/null; then
-            echo "❌ Found references to non-existent /docs/runtime/ directory"
-            exit 1
-          fi
+          # Check for broken relative paths to non-existent directories
+          for reldir in '../model/' '../deployment/' '../runtime/' '../patterns/'; do
+            if grep -rn "$reldir" docs/tutorials/*.md 2>/dev/null; then
+              echo "❌ Found relative references to non-existent ${reldir} directory"
+              errors=$((errors + 1))
+            fi
+          done
           
-          if grep -r '/docs/patterns/' docs/tutorials/ 2>/dev/null; then
-            echo "❌ Found references to non-existent /docs/patterns/ directory"
-            exit 1
-          fi
-          
-          if grep -r '/docs/troubleshooting/' docs/tutorials/ 2>/dev/null; then
-            echo "❌ Found references to non-existent /docs/troubleshooting/ directory"
+          if [ "$errors" -gt 0 ]; then
+            echo "❌ Found $errors broken link issues"
             exit 1
           fi
           
@@ -73,18 +68,21 @@ jobs:
       
       - name: Verify spec references
         run: |
+          set -euo pipefail
           echo "🔍 Verifying spec file references..."
           
-          # Extract all spec file references
-          grep -r 'spec/.*\.md' docs/tutorials/ README.md | \
-            grep -o 'spec/[^)]*\.md' | \
-            sort -u | \
-            while read spec_file; do
-              if [ ! -f "$spec_file" ]; then
-                echo "❌ Referenced spec file does not exist: $spec_file"
-                exit 1
-              fi
-            done
+          errors=0
+          # Extract all spec file references and verify they exist
+          while IFS= read -r spec_file; do
+            if [ ! -f "$spec_file" ]; then
+              echo "❌ Referenced spec file does not exist: $spec_file"
+              errors=$((errors + 1))
+            fi
+          done < <(grep -roh 'spec/[^)]*\.md' docs/tutorials/ README.md 2>/dev/null | sort -u)
+          
+          if [ "$errors" -gt 0 ]; then
+            exit 1
+          fi
           
           echo "✅ All spec references valid"
 
@@ -161,16 +159,28 @@ jobs:
       
       - name: Check for deprecated types
         run: |
+          set -euo pipefail
           echo "🔍 Checking for deprecated/invalid type names..."
+          errors=0
           
-          # Should not find these invalid types in type declarations
-          if grep -r ': Probability' docs/tutorials/*.md | grep 'param\|var'; then
-            echo "❌ Found 'Probability' type (should be 'Fraction')"
-            exit 1
+          # Check for Probability used as a type (in code blocks, type declarations, JSON output)
+          # Match: param/var declarations, JSON "type" fields, and type hierarchy diagrams
+          if grep -rn ': Probability\b' docs/tutorials/*.md | grep -v '//\|#\|<!--' | grep -v 'CONTRIBUTING\|not.*Probability\|not a.*type\|Use.*Fraction'; then
+            echo "❌ Found 'Probability' used as a type (should be 'Fraction')"
+            errors=$((errors + 1))
           fi
           
-          if grep -r '<Bool>' docs/tutorials/*.md; then
+          if grep -rn '"type": "Probability"' docs/tutorials/*.md; then
+            echo "❌ Found '\"type\": \"Probability\"' in JSON output (should be '\"type\": \"Fraction\"')"
+            errors=$((errors + 1))
+          fi
+          
+          if grep -rn '<Bool>' docs/tutorials/*.md; then
             echo "❌ Found 'Bool' type (should be 'Boolean')"
+            errors=$((errors + 1))
+          fi
+          
+          if [ "$errors" -gt 0 ]; then
             exit 1
           fi
           
@@ -239,14 +249,45 @@ jobs:
     
     steps:
       - name: Generate summary
+        env:
+          VALIDATE_RESULT: ${{ needs.validate-tutorial-code.result }}
+          LINKS_RESULT: ${{ needs.check-broken-links.result }}
+          METADATA_RESULT: ${{ needs.validate-metadata.result }}
+          CONSISTENCY_RESULT: ${{ needs.consistency-check.result }}
+          SECURITY_RESULT: ${{ needs.security-check.result }}
         run: |
+          status_icon() {
+            case "$1" in
+              success) echo "✅";;
+              failure) echo "❌";;
+              cancelled) echo "⏭️";;
+              skipped) echo "⏭️";;
+              *) echo "❓";;
+            esac
+          }
+          
           echo "## Tutorial Quality Assurance Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All quality checks completed:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Tutorial code validation" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Broken link detection" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Metadata validation" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Consistency checks" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Security best practices" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tutorial code validation | $(status_icon "$VALIDATE_RESULT") $VALIDATE_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Broken link detection | $(status_icon "$LINKS_RESULT") $LINKS_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Metadata validation | $(status_icon "$METADATA_RESULT") $METADATA_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Consistency checks | $(status_icon "$CONSISTENCY_RESULT") $CONSISTENCY_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security best practices | $(status_icon "$SECURITY_RESULT") $SECURITY_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📚 Tutorial suite is production-ready!" >> $GITHUB_STEP_SUMMARY
+          
+          # Fail if any required job failed
+          failed=0
+          for result in "$VALIDATE_RESULT" "$LINKS_RESULT" "$METADATA_RESULT" "$CONSISTENCY_RESULT" "$SECURITY_RESULT"; do
+            if [ "$result" = "failure" ]; then
+              failed=$((failed + 1))
+            fi
+          done
+          
+          if [ "$failed" -gt 0 ]; then
+            echo "❌ $failed check(s) failed. Tutorial suite is NOT production-ready." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "📚 Tutorial suite is production-ready!" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -159,9 +159,11 @@ model RatesExample {
 - `Fraction`: Success rates, risk factors (dimensionless, 0-1)
 - `Currency<USD> per Month`: Monthly recurring revenue (MRR)
 
-## 3. Probability: A Special Rate
+## 3. Fractions as Probabilities
 
-Probabilities are rates that represent likelihood:
+Probabilities in PEL are represented using the `Fraction` type, constrained to [0, 1].
+
+> **Note**: There is no `Probability` type in PEL. Use `Fraction` for all probability values and add a constraint to enforce valid bounds.
 
 ```pel
 model ProbabilityExample {
@@ -967,8 +969,7 @@ Type
 │   │   └── ... (ISO 4217 codes)
 │   ├── Duration
 │   │   └── Units: mo, wk, day, yr
-│   ├── Fraction (dimensionless)
-│   ├── Probability (Fraction ∈ [0,1])
+│   ├── Fraction (dimensionless, use for probabilities ∈ [0,1])
 │   └── Rate per T
 │       ├── Rate per Month
 │       ├── Rate per Day
@@ -977,7 +978,7 @@ Type
 │   └── T can be any Scalar type
 └── Distribution<T>
     ├── Normal<T>
-    ├── Beta (Probability only)
+    ├── Beta (Fraction [0,1])
     ├── LogNormal<T>
     └── Uniform<T>
 ```

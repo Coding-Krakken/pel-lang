@@ -9,7 +9,7 @@ This script:
 4. Reports any issues with line numbers and context
 
 Usage:
-    python scripts/validate_tutorial_code.py [--fix] [--tutorial TUTORIAL]
+    python scripts/validate_tutorial_code.py [--tutorial TUTORIAL]
 
 Examples:
     # Validate all tutorials
@@ -27,8 +27,6 @@ import re
 import sys
 from pathlib import Path
 from typing import List, Tuple, Dict, Set
-import tempfile
-import subprocess
 
 
 class TutorialValidator:
