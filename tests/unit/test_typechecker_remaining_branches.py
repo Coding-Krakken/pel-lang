@@ -83,15 +83,16 @@ def test_typechecker_infer_literal_percentage_string_and_unknown_fallback() -> N
 
 
 @pytest.mark.unit
-def test_typechecker_binary_multiply_generic_product_type() -> None:
+def test_typechecker_binary_multiply_count_times_rate_yields_rate() -> None:
+    """Count is dimensionless, so Count<User> × Rate per Month → Rate per Month."""
     tc = TypeChecker()
     tc.env.bind("a", PELType.count("User"))
     tc.env.bind("b", PELType.rate("Month"))
 
     expr = BinaryOp(operator="*", left=Variable(name="a"), right=Variable(name="b"))
     t = tc.infer_expression(expr)
-    assert t.type_kind == "Product"
-    assert t.dimension.units == {"count": "User", "rate": "Month"}
+    assert t.type_kind == "Rate"
+    assert t.params.get("per") == "Month"
 
 
 @pytest.mark.unit

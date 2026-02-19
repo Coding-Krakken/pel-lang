@@ -1,7 +1,7 @@
 /*
  * Example: DurationFromCount Contract
  * 
- * Demonstrates: Count<TimeUnit> -> Duration<TimeUnit>
+ * Demonstrates: Count<TimeUnit> → Duration<TimeUnit>
  * Use case: Converting time period counts to duration values
  * 
  * Semantic justification:
@@ -84,7 +84,7 @@ model Subscription_Lifecycle_Metrics {
  *    - From: Count<Day>
  *    - To: Duration<Day>
  *    - Contract: DurationFromCount
- *    - Justification: 14 counted days -> 14-day time period
+ *    - Justification: 14 counted days → 14-day time period
  * 
  * 2. time_to_first_value = days_to_first_value
  *    - From: Count<Day>
@@ -96,7 +96,7 @@ model Subscription_Lifecycle_Metrics {
  *    - From: Count<Month>
  *    - To: Duration<Month>
  *    - Contract: DurationFromCount
- *    - Justification: 12-month count -> 12-month contract term
+ *    - Justification: 12-month count → 12-month contract term
  * 
  * 4. actual_downtime = downtime_hours
  *    - From: Count<Hour>

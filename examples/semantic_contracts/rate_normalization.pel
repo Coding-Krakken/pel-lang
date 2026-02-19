@@ -1,7 +1,7 @@
 /*
  * Example: RateNormalization Contract
  * 
- * Demonstrates: Quotient<Currency, Duration> -> Currency
+ * Demonstrates: Quotient<Currency, Duration> → Currency
  * Use case: Time-normalized revenue (MRR, ARR conversions)
  * 
  * Semantic justification:
@@ -16,11 +16,11 @@ model SaaS_MRR_Metrics {
     param annual_contract_value: Currency<USD> = $120000
     param quarterly_revenue: Currency<USD> = $90000
     
-    // RateNormalization contract: annual revenue / 12 -> MRR (Currency)
+    // RateNormalization contract: annual revenue / 12 → MRR (Currency)
     // This is the canonical MRR calculation for SaaS metrics
     var monthly_recurring_revenue: Currency<USD> = annual_contract_value / 12
     
-    // Another time normalization: quarterly -> monthly
+    // Another time normalization: quarterly → monthly
     // Division by 3 (months in quarter) normalizes to monthly revenue
     var monthly_from_quarterly: Currency<USD> = quarterly_revenue / 3
     
@@ -61,7 +61,7 @@ model SaaS_MRR_Metrics {
  *    - From: Quotient<Currency, Duration>
  *    - To: Currency
  *    - Contract: RateNormalization
- *    - Justification: Quarterly -> monthly normalization
+ *    - Justification: Quarterly → monthly normalization
  * 
  * 3. expansion_mrr = expansion_arr / 12
  *    - From: Quotient<Currency, Duration>
@@ -80,4 +80,3 @@ model SaaS_MRR_Metrics {
  * you're normalizing to a time unit. The result is still Currency-like
  * because the time dimension is part of the metric's semantic definition.
  */
-

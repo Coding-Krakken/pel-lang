@@ -1,6 +1,5 @@
 """Quick diagnostic: try compiling + typechecking a sample of conformance YAML cases."""
 from pathlib import Path
-
 import yaml
 
 from compiler.lexer import Lexer
@@ -38,7 +37,7 @@ def check_runtime_cases(n=20):
             lex = Lexer(src)
             tokens = lex.tokenize()
             parser = Parser(tokens)
-            parser.parse()
+            ast = parser.parse()
             results.append((p.name, 'PARSE_OK'))
         except Exception as e:
             results.append((p.name, f'ERROR: {type(e).__name__}: {e}'))

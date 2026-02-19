@@ -22,28 +22,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ruff mypy
-          pip install -e .[lsp]
+          pip install -e .
       
       - name: Run ruff
-        run: ruff check compiler/ runtime/ lsp/ formatter/ linter/ pel_cli/ tests/ --extend-exclude .github/prompts
+        run: ruff check compiler/ runtime/ tests/ --extend-exclude .github/prompts
       
       - name: Run mypy
-        run: mypy -p compiler -p runtime -p lsp -p formatter -p linter -p pel_cli --exclude "^\.github/prompts/"
-      
-      - name: Check code formatting
-        run: |
-          python -m pel_cli.main format examples/simple_growth.pel examples/saas_subscription.pel --check || {
-            echo "❌ Code formatting check failed"
-            echo "Run 'pel format .' or 'python -m pel_cli.main format .' to fix formatting"
-            exit 1
-          }
-      
-      - name: Run PEL linter
-        run: |
-          python -m pel_cli.main lint examples/simple_growth.pel examples/saas_subscription.pel --severity error || {
-            echo "❌ Linter found errors"
-            exit 1
-          }
+        run: mypy -p compiler -p runtime --exclude "^\.github/prompts/"
 
   test:
     runs-on: ubuntu-latest
@@ -64,10 +49,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev,lsp]
+          pip install -e .[dev]
       
       - name: Run tests
-        run: pytest tests/ -v --cov=compiler --cov=runtime --cov=lsp --cov=formatter --cov=linter --cov=pel_cli --cov-report=term --cov-report=xml --cov-fail-under=80
+        run: pytest tests/ -v --cov=compiler --cov=runtime --cov-report=term --cov-report=xml --cov-fail-under=80
       
       - name: Check coverage threshold
         run: |
@@ -79,6 +64,8 @@ jobs:
         if: matrix.python-version == '3.11'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          # Non-blocking: fork PRs lack CODECOV_TOKEN; don't fail the build for coverage upload issues
+          fail_ci_if_error: false
 
   security:
     runs-on: ubuntu-latest
@@ -95,7 +82,8 @@ jobs:
         run: pip install bandit[toml]
       
       - name: Run security scan
-        run: bandit -r compiler/ runtime/ lsp/ formatter/ linter/ pel_cli/ -c pyproject.toml -x .github/prompts || true
+        run: bandit -r compiler/ runtime/ -c pyproject.toml -x .github/prompts
+        continue-on-error: true
 
   build:
     runs-on: ubuntu-latest

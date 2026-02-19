@@ -54,17 +54,33 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - Gross dollar retention (GDR)
 - Quick ratio
 
-### 7. `capacity/` - Capacity Planning 🔜
-- Queueing models
-- Utilization optimization
-- WIP limits
-- Bottleneck analysis
+### 7. `capacity/` - Capacity Planning ✅ **IMPLEMENTED (PR-22)**
+- Utilization calculations
+- Capacity gap analysis
+- Resource allocation (priority-weighted, proportional)
+- Scaling and expansion planning
+- Bottleneck detection
+- Utilization metrics (peak, average, variability - using Welford's algorithm)
+- Overutilization penalties
+- **Enhancements:**
+  - Comprehensive input validation (division-by-zero guards, empty array protection)
+  - High-performance Welford's algorithm for variance calculation
+  - @param/@return/@errors documentation
 
-### 8. `hiring/` - Hiring & Headcount 🔜
-- Ramp curves
-- Attrition models
-- Span of control
-- Cost per employee by level
+### 8. `hiring/` - Hiring & Headcount ✅ **IMPLEMENTED (PR-22)**
+- Hiring funnel modeling (multi-stage conversion)
+- Ramp curves (linear, s-curve, exponential)
+- Attrition models and replacement planning
+- Workforce capacity planning
+- Talent acquisition cost modeling
+- Growth hiring calculations
+- Effective headcount (ramp-adjusted)
+- Team capacity aggregation
+- **Enhancements:**
+  - High-precision mathematical constants (19-digit Euler's number: 2.71828182845904523536)
+  - Comprehensive edge case handling
+  - Ramp curve shape validation
+  - @param/@return/@errors documentation
 
 ### 9. `shocks/` - Scenario Library 🔜
 - Recession scenarios
@@ -72,7 +88,7 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - Demand spikes
 - Platform risk events
 
-**Implementation Status:** 4 of 9 modules complete (44%)
+**Implementation Status:** 6 of 9 modules complete (67%)
 
 ## Usage
 

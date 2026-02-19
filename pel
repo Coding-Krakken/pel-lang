@@ -6,11 +6,301 @@
 # PEL is dual-licensed under AGPL-3.0 and a commercial license.
 # See LICENSE and COMMERCIAL-LICENSE.md for details.
 
-"""PEL CLI wrapper (developer convenience)."""
+"""
+PEL CLI - Command-line interface for PEL compiler and runtime
+Usage:
+    pel compile <model.pel> -o <output.ir.json>
+    pel run <model.ir.json> --mode deterministic --seed 42
+    pel check <model.pel>  # Type check and validate only
+"""
 
 import sys
+import argparse
+import json
+from pathlib import Path
 
-from pel_cli.main import main
+# Add compiler to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-if __name__ == "__main__":
+from compiler.lexer import Lexer
+from compiler.parser import Parser
+from compiler.typechecker import TypeChecker
+from compiler.provenance_checker import ProvenanceChecker
+from compiler.ir_generator import IRGenerator
+from runtime.runtime import PELRuntime, RuntimeConfig
+
+
+def cmd_compile(args):
+    """Compile PEL source to IR."""
+    source_path = Path(args.source)
+    
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}")
+        return 1
+    
+    # Read source
+    with open(source_path, 'r') as f:
+        source_code = f.read()
+    
+    print(f"Compiling {source_path}...")
+    
+    try:
+        # Lexing
+        print("  [1/5] Lexical analysis...")
+        lexer = Lexer(source_code, str(source_path))
+        tokens = lexer.tokenize()
+        print(f"        Generated {len(tokens)} tokens")
+        
+        # Parsing
+        print("  [2/5] Parsing...")
+        parser = Parser(tokens)
+        ast = parser.parse()
+        print(f"        Parsed model '{ast.name}'")
+        
+        # Type checking
+        print("  [3/5] Type checking...")
+        type_checker = TypeChecker()
+        typed_ast = type_checker.check_model(ast)
+        
+        if type_checker.has_errors():
+            print("        Type errors found:")
+            for error in type_checker.get_errors():
+                print(f"          - {error}")
+            if not args.force:
+                return 1
+        
+
+        print("        Type checking passed")
+        
+        # Provenance checking
+        print("  [4/5] Provenance validation...")
+        prov_checker = ProvenanceChecker()
+        prov_checker.check(ast)
+        
+        if prov_checker.has_errors():
+            print("        Provenance errors found:")
+            for error in prov_checker.get_errors():
+                print(f"          - {error}")
+            if not args.force:
+                return 1
+        else:
+            print(f"        Completeness: {prov_checker.get_completeness_score():.1%}")
+        
+        # IR generation
+        print("  [5/5] Generating IR...")
+        ir_gen = IRGenerator(str(source_path))
+        ir_doc = ir_gen.generate(ast)
+        print(f"        Model hash: {ir_doc['metadata']['model_hash'][:16]}...")
+        
+        # Write output
+        output_path = Path(args.output) if args.output else source_path.with_suffix('.ir.json')
+        with open(output_path, 'w') as f:
+            json.dump(ir_doc, f, indent=2)
+        
+        print(f"\n✓ Compilation successful!")
+        print(f"  Output: {output_path}")
+        print(f"  Model: {ast.name}")
+        print(f"  Parameters: {len(ast.params)}")
+        print(f"  Variables: {len(ast.vars)}")
+        print(f"  Constraints: {len(ast.constraints)}")
+        print(f"  Policies: {len(ast.policies)}")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"\n✗ Compilation failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def cmd_run(args):
+    """Execute compiled IR."""
+    ir_path = Path(args.ir_file)
+    
+    if not ir_path.exists():
+        print(f"Error: File not found: {ir_path}")
+        return 1
+    
+    print(f"Running {ir_path}...")
+    
+    try:
+        # Configure runtime
+        config = RuntimeConfig(
+            mode=args.mode,
+            seed=args.seed,
+            num_runs=args.runs,
+            time_horizon=args.horizon
+        )
+        
+        runtime = PELRuntime(config)
+        
+        # Load IR
+        print(f"  Loading IR...")
+        ir_doc = runtime.load_ir(ir_path)
+        model_name = ir_doc['model']['name']
+        print(f"  Model: {model_name}")
+        
+        # Execute
+        print(f"  Executing ({args.mode} mode, seed={args.seed})...")
+        results = runtime.run(ir_doc)
+        
+        # Output
+        if args.output:
+            output_path = Path(args.output)
+            with open(output_path, 'w') as f:
+                json.dump(results, f, indent=2)
+            print(f"\n✓ Results written to {output_path}")
+        else:
+            print(f"\n✓ Execution complete")
+            print(f"  Status: {results['status']}")
+            if results['status'] == 'success':
+                print(f"  Timesteps: {results.get('timesteps', 0)}")
+                print(f"  Constraint violations: {len(results.get('constraint_violations', []))}")
+                print(f"  Policy executions: {len(results.get('policy_executions', []))}")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"\n✗ Execution failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def cmd_check(args):
+    """Type check and validate only (no IR generation)."""
+    source_path = Path(args.source)
+    
+    if not source_path.exists():
+        print(f"Error: File not found: {source_path}")
+        return 1
+    
+    with open(source_path, 'r') as f:
+        source_code = f.read()
+    
+    print(f"Checking {source_path}...")
+    
+    try:
+        # Lex and parse
+        lexer = Lexer(source_code, str(source_path))
+        tokens = lexer.tokenize()
+        
+        parser = Parser(tokens)
+        ast = parser.parse()
+        
+        # Type check
+        type_checker = TypeChecker()
+        type_checker.check_model(ast)
+        
+        # Provenance check
+        prov_checker = ProvenanceChecker()
+        prov_checker.check(ast)
+        
+        # Report
+        print(f"\n✓ Model '{ast.name}' is valid")
+        print(f"  Type errors: {len(type_checker.get_errors())}")
+        print(f"  Type warnings: {len(type_checker.get_warnings())}")
+        print(f"  Provenance errors: {len(prov_checker.get_errors())}")
+        print(f"  Provenance completeness: {prov_checker.get_completeness_score():.1%}")
+        
+        has_errors = type_checker.has_errors() or prov_checker.has_errors()
+        return 1 if has_errors else 0
+        
+    except Exception as e:
+        print(f"\n✗ Validation failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def cmd_format(args):
+    """Stub: formatting is handled by external tools."""
+    print("Note: `pel format` has been removed.")
+    print("PEL source formatting is now handled by external tools.")
+    print("")
+    print("Recommended: use ruff (https://docs.astral.sh/ruff/)")
+    print("  ruff format .")
+    print("  ruff check --fix .")
+    return 0
+
+
+def cmd_lint(args):
+    """Stub: linting is handled by external tools."""
+    print("Note: `pel lint` has been removed.")
+    print("PEL source linting is now handled by external tools.")
+    print("")
+    print("Recommended: use ruff (https://docs.astral.sh/ruff/)")
+    print("  ruff check .")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='PEL - Programmable Economic Language',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  pel compile model.pel -o model.ir.json
+  pel run model.ir.json --mode monte_carlo --runs 10000
+  pel check model.pel
+                
+For more information: https://spec.pel-lang.org
+        '''
+    )
+    
+    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+    parser.add_argument('--version', action='version', version='PEL 0.1.0')
+    
+    subparsers = parser.add_subparsers(dest='command', required=True)
+    
+    # Compile command
+    compile_parser = subparsers.add_parser('compile', help='Compile PEL source to IR')
+    compile_parser.add_argument('source', type=str, help='Source .pel file')
+    compile_parser.add_argument('-o', '--output', type=str, help='Output .ir.json file')
+    compile_parser.add_argument('--force', action='store_true', help='Generate IR even with errors')
+    
+    # Run command
+    run_parser = subparsers.add_parser('run', help='Execute compiled IR')
+    run_parser.add_argument('ir_file', type=str, help='Compiled .ir.json file')
+    run_parser.add_argument('--mode', choices=['deterministic', 'monte_carlo'], default='deterministic')
+    run_parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    run_parser.add_argument('--runs', type=int, default=1000, help='Monte Carlo runs')
+    run_parser.add_argument('--horizon', type=int, help='Time horizon override')
+    run_parser.add_argument('-o', '--output', type=str, help='Output results JSON')
+    
+    # Check command
+    check_parser = subparsers.add_parser('check', help='Validate model without compiling')
+    check_parser.add_argument('source', type=str, help='Source .pel file')
+    
+    # Format command (stub — delegates to external tools)
+    subparsers.add_parser('format', aliases=['fmt'],
+                          help='[Removed] Use ruff format instead')
+
+    # Lint command (stub — delegates to external tools)
+    subparsers.add_parser('lint',
+                          help='[Removed] Use ruff check instead')
+    
+    args = parser.parse_args()
+    
+    # Dispatch
+    if args.command == 'compile':
+        return cmd_compile(args)
+    elif args.command == 'run':
+        return cmd_run(args)
+    elif args.command == 'check':
+        return cmd_check(args)
+    elif args.command in ('format', 'fmt'):
+        return cmd_format(args)
+    elif args.command == 'lint':
+        return cmd_lint(args)
+    else:
+        parser.print_help()
+        return 1
+
+
+if __name__ == '__main__':
     sys.exit(main())

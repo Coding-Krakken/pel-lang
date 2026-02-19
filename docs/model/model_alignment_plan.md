@@ -55,7 +55,7 @@
 | G-003 | Parser | Distribution named args may not parse (uncertain) | Distribution calls must parse per language spec; deterministic parsing | MAJOR | WI-003 |
 | G-004 | Tests | Unit tests = 0; integration tests = 0; coverage = 0% | Validation must be enforced by tests; determinism must be tested | MAJOR | WI-004, WI-005 |
 | G-005 | CI/CD | Current state: NONE | Canonical pipeline gates required (lint/type/test/coverage) | MAJOR | WI-006 (blocked by WI-004) |
-| G-006 | Stdlib | 8/9 modules incomplete | Canonical stdlib growth path; functions should be pure + documented | MAJOR | WI-007..WI-009 |
+| G-006 | Stdlib | 3/9 modules incomplete | Canonical stdlib growth path; functions should be pure + documented | MAJOR | WI-007..WI-009 |
 | G-007 | Runtime determinism | Snapshot claims bit-identical results; no tests; RNG usage inconsistent (stdlib random listed; snapshot mentions numpy RandomState) | Runtime reproducibility invariant must hold and be verified | FATAL (if violated), otherwise MAJOR | WI-005 (adds determinism tests); may require new WorkItem |
 | G-008 | Correlation | Correlation sampling not implemented | Monte Carlo mode should respect correlation when specified | MINOR (advanced) | (future WorkItem) |
 | G-009 | Observability | Metrics/tracing not implemented; logging ad-hoc | Events/metrics must be optional and non-semantic | MINOR | (future WorkItem) |

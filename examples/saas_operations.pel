@@ -1,0 +1,431 @@
+/// SaaS Operations Model
+/// Infrastructure capacity + Support team staffing
+///
+/// This model uses stdlib modules (auto-loaded by compiler):
+///   - capacity/ - calculate_utilization, capacity_gap, required_capacity, effective_capacity,
+///                 capacity_increment, capacity_cost, capacity_lead_time, peak_utilization,
+///                 average_utilization, utilization_variability, overutilization_penalty
+///   - hiring/   - required_headcount, hiring_plan, ramp_curve, effective_headcount,
+///                 team_productivity, team_capacity, attrition_replacement, hiring_funnel,
+///                 cost_per_hire, onboarding_cost
+///
+/// Note: Import syntax not yet implemented - functions are automatically available
+
+model SaasOperations {
+  // =============================================================================
+  // Infrastructure Capacity Module
+  // =============================================================================
+  
+  // --- Server Infrastructure ---
+  param current_servers: Fraction = 500.0 {
+    source: "infrastructure_team",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param requests_per_server_per_month: Rate per Month = 5000000 / 1mo {
+    source: "vendor_specs",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  param server_efficiency: Fraction = 0.80 {
+    source: "ops_metrics",
+    method: "derived",
+    confidence: 0.92
+  }
+  
+  // Calculate total infrastructure capacity
+  var total_server_capacity: Rate per Month 
+    = current_servers * requests_per_server_per_month
+  
+  var effective_server_capacity: Rate per Month 
+    = effective_capacity(total_server_capacity, server_efficiency)
+  
+  // --- Current and Projected Traffic ---
+  param current_monthly_requests: Rate per Month = 1800000000 / 1mo {
+    source: "monitoring",
+    method: "observed",
+    confidence: 0.98
+  }
+  
+  param projected_monthly_requests: Rate per Month = 2500000000 / 1mo {
+    source: "growth_forecast",
+    method: "derived",
+    confidence: 0.75
+  }
+  
+  // Calculate current utilization
+  var current_infra_utilization: Fraction 
+    = calculate_utilization(current_monthly_requests, effective_server_capacity)
+  
+  // Calculate capacity gap for growth
+  var infrastructure_capacity_gap: Rate per Month 
+    = capacity_gap(projected_monthly_requests, effective_server_capacity)
+  
+  // Calculate additional servers needed
+  var additional_servers_needed: Fraction 
+    = required_capacity(
+        infrastructure_capacity_gap,
+        requests_per_server_per_month,
+        server_efficiency
+      )
+  
+  // Servers come in clusters of 10
+  param servers_per_cluster: Fraction = 10.0 {
+    source: "infrastructure_team",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var server_clusters_to_add: Fraction 
+    = capacity_increment(additional_servers_needed, servers_per_cluster)
+  
+  // Cost analysis
+  param cost_per_server: Currency<USD> = $8000 {
+    source: "vendor_pricing",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  var infrastructure_expansion_cost: Currency<USD> 
+    = capacity_cost(server_clusters_to_add, cost_per_server)
+  
+  // Lead time for provisioning
+  param capacity_type: String = "cloud_servers" {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param cluster_quantity: Fraction = 1.0 {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var server_provisioning_lead_time: Duration<Day> 
+    = capacity_lead_time(capacity_type, cluster_quantity)
+  
+  // =============================================================================
+  // Support Team Staffing Module
+  // =============================================================================
+  
+  // --- Current Support Team ---
+  param current_support_agents: Count<Person> = 45 {
+    source: "hr_system",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param fully_trained_agents: Count<Person> = 35 {
+    source: "support_ops",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param training_agents: Count<Person> = 10 {
+    source: "support_ops",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // --- Ticket Volume Planning ---
+  param current_monthly_tickets: Rate per Month = 12000 / 1mo {
+    source: "support_system",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param projected_monthly_tickets: Rate per Month = 18000 / 1mo {
+    source: "growth_forecast",
+    method: "derived",
+    confidence: 0.80
+  }
+  
+  param tickets_per_agent_per_month: Rate per Month = 300 / 1mo {
+    source: "support_metrics",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  param agent_productivity_factor: Fraction = 0.90 {
+    source: "support_ops",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // Calculate required headcount for projected volume
+  var required_support_headcount: Count<Person> 
+    = required_headcount(
+        projected_monthly_tickets,
+        tickets_per_agent_per_month,
+        agent_productivity_factor
+      )
+  
+  // --- Support Agent Hiring Plan ---
+  param support_planning_horizon: Duration<Month> = 6mo {
+    source: "planning",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param support_reporting_period: Duration<Month> = 1mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var support_hires_per_month: Count<Person> 
+    = hiring_plan(
+        current_support_agents,
+        required_support_headcount,
+        support_planning_horizon,
+        support_reporting_period
+      )
+  
+  // --- Support Agent Ramp ---
+  param support_agent_ramp_duration: Duration<Month> = 2mo {
+    source: "support_ops",
+    method: "assumption",
+    confidence: 0.85
+  }
+  
+  param avg_agent_ramp_progress: Fraction = 0.70 {
+    source: "support_ops",
+    method: "derived",
+    confidence: 0.80
+  }
+  
+  param ramp_calculation_shape: String = "linear" {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param month_1_ramp: Duration<Month> = 1mo {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var month_1_agent_productivity: Fraction 
+    = ramp_curve(month_1_ramp, support_agent_ramp_duration, ramp_calculation_shape)
+  
+  // Calculate effective support team size
+  var effective_support_team: Count<Person> 
+    = effective_headcount(
+        fully_trained_agents,
+        training_agents,
+        avg_agent_ramp_progress
+      )
+  
+  // Calculate current support capacity
+  var current_support_capacity: Rate per Month 
+    = team_productivity(effective_support_team, tickets_per_agent_per_month)
+  
+  // --- Support Team Costs ---
+  param support_annual_attrition: Rate per Year = 0.25 / 1yr {
+    source: "hr_analytics",
+    method: "derived",
+    confidence: 0.88
+  }
+  
+  var support_replacement_hires: Count<Person> 
+    = attrition_replacement(current_support_agents, support_annual_attrition)
+  
+  param support_applicants_per_month: Count<Applicant> = 80 {
+    source: "ats",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  param support_screen_rate: Fraction = 0.40 {
+    source: "recruiting",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  param support_interview_rate: Fraction = 0.50 {
+    source: "recruiting",
+    method: "derived",
+    confidence: 0.88
+  }
+  
+  param support_offer_acceptance: Fraction = 0.80 {
+    source: "recruiting",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  var support_conversion_rates: Array<Fraction> 
+    = [support_screen_rate, support_interview_rate, support_offer_acceptance]
+  
+  var support_hires_from_funnel: Count<Person> 
+    = hiring_funnel(support_applicants_per_month, support_conversion_rates)
+  
+  param support_recruiting_cost_total: Currency<USD> = $180000 {
+    source: "recruiting_finance",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  var support_cost_per_hire: Currency<USD> per Person 
+    = cost_per_hire(support_recruiting_cost_total, support_hires_from_funnel)
+  
+  param support_onboarding_cost_per_hire: Currency<USD> per Person = $5000 {
+    source: "support_ops",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  var total_support_hiring_need: Count<Person> 
+    = required_support_headcount - current_support_agents + support_replacement_hires
+  
+  var support_onboarding_cost_total: Currency<USD> 
+    = onboarding_cost(total_support_hiring_need, support_onboarding_cost_per_hire)
+  
+  // =============================================================================
+  // Multi-Team Capacity (Engineering + Support + Sales)
+  // =============================================================================
+  
+  param engineering_team_size: Count<Person> = 120 {
+    source: "hr",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param sales_team_size: Count<Person> = 30 {
+    source: "hr",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param eng_capacity_per_person: Rate per Month = 8 / 1mo {
+    source: "engineering",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  param support_capacity_per_person: Rate per Month = 300 / 1mo {
+    source: "support",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  param sales_capacity_per_person: Rate per Month = 5 / 1mo {
+    source: "sales",
+    method: "derived",
+    confidence: 0.80
+  }
+  
+  var org_headcounts: Array<Count<Person>> 
+    = [engineering_team_size, effective_support_team, sales_team_size]
+  
+  var org_capacities: Array<Rate per Month> 
+    = [eng_capacity_per_person, support_capacity_per_person, sales_capacity_per_person]
+  
+  var total_organizational_capacity: Rate per Month 
+    = team_capacity(org_headcounts, org_capacities)
+  
+  // =============================================================================
+  // Utilization Monitoring
+  // =============================================================================
+  
+  param infra_util_jan: Fraction = 0.72 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param infra_util_feb: Fraction = 0.75 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param infra_util_mar: Fraction = 0.78 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param infra_util_apr: Fraction = 0.82 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param infra_util_may: Fraction = 0.88 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param infra_util_jun: Fraction = 0.91 {
+    source: "monitoring",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  var infra_util_history: Array<Fraction> 
+    = [infra_util_jan, infra_util_feb, infra_util_mar, infra_util_apr, infra_util_may, infra_util_jun]
+  
+  var peak_infra_utilization: Fraction = peak_utilization(infra_util_history)
+  var avg_infra_utilization: Fraction = average_utilization(infra_util_history)
+  var infra_util_variability: Fraction = utilization_variability(infra_util_history)
+  
+  // =============================================================================
+  // Overutilization Penalties
+  // =============================================================================
+  
+  param target_infra_utilization: Fraction = 0.85 {
+    source: "ops_policy",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param downtime_cost_per_excess: Currency<USD> = $100000 {
+    source: "finance",
+    method: "derived",
+    confidence: 0.75
+  }
+  
+  var overutilization_cost: Currency<USD> 
+    = overutilization_penalty(
+        peak_infra_utilization,
+        target_infra_utilization,
+        downtime_cost_per_excess
+      )
+  
+  // =============================================================================
+  // Key Metrics (exported when export keyword is implemented)
+  // =============================================================================
+  
+  // --- Infrastructure ---
+  // effective_server_capacity          - Available server capacity
+  // current_infra_utilization          - Current utilization %
+  // infrastructure_capacity_gap        - Capacity shortfall
+  // server_clusters_to_add             - Servers to provision
+  // infrastructure_expansion_cost      - Infrastructure investment
+  // server_provisioning_lead_time      - Time to provision
+  
+  // --- Support Team ---
+  // current_support_agents             - Current team size
+  // required_support_headcount         - Target team size
+  // support_hires_per_month            - Hiring rate
+  // effective_support_team             - Team size adjusted for ramp
+  // current_support_capacity           - Current ticket capacity
+  // support_replacement_hires          - Attrition replacement
+  // support_cost_per_hire              - Cost per support hire
+  // support_onboarding_cost_total      - Total onboarding investment
+  
+  // --- Organization ---
+  // total_organizational_capacity      - Cross-functional capacity
+  
+  // --- Utilization ---
+  // peak_infra_utilization             - Highest utilization
+  // avg_infra_utilization              - Average utilization
+  // infra_util_variability             - Utilization variability
+  // overutilization_cost               - Cost of excess utilization
+}

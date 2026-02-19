@@ -1,10 +1,8 @@
-from pathlib import Path
-
-import yaml
-
 from compiler.lexer import Lexer
 from compiler.parser import Parser
 from compiler.typechecker import TypeChecker
+import yaml
+from pathlib import Path
 
 p = Path('tests/conformance/testcases/typechecking/CONF-TYPE-001.yaml')
 if not p.exists():

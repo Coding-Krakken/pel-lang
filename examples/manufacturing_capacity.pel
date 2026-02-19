@@ -1,0 +1,255 @@
+/// Manufacturing Capacity Planning Model
+/// Multi-product factory with bottleneck detection and expansion planning
+///
+/// This model uses stdlib modules (auto-loaded by compiler):
+///   - capacity/ - effective_capacity, allocate_capacity, capacity_gap, required_capacity,
+///                 capacity_increment, capacity_cost, capacity_lead_time, peak_utilization,
+///                 average_utilization, utilization_variability, overutilization_penalty
+///
+/// Note: Import syntax not yet implemented - functions are automatically available
+
+model ManufacturingCapacity {
+  // =============================================================================
+  // Current Factory Configuration
+  // =============================================================================
+  
+  param production_line_count: Fraction = 5.0 {
+    source: "factory_ops",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param units_per_line_per_month: Rate per Month = 10000 / 1mo {
+    source: "equipment_specs",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  param operational_efficiency: Fraction = 0.85 {
+    source: "operations",
+    method: "derived",
+    confidence: 0.90
+  }
+  
+  // =============================================================================
+  // Product Mix Configuration
+  // =============================================================================
+  
+  // Product A - High priority, high demand
+  param product_a_demand: Rate per Month = 35000 / 1mo {
+    source: "sales_forecast",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  param product_a_priority: Fraction = 0.50 {
+    source: "strategy",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  // Product B - Medium priority, medium demand
+  param product_b_demand: Rate per Month = 20000 / 1mo {
+    source: "sales_forecast",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  param product_b_priority: Fraction = 0.30 {
+   source: "strategy",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  // Product C - Lower priority, lower demand
+  param product_c_demand: Rate per Month = 10000 / 1mo {
+    source: "sales_forecast",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  param product_c_priority: Fraction = 0.20 {
+    source: "strategy",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  // =============================================================================
+  // Capacity Calculations
+  // =============================================================================
+  
+  // Calculate total raw capacity (before efficiency losses)
+  var raw_capacity: Rate per Month = production_line_count * units_per_line_per_month
+  
+  // Calculate effective capacity (accounting for efficiency)
+  var effective_total_capacity: Rate per Month 
+    = effective_capacity(raw_capacity, operational_efficiency)
+  
+  // Aggregate product demands
+  var product_demands: Array<Rate per Month> 
+    = [product_a_demand, product_b_demand, product_c_demand]
+  
+  var product_priorities: Array<Fraction> 
+    = [product_a_priority, product_b_priority, product_c_priority]
+  
+  // Allocate capacity across products based on priorities
+  var capacity_allocation: Array<Rate per Month> 
+    = allocate_capacity(effective_total_capacity, product_demands, product_priorities)
+  
+  // =============================================================================
+  // Capacity Gap Analysis
+  // =============================================================================
+  
+  // Calculate unmet demand for each product
+  var product_a_gap: Rate per Month 
+    = capacity_gap(product_a_demand, capacity_allocation[0])
+  
+  var product_b_gap: Rate per Month 
+    = capacity_gap(product_b_demand, capacity_allocation[1])
+  
+  var product_c_gap: Rate per Month 
+    = capacity_gap(product_c_demand, capacity_allocation[2])
+  
+  // Calculate total demand across all products
+  param total_demand: Rate per Month = 65000 / 1mo {
+    source: "aggregated_forecast",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // Overall capacity gap
+  var total_capacity_gap: Rate per Month 
+    = capacity_gap(total_demand, effective_total_capacity)
+  
+  // =============================================================================
+  // Expansion Planning
+  // =============================================================================
+  
+  // Calculate additional production lines needed
+  var additional_lines_needed: Fraction 
+    = required_capacity(
+        total_capacity_gap,
+        units_per_line_per_month,
+        operational_efficiency
+      )
+  
+  // Production lines come in discrete units
+  param lines_per_increment: Fraction = 1.0 {
+    source: "equipment_vendor",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var incremental_lines: Fraction 
+    = capacity_increment(additional_lines_needed, lines_per_increment)
+  
+  // =============================================================================
+  // Cost & Timeline Analysis
+  // =============================================================================
+  
+  param cost_per_production_line: Currency<USD> = $2500000 {
+    source: "equipment_vendor",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  var expansion_cost: Currency<USD> 
+    = capacity_cost(incremental_lines, cost_per_production_line)
+  
+  param line_installation: String = "production_line" {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param quantity_to_install: Fraction = 1.0 {
+    source: "model",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  var lead_time: Duration<Day> 
+    = capacity_lead_time(line_installation, quantity_to_install)
+  
+  // =============================================================================
+  // Utilization Monitoring (Historical Data)
+  // =============================================================================
+  
+  param util_month_1: Fraction = 0.78 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param util_month_2: Fraction = 0.85 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param util_month_3: Fraction = 0.92 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param util_month_4: Fraction = 1.05 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param util_month_5: Fraction = 0.98 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param util_month_6: Fraction = 1.08 {
+    source: "operations_dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  var utilization_history: Array<Fraction> 
+    = [util_month_1, util_month_2, util_month_3, util_month_4, util_month_5, util_month_6]
+  
+  // Calculate utilization metrics
+  var peak_util: Fraction = peak_utilization(utilization_history)
+  var avg_util: Fraction = average_utilization(utilization_history)
+  var util_variability: Fraction = utilization_variability(utilization_history)
+  
+  // =============================================================================
+  // Overutilization Analysis
+  // =============================================================================
+  
+  param target_max_utilization: Fraction = 0.90 {
+    source: "operations_policy",
+    method: "assumption",
+    confidence: 1.0
+  }
+  
+  param quality_cost_per_excess: Currency<USD> = $50000 {
+    source: "quality_department",
+    method: "derived",
+    confidence: 0.80
+  }
+  
+  var overutil_penalty: Currency<USD> 
+    = overutilization_penalty(peak_util, target_max_utilization, quality_cost_per_excess)
+  
+  // =============================================================================
+  // Key Metrics (exported when export keyword is implemented)
+  // =============================================================================
+  
+  // effective_total_capacity      - Available capacity after efficiency
+  // capacity_allocation           - Capacity allocated to each product
+  // total_capacity_gap            - Total unmet demand
+  // incremental_lines             - Number of new lines to add
+  // expansion_cost                - Cost to expand capacity
+  // lead_time                     - Time to install new capacity
+  // peak_util                     - Highest utilization observed
+  // avg_util                      - Average utilization
+  // util_variability              - Utilization variability (std dev)
+  // overutil_penalty              - Cost of operating over capacity
+}

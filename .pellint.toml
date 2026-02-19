@@ -1,6 +1,0 @@
-[linter]
-line_length = 100
-enabled_rules = ["PEL001", "PEL002", "PEL004", "PEL005", "PEL008", "PEL010"]
-
-[rules.PEL010]
-severity = "info"

@@ -113,20 +113,20 @@ A **deterministic execution engine** with optional stochastic mode:
 - Policy execution (trigger-action rules)
 - Seeded PRNG for reproducibility
 
-#### Standard Library (`/stdlib/`, 280 LOC implemented)
+#### Standard Library (`/stdlib/`, 6 modules implemented)
 
 **Completion Status:**
-- ✅ `unit_econ` (280 LOC, 25 functions): LTV, CAC, payback, margins
-- ❌ `demand` (0 LOC): Lead generation, seasonality
-- ❌ `funnel` (0 LOC): Multi-stage conversion
-- ❌ `pricing` (0 LOC): Elasticity, response curves
-- ❌ `cashflow` (0 LOC): AR/AP timing, payroll
-- ❌ `retention` (0 LOC): Cohort, churn curves
-- ❌ `capacity` (0 LOC): Queueing, utilization
-- ❌ `hiring` (0 LOC): Ramp curves, attrition
-- ❌ `shocks` (0 LOC): Recession, platform changes
+- ✅ `unit_econ`: LTV, CAC, payback, margins
+- ❌ `demand`: Lead generation, seasonality
+- ✅ `funnel`: Multi-stage conversion
+- ❌ `pricing`: Elasticity, response curves
+- ✅ `cashflow`: AR/AP timing, payroll
+- ✅ `retention`: Cohort, churn curves
+- ✅ `capacity`: Queueing, utilization
+- ✅ `hiring`: Ramp curves, attrition
+- ❌ `shocks`: Recession, platform changes
 
-**Impact:** Severely limited functionality (11% complete)
+**Impact:** Moderate coverage with 3 modules remaining (67% complete)
 
 #### IR Schema (`/ir/`)
 

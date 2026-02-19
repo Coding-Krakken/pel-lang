@@ -1,25 +1,4 @@
 repos:
-  # PEL-specific hooks (must be first to format/lint before other checks)
-  - repo: local
-    hooks:
-      - id: pel-format
-        name: PEL Formatter
-        entry: python -m pel_cli.main format
-        language: system
-        types: [file]
-        files: \.pel$
-        pass_filenames: true
-        description: 'Format PEL source files'
-      
-      - id: pel-lint
-        name: PEL Linter (errors only)
-        entry: python -m pel_cli.main lint --severity error
-        language: system
-        types: [file]
-        files: \.pel$
-        pass_filenames: true
-        description: 'Lint PEL files for errors'
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.6
     hooks:

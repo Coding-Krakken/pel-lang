@@ -146,7 +146,7 @@ PEL follows a **specification-first, conformance-driven** development model:
 ## Phase 4: Standard Library (PEL-STD) 🚧 IN PROGRESS
 
 **Timeline:** December 2025 - March 2026  
-**Status:** 🚧 60% Complete
+**Status:** 🚧 67% Complete
 
 ### Objectives
 - Implement standard library modules for common economic patterns
@@ -154,15 +154,15 @@ PEL follows a **specification-first, conformance-driven** development model:
 - Conformance: modules behave identically across runtimes
 
 ### Deliverables
-✅ Demand module (`demand_module/`) — lead generation, seasonality  
+🔜 Demand module (`demand_module/`) — lead generation, seasonality  
 ✅ Funnel module (`funnel_module/`) — multi-stage conversion  
-✅ Pricing module (`pricing_module/`) — elasticity, response curves  
+🔜 Pricing module (`pricing_module/`) — elasticity, response curves  
 ✅ Unit economics module (`unit_econ_module/`) — LTV, CAC, payback  
-🚧 Cashflow module (`cashflow_module/`) — AR/AP timing, payroll (70% complete)  
+✅ Cashflow module (`cashflow_module/`) — AR/AP timing, payroll  
 ✅ Retention module (`retention_module/`) — cohort analysis, churn curves  
-🚧 Capacity module (`capacity_module/`) — queueing, utilization (50% complete)  
-🚧 Hiring module (`hiring_module/`) — ramp curves, attrition (40% complete)  
-✅ Shock library (`shock_library/`) — recession, platform changes, supply shocks
+✅ Capacity module (`capacity_module/`) — queueing, utilization  
+✅ Hiring module (`hiring_module/`) — ramp curves, attrition  
+🔜 Shock library (`shock_library/`) — recession, platform changes, supply shocks
 
 ### Success Metrics
 - ✅ 6 of 9 core modules complete with golden tests
@@ -180,29 +180,28 @@ PEL follows a **specification-first, conformance-driven** development model:
 ## Phase 5: Tooling Ecosystem 🚧 IN PROGRESS
 
 **Timeline:** January 2026 - March 2026  
-**Status:** 🚧 50% Complete
+**Status:** 🚧 30% Complete
 
 ### Objectives
 - Provide language-grade developer experience
-- LSP for IDE integration
-- Formatter, linter, test runner, visualizer
+- CLI tooling for compilation and execution
+- Visualizer and package manager
 
 ### Deliverables
-✅ LSP server (`/tooling/lsp_server/`) — autocomplete, inline errors, go-to-definition  
-✅ Formatter (`pel fmt`) — deterministic code formatting  
-🚧 Linter (`pel lint`) — anti-patterns, fragility warnings (60% complete)  
+⏸️ LSP server — deferred to future release (prototype removed to reduce maintenance surface)  
+⏸️ Formatter (`pel fmt`) — deferred to future release (prototype removed to reduce maintenance surface)  
+⏸️ Linter (`pel lint`) — deferred to future release (prototype removed to reduce maintenance surface)  
 ✅ CLI (`pel compile`, `pel run`, `pel test`)  
 🚧 Visualizer (`pel graph`) — dependency graph, risk hotspot map (40% complete)  
 🚧 Package manager (`pel pkg`) — semantic versioning, signing (30% complete)
 
 ### Success Metrics
-- ✅ LSP works in VS Code, Neovim, Emacs
-- ✅ Formatter passes idempotence test (format twice = format once)
-- 🚧 Linter catches 20+ documented anti-patterns
+- ⏸️ LSP — deferred; will be re-evaluated after stdlib stabilises
+- ⏸️ Formatter — deferred; will be re-evaluated after stdlib stabilises
 - 🚧 Visualizer generates interactive dependency graphs from IR
 
 ### Current Focus
-- Linter rule library expansion (target: 50 rules by March)
+- Visualizer interactive graph generation
 - Package manager cryptographic signing implementation
 
 ---
@@ -484,17 +483,26 @@ PEL follows a **specification-first, conformance-driven** development model:
 - PEL-100 expressiveness benchmark
 
 ### v0.2.0 (Planned April 2026) — "Ecosystem Release"
-- Complete standard library
+- Complete standard library (9/9 modules)
 - Advanced sensitivity analysis (Sobol)
 - Linter with 50+ rules
 - Model diff and governance tools
 - PEL-SAFE and PEL-TRUST benchmark suites
+- **Language Enhancement:** Module-level constants (`const E: Fraction = 2.71828...`)
+  - Tracked in: stdlib/hiring/hiring.pel (TODO comments at lines ~5, ~369, ~376)
+  - Unblocks: Mathematical constant extraction (Euler's number, steepness parameters)
+  - Impact: Reduces duplication, improves maintainability
 
 ### v0.3.0 (Planned June 2026) — "Calibration Release"
 - Data connectors and fitting
 - Drift detection
 - PEL-RISK benchmark suite
 - First third-party runtime (in beta)
+- **Language Enhancement:** Contract attribute syntax (`@contract(Monotonic, Bounded(...))`)
+  - Tracked in: stdlib/capacity/capacity.pel, stdlib/hiring/hiring.pel (TODO comments)
+  - Unblocks: Runtime contract validation, enhanced compiler diagnostics
+  - Scope: 37 stdlib functions with documented semantic contracts (@Monotonic, @Bounded)
+  - Impact: Validates invariants at runtime, better error messages for contract violations
 
 ### v1.0.0 (Planned December 2026) — "Stability Release"
 - Specification frozen for backward compatibility
@@ -502,6 +510,11 @@ PEL follows a **specification-first, conformance-driven** development model:
 - All benchmark suites complete
 - Production-ready tooling
 - Multi-runtime ecosystem
+- **API Review:** Trivial wrapper function simplification
+  - Tracked in: stdlib functions with TODO(v1.0) comments
+  - Scope: 3 functions (parallel_capacity, team_productivity, headcount_capacity)
+  - Decision: Retain vs inline vs add value-add logic
+  - Rationale: Semantic naming aids discoverability; allows non-breaking enhancement
 
 ---
 

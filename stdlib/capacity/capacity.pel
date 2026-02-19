@@ -1,0 +1,533 @@
+// PEL Standard Library: Capacity Module
+// Functions for capacity planning, utilization, and resource allocation
+
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic", "@Bounded", etc. comments to:
+//     @contract(Monotonic, Bounded(0.0, 1.0))
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 16 functions with contract annotations throughout this module
+
+// ============================================================================
+// Core Capacity Calculations
+// ============================================================================
+
+/// Calculate utilization rate (used / total capacity)  
+///
+/// @param used_capacity - Current capacity usage (must be >= 0)
+/// @param total_capacity - Total available capacity (must be > 0)
+/// @return Utilization fraction (0.0 to Inf, can exceed 1.0 if overutilized)
+///
+/// @errors Returns 0.0 if total_capacity <= 0 or used_capacity < 0
+/// @example calculate_utilization(80/1mo, 100/1mo) = 0.8 (80% utilized)
+///
+/// IMPORTANT: Result CAN exceed 1.0 (100%) - this is intentional, not a bug!
+/// Overutilization (>100%) indicates capacity shortfall and is useful for:
+///   - SLA breach detection (e.g., 120% utilization = 20% requests queued/dropped)
+///   - Capacity planning alerts (trigger expansion before hitting limits)
+///   - Performance degradation tracking (latency increases with overutilization)
+/// Result is 0.0 on invalid input (negative usage, zero capacity)
+/// Contracts: @Bounded(0.0, Inf) - Lower bound enforced by guards, upper bound unbounded
+func calculate_utilization(
+  used_capacity: Rate per Month,
+  total_capacity: Rate per Month
+) -> Fraction {
+  // Input validation: handle edge cases
+  if total_capacity <= 0 / 1mo {
+    return 0.0  // Cannot compute utilization without capacity
+  }
+  if used_capacity < 0 / 1mo {
+    return 0.0  // Negative usage is invalid
+  }
+  
+  // Division preserves dimensional correctness:
+  // (Rate per Month) / (Rate per Month) → Fraction (dimensionless)
+  // Result can exceed 1.0 when used_capacity > total_capacity (overutilization)
+  return used_capacity / total_capacity
+}
+
+/// Calculate capacity gap (demand - available capacity)
+///
+/// @param demand - Expected/required capacity throughput (must be >= 0)
+/// @param available_capacity - Currently available capacity (must be >= 0)
+/// @return Capacity gap (positive = shortage, negative = surplus)
+///
+/// Positive gap means capacity shortage, negative means surplus
+func capacity_gap(
+  demand: Rate per Month,
+  available_capacity: Rate per Month
+) -> Rate per Month {
+  // Input validation: ensure non-negative values
+  // PEL idiom: 0/1mo creates a zero Rate per Month value (type-safe zero)
+  var validated_demand = max(demand, 0 / 1mo)
+  var validated_capacity = max(available_capacity, 0 / 1mo)
+  
+  return validated_demand - validated_capacity
+}
+
+/// Calculate required capacity to meet target throughput
+///
+/// @param target_throughput - Desired throughput capacity (must be >= 0)
+/// @param capacity_per_unit - Capacity per resource unit (must be > 0)
+/// @param efficiency - Efficiency factor 0.0-1.0 (must be > 0)
+/// @return Dimensionless capacity multiplier
+///
+/// @errors Returns 0.0 if capacity_per_unit or efficiency <= 0
+///
+/// Accounts for efficiency factor (0.0 - 1.0)
+/// Returns a dimensionless capacity multiplier
+func required_capacity(
+  target_throughput: Rate per Month,
+  capacity_per_unit: Rate per Month,
+  efficiency: Fraction
+) -> Fraction {
+  // Input validation: prevent division by zero
+  if capacity_per_unit <= 0 / 1mo {
+    return 0.0  // Cannot compute without valid capacity per unit
+  }
+  if efficiency <= 0.0 {
+    return 0.0  // Cannot compute with zero or negative efficiency
+  }
+  if target_throughput < 0 / 1mo {
+    return 0.0  // Negative throughput is invalid
+  }
+  
+  return (target_throughput / capacity_per_unit) / efficiency
+}
+
+/// Calculate effective capacity after efficiency losses
+///
+/// @param total_capacity - Maximum theoretical capacity (must be >= 0)
+/// @param efficiency - Efficiency factor 0.0-1.0 (should be 0.0-1.0)
+/// @return Effective capacity accounting for efficiency losses
+///
+/// Higher efficiency yields higher effective capacity
+/// Contracts: @Monotonic, @Bounded(0.0, total_capacity)
+func effective_capacity(
+  total_capacity: Rate per Month,
+  efficiency: Fraction
+) -> Rate per Month {
+  // Input validation: clamp efficiency to valid range and ensure non-negative capacity
+  var validated_efficiency = max(0.0, min(1.0, efficiency))
+  var validated_capacity = max(total_capacity, 0 / 1mo)
+  
+  return validated_capacity * validated_efficiency
+}
+
+// ============================================================================
+// Resource Allocation
+// ============================================================================
+
+/// Allocate capacity across multiple product lines/uses
+///
+/// @param total_capacity - Total available capacity to allocate (must be >= 0)
+/// @param demands - Capacity demands for each line (must be non-empty)
+/// @param priorities - Priority weights for allocation (empty = proportional)
+/// @return Allocated capacity per line (may be constrained by total)
+///
+/// @errors Returns empty array if demands is empty
+///
+/// Returns allocated capacity per line (may be constrained by total)
+func allocate_capacity(
+  total_capacity: Rate per Month,
+  demands: Array<Rate per Month>,
+  priorities: Array<Fraction>
+) -> Array<Rate per Month> {
+  // Input validation: handle empty demands array
+  if demands.length == 0 {
+    return []  // Cannot allocate with no demands
+  }
+  
+  var total_demand = sum(demands)
+  
+  // Case 1: Sufficient capacity - give each line what it needs
+  if total_demand <= total_capacity {
+    return demands
+  }
+
+  // Case 2: No priorities specified - use proportional allocation
+  if priorities.length == 0 {
+    // Prevent division by zero
+    if total_demand <= 0 / 1mo {
+      return demands  // All demands are zero
+    }
+    
+    var allocation_ratio = total_capacity / total_demand
+    var allocations: Array<Rate per Month> = []
+    for i in 0..demands.length - 1 {
+      allocations[i] = demands[i] * allocation_ratio
+    }
+    return allocations
+  }
+
+  // Case 3: Priority-weighted allocation
+  var total_priority = sum(priorities)
+  
+  // Prevent division by zero in priority calculation
+  if total_priority <= 0.0 {
+    // Fall back to proportional allocation
+    if total_demand <= 0 / 1mo {
+      return demands
+    }
+    var allocation_ratio = total_capacity / total_demand
+    var allocations: Array<Rate per Month> = []
+    for i in 0..demands.length - 1 {
+      allocations[i] = demands[i] * allocation_ratio
+    }
+    return allocations
+  }
+  
+  var weighted: Array<Rate per Month> = []
+  for i in 0..priorities.length - 1 {
+    weighted[i] = total_capacity * (priorities[i] / total_priority)
+  }
+  // Cap weighted allocations at each demand to avoid over-allocating a line
+  var capped: Array<Rate per Month> = []
+  var allocated: Rate per Month = 0 / 1mo
+  for i in 0..demands.length - 1 {
+    var share = weighted[i]
+    // If demand smaller than allocated share, cap it
+    var cap = min(demands[i], share)
+    capped[i] = cap
+    allocated = allocated + cap
+  }
+
+  // If we under-allocated (due to caps), distribute remaining capacity
+  var remaining = total_capacity - allocated
+  if remaining > 0 / 1mo {
+    // Compute remaining demand (how much more each line can still take)
+    var remaining_need_sum = 0 / 1mo
+    for i in 0..demands.length - 1 {
+      var need = max(demands[i] - capped[i], 0 / 1mo)
+      remaining_need_sum = remaining_need_sum + need
+    }
+
+    if remaining_need_sum > 0 / 1mo {
+      // Distribute leftover proportionally to remaining need
+      for i in 0..demands.length - 1 {
+        var need = max(demands[i] - capped[i], 0 / 1mo)
+        capped[i] = capped[i] + (remaining * (need / remaining_need_sum))
+      }
+    }
+  }
+
+  return capped
+}
+
+/// Calculate maximum possible output given capacity constraint
+///
+/// @param capacity - Total raw capacity (must be >= 0)
+/// @param efficiency - Efficiency factor 0.0-1.0 (clamped to valid range)
+/// @return Effective output capacity after efficiency losses
+///
+/// Contracts: @Monotonic, @Bounded(0.0, capacity)
+func capacity_constraint(
+  capacity: Rate per Month,
+  efficiency: Fraction
+) -> Rate per Month {
+  // Input validation: clamp efficiency and ensure non-negative capacity
+  var validated_efficiency = max(0.0, min(1.0, efficiency))
+  var validated_capacity = max(capacity, 0 / 1mo)
+  
+  return validated_capacity * validated_efficiency
+}
+
+/// Identify bottleneck capacity (limiting resource)
+///
+/// @param capacities - Array of resource capacities (must be non-empty)
+/// @return Index of bottleneck (minimum capacity resource), or -1 if empty
+///
+/// @errors Returns -1 if capacities array is empty
+///
+/// Returns index of the bottleneck resource
+/// Contracts: @Bounded(-1, capacities.length - 1)
+func bottleneck_capacity(
+  capacities: Array<Rate per Month>
+) -> Int {
+  // Input validation: handle empty array
+  if capacities.length == 0 {
+    return -1  // Sentinel value: no bottleneck in empty array
+  }
+  
+  var min_idx = 0
+  var min_capacity = capacities[0]
+  
+  // Iterate through remaining items to find minimum
+  for i in 1..capacities.length - 1 {
+    if capacities[i] < min_capacity {
+      min_capacity = capacities[i]
+      min_idx = i
+    }
+  }
+  
+  return min_idx
+}
+
+/// Calculate combined capacity of parallel resources
+///
+/// @param capacities - Array of resource capacities (may be empty)
+/// @return Sum of all resource capacities (0 if empty)
+///
+/// More resources yields more capacity (monotonic)
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+///
+/// Implementation note: Delegates to builtin sum() for simplicity and consistency.
+/// Could be inlined but kept as named function for semantic clarity and discoverability.
+///
+/// TODO(v1.0): Consider inlining or adding value-add logic
+///   This is a trivial wrapper (delegates to builtin sum()). Retained for:
+///   - Semantic naming improves API discoverability
+///   - Allows future enhancement without breaking changes
+///   - "Functions as documentation" pattern
+///   Review during v1.0 API stabilization
+func parallel_capacity(
+  capacities: Array<Rate per Month>
+) -> Rate per Month {
+  return sum(capacities)
+}
+
+// ============================================================================
+// Scaling & Expansion
+// ============================================================================
+
+/// Calculate capacity needed after growth
+///
+/// @param current_capacity - Current capacity level (must be >= 0)
+/// @param growth_rate - Growth rate per period as fraction (e.g., 0.1 = 10%)
+/// @param time_periods - Number of periods (must be >= 0, capped at 100 to avoid overflow)
+/// @return Future capacity after compound growth
+///
+/// @errors Returns current_capacity if time_periods <= 0
+///         Clamps time_periods to 100 maximum to prevent overflow
+///
+/// @note Exponential growth can produce very large values. Capped at 100 periods.
+///       For longer horizons, break into smaller intervals.
+///
+/// Higher growth yields more capacity needed (monotonic)
+/// Contracts: @Monotonic
+func scale_capacity(
+  current_capacity: Rate per Month,
+  growth_rate: Fraction,
+  time_periods: Count
+) -> Rate per Month {
+  // Input validation
+  if current_capacity < 0 / 1mo {
+    return 0 / 1mo  // Invalid starting capacity
+  }
+  if time_periods <= 0 {
+    return current_capacity  // No growth for zero or negative periods
+  }
+  
+  // Cap time periods to prevent overflow (compound growth is exponential)
+  var safe_periods = min(time_periods, 100)
+  
+  return current_capacity * (1 + growth_rate) ^ safe_periods
+}
+
+/// Minimum unit of capacity addition (discrete scaling)
+///
+/// @param needed_capacity - Capacity requirement (must be >= 0)
+/// @param increment_size - Minimum unit of capacity (must be > 0)
+/// @return Capacity rounded up to nearest increment
+///
+/// @errors Returns 0.0 if increment_size <= 0
+///
+/// Rounds up to nearest increment (cannot provision partial units)
+/// Uses epsilon tolerance (1e-9) to handle floating-point imprecision
+func capacity_increment(
+  needed_capacity: Fraction,
+  increment_size: Fraction
+) -> Fraction {
+  // Input validation  
+  if increment_size <= 0.0 {
+    return 0.0  // Cannot increment with invalid size
+  }
+  if needed_capacity <= 0.0 {
+    return 0.0  // No capacity needed
+  }
+  
+  // Step 1: Calculate how many increments we need (fractional)
+  var ratio = needed_capacity / increment_size
+
+  // Step 2: Compute ceiling robustly while guarding against floating
+  // point noise. We use a small epsilon and round-based floor as a
+  // portable approach across runtimes, then ensure non-negative result.
+  var epsilon = 0.000000001  // 1e-9 tolerance for floating-point comparison
+  var floored = round(ratio - 0.5)  // floor equivalent
+  var remainder = ratio - floored
+
+  var ceiling = floored
+  if remainder > epsilon {
+    ceiling = floored + 1.0
+  }
+
+  // Safety clamp: never return negative increments
+  if ceiling < 0.0 {
+    ceiling = 0.0
+  }
+
+  // Step 3: Convert back to capacity units
+  return ceiling * increment_size
+}
+
+/// Time required to provision new capacity
+///
+/// @param capacity_type - Type of capacity ("server", "building", "equipment", "license")
+/// @param quantity - Amount of capacity to provision (must be >= 0)
+/// @return Lead time in days
+///
+/// @note Supported capacity_type values and their lead times:
+///       - "server":    1 day per unit (cloud provisioning)
+///       - "building": 180 days per unit (~6 months construction)
+///       - "equipment": 14 days per unit (procurement + setup)
+///       - "license":    3 days per unit (procurement + approval)
+///       - Other:       30 days per unit (conservative default)
+///
+/// Lead times are configurable defaults representing typical industry values.
+/// Override with organization-specific values in model parameters.
+///
+/// Implementation note: Uses if-else chain instead of lookup table/map because
+/// PEL does not yet support dictionary/map literals. When map support is added,
+/// consider refactoring to: const LEAD_TIMES = {"server": 1d, "building": 180d, ...}
+func capacity_lead_time(
+  capacity_type: String,
+  quantity: Fraction
+) -> Duration<Day> {
+  // Input validation
+  if quantity <= 0.0 {
+    return 0d  // No time needed for zero quantity
+  }
+  
+  // Type-specific lead times with industry-standard defaults
+  if capacity_type == "server" {
+    return quantity * 1d  // Servers: 1 day per unit (cloud provisioning)
+  }
+  if capacity_type == "building" {
+    return quantity * 180d  // Buildings: ~6 months per unit (construction)
+  }
+  if capacity_type == "equipment" {
+    return quantity * 14d  // Equipment: 2 weeks per unit (procurement + setup)
+  }
+  if capacity_type == "license" {
+    return quantity * 3d  // Licenses: 3 days per unit (procurement + approval)
+  }
+  
+  // Default: 30 days per unit (conservative estimate for unrecognized types)
+  return quantity * 30d
+}
+
+/// Cost to add capacity
+///
+/// @param quantity - Number of capacity units to add (must be >= 0)
+/// @param cost_per_unit - Cost per capacity unit (must be >= 0)
+/// @return Total cost of capacity addition
+///
+/// More capacity yields higher cost (monotonic)
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+func capacity_cost(
+  quantity: Count,
+  cost_per_unit: Currency<USD>
+) -> Currency<USD> {
+  return quantity * cost_per_unit
+}
+
+// ============================================================================
+// Utilization Metrics
+// ============================================================================
+
+/// Peak utilization over time period
+///
+/// @param utilization_series - Array of utilization measurements (must be non-empty)
+/// @return Maximum utilization value (can exceed 1.0)
+///
+/// @errors Returns 0.0 if array is empty
+///
+/// Can exceed 100% in overutilization scenarios
+/// Contracts: @Bounded(0.0, Inf)
+func peak_utilization(
+  utilization_series: Array<Fraction>
+) -> Fraction {
+  // Input validation: handle empty array
+  if utilization_series.length == 0 {
+    return 0.0  // No data means no utilization
+  }
+  
+  return max(utilization_series)
+}
+
+/// Average utilization over time period
+///
+/// @param utilization_series - Array of utilization measurements (must be non-empty)
+/// @return Mean utilization (can exceed 1.0 if frequently overutilized)
+///
+/// @errors Returns 0.0 if array is empty
+///
+/// Can exceed 100% if frequently overutilized
+/// Contracts: @Bounded(0.0, Inf)
+func average_utilization(
+  utilization_series: Array<Fraction>
+) -> Fraction {
+  // Input validation: prevent division by zero
+  var n = len(utilization_series)
+  if n == 0 {
+    return 0.0  // Empty array has no average
+  }
+  
+  // Manual mean implementation (runtime doesn't have mean builtin)
+  return sum(utilization_series) / n
+}
+
+/// Variability in utilization (standard deviation using Welford's algorithm)
+///
+/// @param utilization_series - Array of utilization measurements (must be non-empty)
+/// @return Standard deviation (measure of variability, always >= 0)
+///
+/// @errors Returns 0.0 if array is empty or has single element
+///
+/// @note Uses numerically stable Welford's online algorithm
+///
+/// Higher variability means less predictable demand
+/// Result is non-negative
+/// Contracts: @Bounded(0.0, Inf)
+func utilization_variability(
+  utilization_series: Array<Fraction>
+) -> Fraction {
+  // Input validation
+  var n = len(utilization_series)
+  if n == 0 {
+    return 0.0  // No variability in empty dataset
+  }
+  if n == 1 {
+    return 0.0  // Single value has no variability
+  }
+  
+  // Welford's online algorithm for numerically stable variance calculation
+  // More accurate than two-pass algorithm for large datasets
+  var mean = 0.0
+  var m2 = 0.0  // Sum of squared differences from mean
+  
+  for i in 0..n - 1 {
+    var delta = utilization_series[i] - mean
+    mean = mean + delta / (i + 1)
+    var delta2 = utilization_series[i] - mean
+    m2 = m2 + delta * delta2
+  }
+  
+  // Population standard deviation
+  var variance = m2 / n
+  return pow(variance, 0.5)
+}
+
+/// Penalty for exceeding capacity (quality degradation, overtime costs, etc.)
+/// Higher overutilization yields higher penalty (monotonic)
+/// Result is non-negative
+/// Contracts: @Monotonic, @Bounded(0.0, Inf)
+func overutilization_penalty(
+  actual_utilization: Fraction,
+  max_safe_utilization: Fraction,
+  penalty_rate: Currency<USD>
+) -> Currency<USD> {
+  var overutilization = max(0.0, actual_utilization - max_safe_utilization)
+  return overutilization * penalty_rate
+}
