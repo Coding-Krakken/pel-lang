@@ -52,8 +52,10 @@ jobs:
           done
           
           # Check for broken relative paths to non-existent directories
-          for reldir in '../model/' '../deployment/' '../runtime/' '../patterns/'; do
-            if grep -rn "$reldir" docs/tutorials/*.md 2>/dev/null; then
+          # Note: ../runtime/ excluded because runtime/calibration/ exists and is valid
+          # Note: CONTRIBUTING.md excluded as it documents what NOT to do
+          for reldir in '../model/' '../deployment/' '../patterns/'; do
+            if grep -rn "$reldir" $(find docs/tutorials -name "*.md" ! -name "CONTRIBUTING.md") 2>/dev/null; then
               echo "❌ Found relative references to non-existent ${reldir} directory"
               errors=$((errors + 1))
             fi
