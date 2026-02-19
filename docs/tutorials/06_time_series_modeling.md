@@ -84,7 +84,7 @@ var <name>: TimeSeries<<type>>
 ```pel
 var revenue: TimeSeries<Currency<USD>>
 var customer_count: TimeSeries<Fraction>
-var is_profitable: TimeSeries<Bool>
+var is_profitable: TimeSeries<Boolean>
 var monthly_growth_rate: TimeSeries<Rate per Month>
 ```
 
@@ -162,7 +162,7 @@ model CustomerRetention {
     confidence: 0.99
   }
   
-  param monthly_churn: Probability = 0.05 {
+  param monthly_churn: Fraction = 0.05 {
     source: "analytics",
     method: "fitted",
     confidence: 0.75
@@ -230,7 +230,7 @@ model CustomerDynamics {
     confidence: 0.60
   }
   
-  param monthly_churn_rate: Probability = 0.05 {
+  param monthly_churn_rate: Fraction = 0.05 {
     source: "analytics",
     method: "fitted",
     confidence: 0.75
@@ -322,7 +322,7 @@ model SaasBusinessModel {
     confidence: 0.60
   }
   
-  param churn_rate: Probability = 0.05 {
+  param churn_rate: Fraction = 0.05 {
     source: "analytics",
     method: "fitted",
     confidence: 0.75
@@ -664,7 +664,7 @@ model SaaSEcosystem {
   // Inputs
   param initial_customers: Fraction = 1000.0
   param monthly_growth_rate: Rate per Month = 0.15 / 1mo
-  param monthly_churn_rate: Probability = 0.05
+  param monthly_churn_rate: Fraction = 0.05
   param avg_revenue_per_user: Currency<USD> = $99
   
   // Time series 1: Customers
@@ -757,7 +757,7 @@ model CohortRetention {
   cohort_size[t] = monthly_new_users  // New cohort each month
   
   // Retention curve: percentage of cohort still active after k months
-  param retention_curve: List<Probability> = [
+  param retention_curve: List<Fraction> = [
     1.00,  // Month 0 (100% active)
     0.60,  // Month 1 (60% retained)
     0.40,  // Month 2
@@ -790,9 +790,9 @@ model CustomerStates {
   churned[0] = 0.0
   
   // Transition probabilities
-  param trial_to_active: Probability = 0.40
-  param trial_to_churned: Probability = 0.60
-  param active_to_churned: Probability = 0.05
+  param trial_to_active: Fraction = 0.40
+  param trial_to_churned: Fraction = 0.60
+  param active_to_churned: Fraction = 0.05
   
   // State transitions
   trial[t+1] = 1000.0  // New trials each month
@@ -959,7 +959,7 @@ model InventoryManagement {
   inventory[t+1] = max(0.0, inventory[t] - demand[t] + orders_arriving[t])
   
   // Service level: avoid stockouts
-  var stockout: TimeSeries<Bool>
+  var stockout: TimeSeries<Boolean>
   stockout[t] = inventory[t] < demand[t]
   
   var service_level: Fraction = 
@@ -983,7 +983,7 @@ model WorkforcePlanning {
   var capacity: TimeSeries<Fraction>
   var revenue_capacity: TimeSeries<Currency<USD>>
   
-  param avg_attrition_rate: Probability = 0.10 / 12.0  // Annual → monthly
+  param avg_attrition_rate: Fraction = 0.10 / 12.0  // Annual → monthly
   param revenue_per_employee: Currency<USD> = $150_000 / 12.0
   param hiring_ramp_time: Duration = 3mo
   
@@ -1121,13 +1121,13 @@ runway[t] = if cash[t] > $0
 
 - **Tutorial 7**: Stdlib Functions & Modules - reusable time-series patterns
 - **Tutorial 4**: Add constraints to time-series values
-- **Reference**: See `/docs/model/time_series.md` for complete specification
+- **Reference**: See `spec/pel_language_spec.md` for complete time-series specification
 
 ## Additional Resources
 
-- [Time-Series Specification](/docs/model/time_series.md)
-- [Execution Model](/docs/runtime/execution.md)
-- [Common Patterns Library](/docs/patterns/time_series_patterns.md)
+- [Language Specification (Time-Series)](../../spec/pel_language_spec.md#time-series)
+- [Formal Semantics](../../spec/pel_formal_semantics.md)
+- [Examples with Time-Series](../../examples/)
 
 ---
 

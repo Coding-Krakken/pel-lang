@@ -33,7 +33,7 @@ PEL types fall into 4 categories:
 | Category | Purpose | Examples |
 |----------|---------|----------|
 | **Quantities** | Physical/economic measures with units | `Currency<USD>`, `Duration`, `Fraction` |
-| **Rates** | Change over time | `Rate per Month`, `Probability` |
+| **Rates** | Change over time | `Rate per Month`, `Fraction` |
 | **Scopes** | Aggregation boundaries | `Dimension`, `Team`, `Region` |
 | **Time-Indexed** | Values that change over time | `TimeSeries<Currency<USD>>` |
 
@@ -156,7 +156,7 @@ model RatesExample {
 
 **Common rate patterns**:
 - `Rate per Month`: Growth, churn, hiring
-- `Probability`: Success rates, risk factors (dimensionless, 0-1)
+- `Fraction`: Success rates, risk factors (dimensionless, 0-1)
 - `Currency<USD> per Month`: Monthly recurring revenue (MRR)
 
 ## 3. Probability: A Special Rate
@@ -166,7 +166,7 @@ Probabilities are rates that represent likelihood:
 ```pel
 model ProbabilityExample {
   // Probability is a Fraction constrained to [0, 1]
-  param conversion_rate: Probability = 0.12 {
+  param conversion_rate: Fraction = 0.12 {
     source: "ab_test_results",
     method: "observed",
     confidence: 0.85
@@ -267,7 +267,7 @@ model SaasFinancials {
     confidence: 0.60
   }
   
-  param monthly_churn_rate: Probability = 0.05 {
+  param monthly_churn_rate: Fraction = 0.05 {
     source: "historical_data",
     method: "fitted",
     confidence: 0.80
@@ -996,7 +996,7 @@ Type
 | `/` | `Duration` | `Duration` | `Fraction` | ✅ |
 | `*` | `Rate per Month` | `Duration` | `Fraction` | ✅ |
 | `+` | `Duration` | `Duration` | `Duration` | ✅ |
-| `+` | `Probability` | `Probability` | N/A | ❌ (use formula) |
+| `+` | `Fraction` | `Fraction` | N/A | ❌ (use formula) |
 
 ### Duration Unit Conversions
 
@@ -1025,7 +1025,7 @@ model Exercise1 {
     confidence: 1.0
   }
   
-  param monthly_churn_rate: Probability = 0.05 {
+  param monthly_churn_rate: Fraction = 0.05 {
     source: "analytics",
     method: "fitted",
     confidence: 0.75
@@ -1081,7 +1081,7 @@ model Exercise2 {
     confidence: 0.60
   }
   
-  param monthly_churn_rate: Probability = 0.05 {
+  param monthly_churn_rate: Fraction = 0.05 {
     source: "analytics",
     method: "fitted",
     confidence: 0.75
@@ -1177,13 +1177,13 @@ var total_revenue_usd: Currency<USD> = us_revenue + japan_revenue_usd
 
 - **Tutorial 3**: Learn how to model uncertainty with distributions (`Normal`, `Beta`, `LogNormal`)
 - **Tutorial 6**: Deep dive into time-series modeling patterns
-- **Reference**: See `/docs/model/types.md` for complete type system specification
+- **Reference**: See `spec/pel_type_system.md` and `spec/pel_language_spec.md` for complete type system specification
 
 ## Additional Resources
 
-- [Type System Specification](/docs/model/types.md)
-- [Unit Conversion Reference](/docs/model/units.md)
-- [Common Type Errors](/docs/troubleshooting/type_errors.md)
+- [Type System Specification](../../spec/pel_type_system.md)
+- [Language Specification (Types Section)](../../spec/pel_language_spec.md#3-type-system)
+- [Examples](../../examples/)
 
 ---
 

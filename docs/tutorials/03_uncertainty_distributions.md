@@ -26,7 +26,7 @@ Consider a product launch forecast:
 ```pel
 // ❌ Overconfident: pretends we know exact values
 param launch_date_delay: Duration = 0mo  // Launches exactly on time? Unlikely.
-param conversion_rate: Probability = 0.15  // Exactly 15%? Impossible.
+param conversion_rate: Fraction = 0.15  // Exactly 15%? Impossible.
 param viral_coefficient: Fraction = 1.8  // Precise to 0.1? Doubtful.
 ```
 
@@ -45,7 +45,7 @@ param launch_date_delay: Duration ~ Normal(μ=0mo, σ=1.5mo) {
   confidence: 0.70
 }
 
-param conversion_rate: Probability ~ Beta(alpha: 15, beta: 85) {
+param conversion_rate: Fraction ~ Beta(alpha: 15, beta: 85) {
   source: "industry_benchmarks",
   method: "expert_estimate",
   confidence: 0.50
@@ -123,21 +123,21 @@ Use for parameters bounded between 0 and 1 (probabilities, rates, percentages).
 ```pel
 model MarketingFunnel {
   // Website conversion rate: typically 8-15%, most likely 12%
-  param website_conversion: Probability ~ Beta(alpha: 12, beta: 88) {
+  param website_conversion: Fraction ~ Beta(alpha: 12, beta: 88) {
     source: "google_analytics",
     method: "fitted",
     confidence: 0.80
   }
   
   // Email open rate: 20-30% range
-  param email_open_rate: Probability ~ Beta(alpha: 25, beta: 75) {
+  param email_open_rate: Fraction ~ Beta(alpha: 25, beta: 75) {
     source: "mailchimp_data",
     method: "observed",
     confidence: 0.85
   }
   
   // Customer churn (monthly): low churn ~5%
-  param monthly_churn: Probability ~ Beta(alpha: 2, beta: 38) {
+  param monthly_churn: Fraction ~ Beta(alpha: 2, beta: 38) {
     source: "subscription_analytics",
     method: "fitted",
     confidence: 0.70,
@@ -240,7 +240,7 @@ model NewMarketEntry {
   }
   
   // Market share: wild guess between 5-25%
-  param market_share: Probability ~ Uniform(min: 0.05, max: 0.25) {
+  param market_share: Fraction ~ Uniform(min: 0.05, max: 0.25) {
     source: "market_research",
     method: "expert_estimate",
     confidence: 0.20
@@ -274,14 +274,16 @@ model CorrelatedGrowth {
   // (good products acquire AND retain customers)
   
   param customer_acquisition_rate: Rate per Month 
-    ~ Normal(μ=0.15/1mo, σ=0.05/1mo) 
-    with correlation(customer_retention_rate: 0.7) {
+    ~ Normal(μ=0.15/1mo, σ=0.05/1mo) {
       source: "growth_model",
       method: "assumption",
-      confidence: 0.50
+      confidence: 0.50,
+      correlated_with: [
+        { param: "customer_retention_rate", coefficient: 0.7 }
+      ]
     }
   
-  param customer_retention_rate: Probability 
+  param customer_retention_rate: Fraction 
     ~ Beta(alpha: 90, beta: 10) {
       source: "churn_analysis",
       method: "fitted",
@@ -398,16 +400,18 @@ model SaasGrowthUncertain {
   
   // Monthly customer growth: 10-30%, most likely 20%
   param customer_growth_rate: Rate per Month 
-    ~ Normal(μ=0.20/1mo, σ=0.05/1mo) 
-    with correlation(churn_rate: -0.3) {
+    ~ Normal(μ=0.20/1mo, σ=0.05/1mo) {
       source: "marketing_forecast",
       method: "assumption",
       confidence: 0.50,
-      notes: "Negative correlation: good growth often means lower churn"
+      notes: "Negative correlation: good growth often means lower churn",
+      correlated_with: [
+        { param: "churn_rate", coefficient: -0.3 }
+      ]
     }
   
   // Monthly churn: typically 3-7%, mean 5%
-  param churn_rate: Probability ~ Beta(alpha: 5, beta: 95) {
+  param churn_rate: Fraction ~ Beta(alpha: 5, beta: 95) {
     source: "subscription_analytics",
     method: "fitted",
     confidence: 0.70
@@ -486,10 +490,10 @@ pel report saas_risk_analysis.json -o saas_report.html
 
 ```pel
 // ❌ Wrong: Normal can produce negative churn or >100%
-param churn_rate: Probability ~ Normal(μ=0.05, σ=0.02)
+param churn_rate: Fraction ~ Normal(μ=0.05, σ=0.02)
 
 // ✅ Correct: Beta is bounded [0, 1]
-param churn_rate: Probability ~ Beta(alpha: 5, beta: 95)
+param churn_rate: Fraction ~ Beta(alpha: 5, beta: 95)
 ```
 
 ### Mistake 2: LogNormal Parameter Confusion
@@ -547,7 +551,7 @@ When a parameter has multiple possible regimes:
 ```pel
 model ProductLaunchScenarios {
   // Scenario probability
-  param success_probability: Probability = 0.60 {
+  param success_probability: Fraction = 0.60 {
     source: "expert_panel",
     method: "assumption",
     confidence: 0.50
@@ -591,7 +595,7 @@ Constrain distributions to valid ranges:
 ```pel
 model TruncatedExamples {
   // ❌ Problem: Beta can be extreme
-  param churn_rate_unconstrained: Probability ~ Beta(alpha: 2, beta: 18) {
+  param churn_rate_unconstrained: Fraction ~ Beta(alpha: 2, beta: 18) {
     source: "industry",
     method: "assumption",
     confidence: 0.60
@@ -599,7 +603,7 @@ model TruncatedExamples {
   // P5 might be 0.02, P95 might be 0.25 (too wide for decisions)
   
   // ✅ Solution: Add constraints (Tutorial 4) or use narrower Beta
-  param churn_rate_constrained: Probability ~ Beta(alpha: 20, beta: 180) {
+  param churn_rate_constrained: Fraction ~ Beta(alpha: 20, beta: 180) {
     source: "industry",
     method: "assumption",
     confidence: 0.70,
@@ -624,7 +628,7 @@ model DerivedDistributions {
   }
   // Median: exp(5.0) ≈ $148, P5 ≈ $94, P95 ≈ $233
   
-  param cost_percentage: Probability ~ Beta(alpha: 60, beta: 40) {
+  param cost_percentage: Fraction ~ Beta(alpha: 60, beta: 40) {
     source: "historical_cogs",
     method: "fitted",
     confidence: 0.85
@@ -653,7 +657,7 @@ Uncertainty often changes over time:
 ```pel
 model TimeVaryingUncertainty {
   // Year 1: High uncertainty (new product)
-  param year1_conversion: Probability ~ Beta(alpha: 5, beta: 45) {
+  param year1_conversion: Fraction ~ Beta(alpha: 5, beta: 45) {
     source: "similar_products",
     method: "expert_estimate",
     confidence: 0.40
@@ -661,14 +665,14 @@ model TimeVaryingUncertainty {
   // Wide: P5 ≈ 0.04, P95 ≈ 0.22
   
   // Year 2: Lower uncertainty (data collected)
-  param year2_conversion: Probability ~ Beta(alpha: 50, beta: 450) {
+  param year2_conversion: Fraction ~ Beta(alpha: 50, beta: 450) {
     source: "cohort_analysis",
     method: "fitted",
     confidence: 0.80
   }
   // Narrow: P5 ≈ 0.08, P95 ≈ 0.12
   
-  var conversion: TimeSeries<Probability>
+  var conversion: TimeSeries<Fraction>
   conversion[t] = if t < 12 then year1_conversion else year2_conversion
   
   // Interpretation: Forecast uncertainty decreases over time (realistic)
@@ -705,17 +709,17 @@ with open('churn_history.csv') as f:
 # Transform to (0,1) if needed, then fit
 alpha, beta, loc, scale = stats.beta.fit(rates, floc=0, fscale=1)
 
-print(f"param churn_rate: Probability ~ Beta(alpha: {alpha:.1f}, beta: {beta:.1f})")
+print(f"param churn_rate: Fraction ~ Beta(alpha: {alpha:.1f}, beta: {beta:.1f})")
 EOF
 
 # Output:
-# param churn_rate: Probability ~ Beta(alpha: 12.3, beta: 231.7)
+# param churn_rate: Fraction ~ Beta(alpha: 12.3, beta: 231.7)
 ```
 
 Then use in PEL:
 
 ```pel
-param churn_rate: Probability ~ Beta(alpha: 12.3, beta: 231.7) {
+param churn_rate: Fraction ~ Beta(alpha: 12.3, beta: 231.7) {
   source: "churn_history_2024-2025",
   method: "fitted",
   confidence: 0.85,
@@ -772,7 +776,7 @@ model SensitivityTest {
   // Test low, medium, high variance scenarios
   
   // Low variance (confident)
-  param conversion_low_var: Probability ~ Beta(alpha: 50, beta: 450) {
+  param conversion_low_var: Fraction ~ Beta(alpha: 50, beta: 450) {
     source: "test",
     method: "assumption",
     confidence: 0.90
@@ -780,7 +784,7 @@ model SensitivityTest {
   // P5 ≈ 0.08, P95 ≈ 0.12
   
   // Medium variance (moderate)
-  param conversion_med_var: Probability ~ Beta(alpha: 15, beta: 135) {
+  param conversion_med_var: Fraction ~ Beta(alpha: 15, beta: 135) {
     source: "test",
     method: "assumption",
     confidence: 0.70
@@ -788,7 +792,7 @@ model SensitivityTest {
   // P5 ≈ 0.06, P95 ≈ 0.15
   
   // High variance (uncertain)
-  param conversion_high_var: Probability ~ Beta(alpha: 5, beta: 45) {
+  param conversion_high_var: Fraction ~ Beta(alpha: 5, beta: 45) {
     source: "test",
     method: "assumption",
     confidence: 0.40
@@ -839,7 +843,7 @@ model CorrelationStrengths {
     confidence: 0.70
   }
   
-  param churn_rate: Probability ~ Beta(alpha: 10, beta: 90) {
+  param churn_rate: Fraction ~ Beta(alpha: 10, beta: 90) {
     source: "analytics",
     method: "assumption",
     confidence: 0.70,
@@ -854,7 +858,7 @@ model CorrelationStrengths {
     confidence: 0.60
   }
   
-  param churn: Probability ~ Beta(alpha: 8, beta: 72) {
+  param churn: Fraction ~ Beta(alpha: 8, beta: 72) {
     source: "analytics",
     method: "assumption",
     confidence: 0.70,
@@ -892,14 +896,14 @@ model MultiVariate {
     correlation: [(market_strength, 0.75)]
   }
   
-  param conversion_rate: Probability ~ Beta(alpha: 12, beta: 88) {
+  param conversion_rate: Fraction ~ Beta(alpha: 12, beta: 88) {
     source: "forecast",
     method: "assumption",
     confidence: 0.60,
     correlation: [(market_strength, 0.70)]
   }
   
-  param churn_rate: Probability ~ Beta(alpha: 8, beta: 92) {
+  param churn_rate: Fraction ~ Beta(alpha: 8, beta: 92) {
     source: "forecast",
     method: "assumption",
     confidence: 0.60,
@@ -1048,15 +1052,15 @@ pel run model.ir.json --mode monte_carlo --samples 5000 --seed 42
 ```pel
 model VarianceReduction {
   // ❌ High variance: independent samples for each cohort
-  param cohort_1_conversion: Probability ~ Beta(alpha: 10, beta: 90)
-  param cohort_2_conversion: Probability ~ Beta(alpha: 10, beta: 90)
-  param cohort_3_conversion: Probability ~ Beta(alpha: 10, beta: 90)
+  param cohort_1_conversion: Fraction ~ Beta(alpha: 10, beta: 90)
+  param cohort_2_conversion: Fraction ~ Beta(alpha: 10, beta: 90)
+  param cohort_3_conversion: Fraction ~ Beta(alpha: 10, beta: 90)
   
   // Each cohort samples independently → high variance in total
   var total_conversions = cohort_1_conversion + cohort_2_conversion + cohort_3_conversion
   
   // ✅ Lower variance: common random variable
-  param base_conversion: Probability ~ Beta(alpha: 10, beta: 90) {
+  param base_conversion: Fraction ~ Beta(alpha: 10, beta: 90) {
     source: "baseline",
     method: "assumption",
     confidence: 0.70
@@ -1119,7 +1123,7 @@ param revenue: Currency<USD> ~ LogNormal(μ=5.0, σ=0.4) {
 
 ```pel
 // ❌ Overconfident: churn rate is never exactly known
-param churn_rate: Probability = 0.05 {
+param churn_rate: Fraction = 0.05 {
   source: "last_month",
   method: "observed",
   confidence: 0.95
@@ -1130,7 +1134,7 @@ param churn_rate: Probability = 0.05 {
 
 ```pel
 // ✅ Acknowledges measurement noise
-param churn_rate: Probability ~ Beta(alpha: 95, beta: 1805) {
+param churn_rate: Fraction ~ Beta(alpha: 95, beta: 1805) {
   source: "last_month",
   method: "fitted",
   confidence: 0.95,
@@ -1156,7 +1160,7 @@ param drowning_incidents: Fraction ~ LogNormal(μ=2.0, σ=0.3) {
 
 ```pel
 // ✅ Correct: Model the confounder
-param is_summer: Probability = 0.25  // 3 months / 12 months
+param is_summer: Fraction = 0.25  // 3 months / 12 months
 param ice_cream_sales: Currency<USD> ~ 
   if is_summer 
     then LogNormal(μ=11.0, σ=0.3)  // High in summer
@@ -1199,7 +1203,7 @@ Given historical churn data: 150 churned, 2850 retained.
 **Task**: Specify appropriate Beta distribution.
 
 ```pel
-param churn_rate: Probability ~ Beta(alpha: ???, beta: ???) {
+param churn_rate: Fraction ~ Beta(alpha: ???, beta: ???) {
   source: "historical_data",
   method: "fitted",
   confidence: ???
@@ -1210,7 +1214,7 @@ param churn_rate: Probability ~ Beta(alpha: ???, beta: ???) {
 <summary>Solution</summary>
 
 ```pel
-param churn_rate: Probability ~ Beta(alpha: 150, beta: 2850) {
+param churn_rate: Fraction ~ Beta(alpha: 150, beta: 2850) {
   source: "historical_data_q4_2025",
   method: "fitted",
   confidence: 0.95,
@@ -1233,7 +1237,7 @@ model Exercise2 {
     confidence: 0.60
   }
   
-  param cost_of_goods_pct: Probability ~ Beta(alpha: 60, beta: 40) {
+  param cost_of_goods_pct: Fraction ~ Beta(alpha: 60, beta: 40) {
     source: "vendor_quotes",
     method: "assumption",
     confidence: 0.70
@@ -1248,7 +1252,7 @@ model Exercise2 {
 <summary>Solution</summary>
 
 ```pel
-param cost_of_goods_pct: Probability ~ Beta(alpha: 60, beta: 40) {
+param cost_of_goods_pct: Fraction ~ Beta(alpha: 60, beta: 40) {
   source: "vendor_quotes",
   method: "assumption",
   confidence: 0.70,
@@ -1294,13 +1298,13 @@ Given results:
 
 - **Tutorial 4**: Add constraints and policies to enforce business rules
 - **Tutorial 8**: Calibrate distributions from real data (CSV import)
-- **Reference**: See `/docs/model/distributions.md` for mathematical details
+- **Reference**: See `spec/pel_uncertainty_spec.md` for mathematical details
 
 ## Additional Resources
 
-- [Distribution Reference](/docs/model/distributions.md)
-- [Monte Carlo Execution](/docs/runtime/monte_carlo.md)
-- [Statistical Interpretation Guide](/docs/tutorials/interpreting_results.md)
+- [Uncertainty Specification](../../spec/pel_uncertainty_spec.md)
+- [Language Specification (Distributions)](../../spec/pel_language_spec.md#distributions)
+- [Examples with Distributions](../../examples/)
 
 ---
 

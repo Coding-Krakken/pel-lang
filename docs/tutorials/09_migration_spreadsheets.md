@@ -137,8 +137,8 @@ model SaaS_Model_V1 {
   param monthly_growth_rate: Rate per Month = 0.15 / 1mo
   
   // ❌ Excel: "0.05" (dimensionless)
-  // ✅ PEL: Probability type (bounded [0,1])
-  param monthly_churn_rate: Probability = 0.05
+  // ✅ PEL: Fraction type (bounded [0,1])
+  param monthly_churn_rate: Fraction = 0.05
   
   // Dimensionless percentage
   param cogs_percentage: Fraction = 0.25
@@ -187,7 +187,7 @@ model SaaS_Model_V2 {
     notes: "Excel: 'Guess' - NO DATA. Replace with historical fit ASAP."
   }
   
-  param monthly_churn_rate: Probability = 0.05 {
+  param monthly_churn_rate: Fraction = 0.05 {
     source: "industry_benchmarks",
     method: "benchmark",
     confidence: 0.30,
@@ -259,7 +259,7 @@ model SaaS_Model_V3 {
       notes: "Range: 10-20% growth. High uncertainty - need data."
     }
   
-  param monthly_churn_rate: Probability 
+  param monthly_churn_rate: Fraction 
     ~ Beta(alpha: 5, beta: 95) {
       source: "industry_benchmarks",
       method: "benchmark",
@@ -647,7 +647,7 @@ Excel often has circular references (e.g., debt depends on interest, interest de
 model DebtModel {
   // Option 1: Iterative solver (manual)
   param initial_debt_guess: Currency<USD> = $1_000_000
-  param interest_rate: Probability = 0.05
+  param interest_rate: Fraction = 0.05
   
   var debt: Currency<USD> = initial_debt_guess
   var annual_interest: Currency<USD> = debt * interest_rate
@@ -695,19 +695,19 @@ PEL approach:
 // Option 1: Multiple model files
 // base_case.pel
 param revenue_growth: Rate per Month = 0.15 / 1mo
-param churn_rate: Probability = 0.05
+param churn_rate: Fraction = 0.05
 
 // pessimistic.pel
 param revenue_growth: Rate per Month = 0.05 / 1mo
-param churn_rate: Probability = 0.10
+param churn_rate: Fraction = 0.10
 
 // optimistic.pel
 param revenue_growth: Rate per Month = 0.25 / 1mo
-param churn_rate: Probability = 0.03
+param churn_rate: Fraction = 0.03
 
 // Option 2: Distributions (Monte Carlo replaces scenarios)
 param revenue_growth: Rate per Month ~ Normal(μ=0.15/1mo, σ=0.05/1mo)
-param churn_rate: Probability ~ Beta(alpha: 10, beta: 190)
+param churn_rate: Fraction ~ Beta(alpha: 10, beta: 190)
 // Monte Carlo samples thousands of scenarios automatically
 
 // Option 3: Command-line overrides
@@ -807,7 +807,7 @@ Excel macros cannot be directly migrated. Options:
 
 t {
      param initial_customers: Fraction = 1000.0
-     param growth_rate: Probability = 0.10
+     param growth_rate: Fraction = 0.10
      param arpu: Currency<USD> = $50
    }
    ```
@@ -826,7 +826,7 @@ t {
      confidence: 0.99
    }
    
-   param growth_rate: Probability = 0.10 {
+   param growth_rate: Fraction = 0.10 {
      source: "marketing_estimate",
      method: "assumption",
      confidence: 0.50,
@@ -863,7 +863,7 @@ t {
 6. **Enhance**:
    ```pel
    // Add uncertainty
-   param growth_rate: Probability ~ Beta(alpha: 10, beta: 90) {
+   param growth_rate: Fraction ~ Beta(alpha: 10, beta: 90) {
      source: "historical_growth_range",
      method: "fitted",
      confidence: 0.70,
@@ -878,7 +878,7 @@ t {
    }
    
    // Add churn
-   param churn_rate: Probability = 0.05 {
+   param churn_rate: Fraction = 0.05 {
      source: "analytics",
      method: "observed",
      confidence: 0.85
@@ -923,7 +923,7 @@ model CashFlowStatement {
   revenue[t+1] = revenue[t] * (1 + revenue_growth)
   
   // COGS (30% of revenue)
-  param cogs_margin: Probability = 0.30 {
+  param cogs_margin: Fraction = 0.30 {
     source: "finance_records",
     method: "observed",
     confidence: 0.95
@@ -983,7 +983,7 @@ model CashFlowStatement {
 **Solution**: Make explicit in PEL with provenance.
 
 ```pel
-param growth_rate: Probability = 0.15 {
+param growth_rate: Fraction = 0.15 {
   source: "marketing_plan_q1_2026",
   method: "assumption",
   confidence: 0.60,
@@ -1105,7 +1105,7 @@ model CustomerGrowth {
     confidence: 0.99
   }
   
-  param growth_rate: Probability = 0.10 {
+  param growth_rate: Fraction = 0.10 {
     source: "sales_target",
     method: "assumption",
     confidence: 0.50
@@ -1170,9 +1170,9 @@ var price: Currency<USD> =
 
 ## Additional Resources
 
-- [Excel Formula Translation Guide](/docs/migration/excel_formula_reference.md)
-- [Migration Case Studies](/docs/migration/case_studies.md)
-- [Common Migration Gotchas](/docs/troubleshooting/migration_errors.md)
+- [Migration Guide](../MIGRATION_GUIDE.md)
+- [Language Specification](../../spec/pel_language_spec.md)
+- [Example Models](../../examples/)
 
 ---
 

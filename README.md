@@ -180,7 +180,7 @@ Complete **10-tutorial series** that takes you from "Hello World" to production 
 ### 📖 Documentation
 
 - **[Language Specification](spec/)** - Complete formal spec
-- **[Type System Guide](docs/model/types.md)** - Economic types reference
+- **[Type System Guide](spec/pel_type_system.md)** - Economic types reference
 - **[Standard Library](stdlib/README.md)** - Stdlib module reference  
 - **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Excel → PEL conversion
 - **[Example Models](examples/)** - Production-quality examples

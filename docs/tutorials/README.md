@@ -261,7 +261,7 @@ For teams deploying models in critical workflows:
 
 ---
 
-### Path 4: Full Mastery (6 hours)
+### Path 4: Full Mastery (4.5 hours)
 Complete all tutorials:
 
 All tutorials 1-10 in order.
@@ -300,7 +300,7 @@ Each tutorial includes:
 - ➡️ **Next steps**: Recommended tutorials
 
 ### Beyond Tutorials
-- **Stuck?** Check the [troubleshooting guide](../troubleshooting/)
+- **Stuck?** Check the [examples/](../../examples/) directory for reference implementations
 - **Found an error?** [Open an issue](https://github.com/Coding-Krakken/pel-lang/issues/new)
 - **Have a question?** [Start a discussion](https://github.com/Coding-Krakken/pel-lang/discussions)
 - **Want more examples?** See [examples/](../../examples/)

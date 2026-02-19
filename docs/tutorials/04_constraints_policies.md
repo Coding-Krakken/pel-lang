@@ -624,7 +624,7 @@ Check compound conditions using logical operators:
 model SaaSOpsAdvanced {
   var revenue: TimeSeries<Currency<USD>>
   var costs: TimeSeries<Currency<USD>>
-  var gross_margin: TimeSeries<Probability>
+  var gross_margin: TimeSeries<Fraction>
   
   gross_margin[t] = (revenue[t] - costs[t]) / revenue[t]
   
@@ -859,7 +859,7 @@ t=14:
 var marketing_spend[t] = revenue[t] * marketing_spend_pct
 
 // Why did marketing_spend_pct spike?
-param marketing_spend_pct: Probability = 0.50  ← HERE: 50% is too high!
+param marketing_spend_pct: Fraction = 0.50  ← HERE: 50% is too high!
 ```
 
 **Fix**: Adjust parameter to reasonable level (e.g., 0.20).
@@ -1067,7 +1067,7 @@ results_high_growth.json: 3.1% bankruptcy risk
 model BankCapitalRequirements {
   var tier1_capital: TimeSeries<Currency<USD>>
   var risk_weighted_assets: TimeSeries<Currency<USD>>
-  var tier1_ratio: TimeSeries<Probability>
+  var tier1_ratio: TimeSeries<Fraction>
   
   tier1_ratio[t] = tier1_capital[t] / risk_weighted_assets[t]
   
@@ -1092,7 +1092,7 @@ model BankCapitalRequirements {
 ```pel
 model SaaSBoardMetrics {
   var arr: TimeSeries<Currency<USD>>  // Annual Recurring Revenue
-  var revenue_retention: TimeSeries<Probability>  // Net Revenue Retention
+  var revenue_retention: TimeSeries<Fraction>  // Net Revenue Retention
   var rule_of_40: TimeSeries<Fraction>
   
   // Rule of 40: growth% + profit_margin% >= 40%
@@ -1131,7 +1131,7 @@ model SaaSBoardMetrics {
 model InventoryConstraints {
   var inventory_units: TimeSeries<Fraction>
   var days_of_inventory: TimeSeries<Duration>
-  var stockout_risk: TimeSeries<Probability>
+  var stockout_risk: TimeSeries<Fraction>
   
   days_of_inventory[t] = inventory_units[t] / daily_sales_rate[t]
   
@@ -1277,7 +1277,7 @@ Ensure gross profit margin stays above 40%:
 model Exercise1 {
   var revenue: TimeSeries<Currency<USD>>
   var cogs: TimeSeries<Currency<USD>>
-  var gross_margin: TimeSeries<Probability>
+  var gross_margin: TimeSeries<Fraction>
   
   gross_margin[t] = (revenue[t] - cogs[t]) / revenue[t]
   
@@ -1374,13 +1374,13 @@ constraint leverage_covenant {
 
 - **Tutorial 5**: Provenance & Assumption Governance - track where numbers come from
 - **Tutorial 6**: Time-Series Modeling - advanced patterns for recurrence relations
-- **Reference**: See `/docs/model/constraints.md` for complete constraint syntax
+- **Reference**: See `spec/pel_constraint_spec.md` for complete constraint syntax
 
 ## Additional Resources
 
-- [Constraint Syntax Reference](/docs/model/constraints.md)
-- [Policy Execution (Planned)](/docs/roadmap/policies.md)
-- [Debugging Guide](/docs/troubleshooting/constraint_failures.md)
+- [Constraint Specification](../../spec/pel_constraint_spec.md)
+- [Policy Specification](../../spec/pel_policy_spec.md)
+- [Examples with Constraints](../../examples/)
 
 ---
 

@@ -41,7 +41,7 @@ PEL's **Standard Library (PEL-STD)** provides battle-tested, reusable economic m
 ltv_simple(arpu: Currency<USD> per Month, churn: Rate per Month) -> Currency<USD>
 
 // 2. Discounted LTV (with time value of money)
-ltv_discounted(
+ltv_with_discount(
   arpu: Currency<USD> per Month,
   churn: Rate per Month,
   discount_rate: Rate per Month
@@ -118,8 +118,8 @@ model SaasUnitEconomics {
   // Result: $125 / 0.05 = $2,500
   
   // Discounted LTV (with time value of money)
-  var ltv_discounted_value: Currency<USD>
-    = ltv_discounted(monthly_arpu, monthly_churn, discount_rate)
+  var ltv_with_discount_value: Currency<USD>
+    = ltv_with_discount(monthly_arpu, monthly_churn, discount_rate)
   // Result: ~$1,875 (lower due to discounting)
   
   // Monthly margin (ARPU × gross margin)
@@ -157,7 +157,7 @@ model SaasUnitEconomics {
 ```json
 {
   "ltv_simple_value": "$2,500",
-  "ltv_discounted_value": "$1,875",
+  "ltv_with_discount_value": "$1,875",
   "payback_months": "4.8mo",
   "ltv_cac_ratio": 5.56,
   "constraints": {
@@ -480,7 +480,7 @@ model InfrastructureCapacity {
 // 1. Hiring funnel (multi-stage conversion)
 hiring_funnel(
   top_of_funnel: Fraction,
-  stage_conversion_rates: Array<Probability>
+  stage_conversion_rates: Array<Fraction>
 ) -> Fraction
 
 // 2. Ramp curve (new hire productivity)
@@ -511,7 +511,7 @@ model EngineeringHiring {
   }
   
   // Conversion rates: screening → phone → onsite → offer → accept
-  param funnel_stages: Array<Probability> = [0.40, 0.50, 0.60, 0.80] {
+  param funnel_stages: Array<Fraction> = [0.40, 0.50, 0.60, 0.80] {
     source: "recruiting_analytics",
     method: "fitted",
     confidence: 0.75
@@ -614,7 +614,7 @@ model FullBusinessModel {
    Net Dollar Retention above 100% means existing customers are expanding faster than they're churning - you're growing revenue even without new customers.
    </details>
 
-4. **Why use `ltv_discounted` instead of `ltv_simple`?**
+4. **Why use `ltv_with_discount` instead of `ltv_simple`?**
    <details>
    <summary>Answer</summary>
    To account for time value of money - a dollar today is worth more than a dollar in 2 years. Discounted LTV is more conservative and financially accurate.
@@ -680,8 +680,8 @@ Calculates customer lifetime value.
 
 **Parameters**:
 - `arpu: Currency<C>` - Average revenue per user (monthly or annual)
-- `churn_rate: Probability` - Monthly churn rate (0-1)
-- `margin: Probability` - Gross margin (0-1)
+- `churn_rate: Fraction` - Monthly churn rate (0-1)
+- `margin: Fraction` - Gross margin (0-1)
 
 **Returns**: `Currency<C>`
 
@@ -752,7 +752,7 @@ Tracks cohort size over time.
 
 **Parameters**:
 - `initial_size: Fraction` - Starting cohort size
-- `retention_rates: List<Probability>` - Retention rate for each period
+- `retention_rates: List<Fraction>` - Retention rate for each period
 
 **Returns**: `TimeSeries<Fraction>`
 
@@ -777,7 +777,7 @@ Net Revenue Retention.
 - `contraction: Currency<C>` - Downgrades
 - `churn: Currency<C>` - Churned revenue
 
-**Returns**: `Probability` (typically 0.7 - 1.3)
+**Returns**: `Fraction` (typically 0.7 - 1.3)
 
 **Example**:
 ```pel
@@ -823,7 +823,7 @@ Net Present Value.
 
 **Parameters**:
 - `cash_flows: List<Currency<C>>` - Cash flow each period
-- `discount_rate: Probability` - Annual discount rate
+- `discount_rate: Fraction` - Annual discount rate
 
 **Returns**: `Currency<C>`
 
@@ -874,7 +874,7 @@ Calculates required hiring to achieve growth targets.
 **Parameters**:
 - `current_headcount: Fraction`
 - `growth_rate: Rate per Month` - Desired headcount growth
-- `attrition_rate: Probability` - Monthly attrition rate
+- `attrition_rate: Fraction` - Monthly attrition rate
 
 **Returns**: `Fraction` (hires per month)
 
@@ -897,7 +897,7 @@ Multi-stage conversion funnel.
 **Parameters**:
 - `visitors: Fraction` - Top-of-funnel traffic
 - `stages: List<String>` - Stage names (for reporting)
-- `conversion_rates: List<Probability>` - Conversion rate at each stage
+- `conversion_rates: List<Fraction>` - Conversion rate at each stage
 
 **Returns**: `List<Fraction>` - Count at each stage
 
@@ -939,8 +939,8 @@ model IntegratedModel {
   )
   
   param arpu: Currency<USD> = $99
-  param churn: Probability = 0.05
-  param margin: Probability = 0.70
+  param churn: Fraction = 0.05
+  param margin: Fraction = 0.70
   
   var customer_ltv = ltv(
     arpu: arpu,
@@ -1188,9 +1188,9 @@ Optimize funnel to achieve 500 paid customers:
 ```pel
 model Exercise2 {
   param target_customers: Fraction = 500.0
-  param visitor_to_signup: Probability = 0.12
-  param signup_to_trial: Probability = 0.35
-  param trial_to_paid: Probability = 0.22
+  param visitor_to_signup: Fraction = 0.12
+  param signup_to_trial: Fraction = 0.35
+  param trial_to_paid: Fraction = 0.22
   
   // TODO: Calculate required visitors
   var required_visitors: Fraction = ???

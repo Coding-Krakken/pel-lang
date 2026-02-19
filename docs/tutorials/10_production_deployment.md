@@ -479,16 +479,39 @@ app = Flask(__name__)
 
 MODEL_DIR = os.environ.get("MODEL_DIR", "./models")
 
+# In production, keep this list in config and update as you add models.
+# This prevents path traversal attacks where users supply "../../../etc/passwd"
+ALLOWED_MODELS = {
+    "revenue_forecast",
+    "churn_model",
+    "growth_projection",
+    # Add your models here
+}
+
 def run_pel_model(model_name, params=None, mode="deterministic", seed=42):
-    """Run PEL model with optional parameter overrides."""
+    """Run PEL model with optional parameter overrides.
     
-    model_path = f"{MODEL_DIR}/{model_name}.ir.json"
+    Security: Validates model_name against allowlist and ensures path stays within MODEL_DIR.
+    """
     
-    if not os.path.exists(model_path):
+    # Enforce an allowlist of known models
+    if model_name not in ALLOWED_MODELS:
+        raise ValueError(f"Model {model_name} is not allowed")
+    
+    # Safely construct and validate the model path to prevent traversal
+    model_path = os.path.join(MODEL_DIR, f"{model_name}.ir.json")
+    model_dir_abs = os.path.abspath(MODEL_DIR)
+    model_path_abs = os.path.abspath(model_path)
+    
+    # Ensure path stays within MODEL_DIR (prevents ../../../etc/passwd attacks)
+    if os.path.commonpath([model_dir_abs, model_path_abs]) != model_dir_abs:
+        raise ValueError("Invalid model path")
+    
+    if not os.path.exists(model_path_abs):
         raise ValueError(f"Model {model_name} not found")
     
     cmd = [
-        "pel", "run", model_path,
+        "pel", "run", model_path_abs,
         "--mode", mode,
         "--seed", str(seed),
         "-o", "/tmp/pel_output.json"
@@ -511,13 +534,8 @@ def health():
 
 @app.route('/models', methods=['GET'])
 def list_models():
-    """List available models."""
-    models = [
-        f.replace(".ir.json", "")
-        for f in os.listdir(MODEL_DIR)
-        if f.endswith(".ir.json")
-    ]
-    return jsonify({"models": models})
+    """List available models (from allowlist)."""
+    return jsonify({"models": list(ALLOWED_MODELS)})
 
 @app.route('/models/<model_name>/run', methods=['POST'])
 def run_model(model_name):
@@ -903,7 +921,7 @@ model FeatureFlaggedModel {
     notes: "Toggle for new retention curve calculation"
   }
   
-  var retention_rate: Probability = if use_new_retention_model
+  var retention_rate: Fraction = if use_new_retention_model
     then new_retention_logic()
     else old_retention_logic()
   

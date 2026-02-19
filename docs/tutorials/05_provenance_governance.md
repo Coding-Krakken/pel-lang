@@ -49,7 +49,7 @@ param growth_rate: Rate per Month = 0.15 / 1mo {
   notes: "Fitted from last 18 months of customer growth data (Q3 2024 - Q1 2026)"
 }
 
-param churn: Probability = 0.05 {
+param churn: Fraction = 0.05 {
   source: "assumption",
   method: "expert_estimate",
   confidence: 0.40,
@@ -169,7 +169,7 @@ param monthly_rent: Currency<USD> = $15_000 {
 }
 
 // Confidence: 0.85 (measured data, recent)
-param current_monthly_churn: Probability = 0.047 {
+param current_monthly_churn: Fraction = 0.047 {
   source: "analytics_dashboard",
   method: "observed",
   confidence: 0.85,
@@ -185,7 +185,7 @@ param sales_cycle_days: Duration ~ LogNormal(μ=3.9, σ=0.4) {
 }
 
 // Confidence: 0.30 (guess based on industry data)
-param market_share_2027: Probability = 0.12 {
+param market_share_2027: Fraction = 0.12 {
   source: "market_research_report",
   method: "benchmark",
   confidence: 0.30,
@@ -214,7 +214,7 @@ Free-text field for:
 **Examples**:
 
 ```pel
-param churn_rate: Probability ~ Beta(alpha: 5, beta: 95) {
+param churn_rate: Fraction ~ Beta(alpha: 5, beta: 95) {
   source: "subscription_analytics",
   method: "fitted",
   confidence: 0.70,
@@ -228,7 +228,7 @@ param cac: Currency<USD> ~ LogNormal(μ=5.5, σ=0.3) {
   notes: "Total marketing spend / new customers. Excludes word-of-mouth (25% of signups). May underestimate true CAC."
 }
 
-param ai_feature_adoption: Probability = 0.40 {
+param ai_feature_adoption: Fraction = 0.40 {
   source: "assumption",
   method: "expert_estimate",
   confidence: 0.25,
@@ -383,7 +383,7 @@ model ProductLaunchV1 {
     notes: "PLACEHOLDER - market research needed"
   }
   
-  param conversion_rate: Probability = 0.10 {
+  param conversion_rate: Fraction = 0.10 {
     source: "assumption",
     method: "expert_estimate",
     confidence: 0.30,
@@ -407,7 +407,7 @@ model ProductLaunchV2 {
   }
   
   // Landing page experiment complete
-  param conversion_rate: Probability ~ Beta(alpha: 12, beta: 88) {
+  param conversion_rate: Fraction ~ Beta(alpha: 12, beta: 88) {
     source: "landing_page_experiment",
     method: "observed",
     confidence: 0.80,
@@ -430,7 +430,7 @@ model ProductLaunchV3 {
     notes: "Gartner TAM estimate - validated against actual sales velocity"
   }
   
-  param conversion_rate: Probability ~ Beta(alpha: 152, beta: 848) {
+  param conversion_rate: Fraction ~ Beta(alpha: 152, beta: 848) {
     source: "production_analytics",
     method: "observed",
     confidence: 0.90,
@@ -520,7 +520,7 @@ model SaasFinancials2026 {
   
   // --- Moderate-Confidence Fitted Data ---
   
-  param monthly_churn_rate: Probability ~ Beta(alpha: 18, beta: 354) {
+  param monthly_churn_rate: Fraction ~ Beta(alpha: 18, beta: 354) {
     source: "churn_analysis",
     method: "fitted",
     confidence: 0.75,
@@ -617,7 +617,7 @@ model ProvenanceInheritance {
     notes: "January 2026 actual MRR"
   }
   
-  param churn_rate: Probability = 0.05 {
+  param churn_rate: Fraction = 0.05 {
     source: "analytics_cohort_analysis",
     method: "fitted",
     confidence: 0.85,
@@ -686,7 +686,7 @@ Confidence degrades as data ages:
 
 ```pel
 model ProvenanceDecay {
-  param conversion_rate_q4_2025: Probability = 0.12 {
+  param conversion_rate_q4_2025: Fraction = 0.12 {
     source: "google_analytics_q4_2025",
     method: "observed",
     confidence: 0.95,
@@ -694,7 +694,7 @@ model ProvenanceDecay {
   }
   
   // Q1 2026: Same value, but lower confidence (context changed)
-  param conversion_rate_q1_2026: Probability = 0.12 {
+  param conversion_rate_q1_2026: Fraction = 0.12 {
     source: "google_analytics_q4_2025",  // Stale source
     method: "assumption",  // No longer observed (now assumed)
     confidence: 0.60,  // Confidence degraded
@@ -851,7 +851,7 @@ param q4_2025_revenue: Currency<USD> = $1_245_000 {
 **Responsibility**: Document product assumptions and rationale.
 
 ```pel
-param feature_adoption_rate: Probability = 0.35 {
+param feature_adoption_rate: Fraction = 0.35 {
   source: "pm_estimate_based_on_similar_feature",
   method: "expert_estimate",
   confidence: 0.50,
@@ -869,7 +869,7 @@ param feature_adoption_rate: Probability = 0.35 {
 **Responsibility**: High-level strategic assumptions with decision context.
 
 ```pel
-param market_penetration_target: Probability = 0.05 {
+param market_penetration_target: Fraction = 0.05 {
   source: "strategic_plan_2026-2028",
   method: "assumption",
   confidence: 0.60,
@@ -1129,7 +1129,7 @@ jobs:
 Add provenance to this parameter:
 
 ```pel
-param monthly_churn_rate: Probability = 0.048
+param monthly_churn_rate: Fraction = 0.048
 ```
 
 **Requirements**:
@@ -1142,7 +1142,7 @@ param monthly_churn_rate: Probability = 0.048
 <summary>Solution</summary>
 
 ```pel
-param monthly_churn_rate: Probability = 0.048 {
+param monthly_churn_rate: Fraction = 0.048 {
   source: "google_analytics_cohort_analysis_2025-11_to_2026-01",
   method: "observed",
   confidence: 0.90,
@@ -1222,13 +1222,13 @@ param revenue: Currency<USD> = $500_000 {
 
 - **Tutorial 6**: Time-Series Modeling - model values that change over time
 - **Tutorial 8**: Calibration - replace assumptions with data-fitted parameters
-- **Reference**: See `/docs/model/provenance.md` for complete provenance specification
+- **Reference**: See `spec/pel_governance_spec.md` for complete provenance specification
 
 ## Additional Resources
 
-- [Provenance Specification](/docs/model/provenance.md)
-- [Assumption Governance Best Practices](/docs/governance/assumptions.md)
-- [Confidence Scoring Guidelines](/docs/governance/confidence_scoring.md)
+- [Governance Specification](../../spec/pel_governance_spec.md)
+- [Language Specification (Provenance)](../../spec/pel_language_spec.md#provenance)
+- [Examples with Provenance](../../examples/)
 
 ---
 
