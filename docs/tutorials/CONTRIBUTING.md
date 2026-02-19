@@ -94,7 +94,7 @@ var status: TimeSeries<Boolean>               // ✅ Correct
 ```pel
 param probability_value: Probability = 0.25   // ❌ Invalid - use Fraction
 param is_active: Bool = true                  // ❌ Invalid - use Boolean
-var status: TimeSeries<Bool>                  // ❌ Invalid - use Boolean
+# Note: TimeSeries with Bool type parameter is also invalid - use Boolean
 ```
 
 ## Syntax Patterns
