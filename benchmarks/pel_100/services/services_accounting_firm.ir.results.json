@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "ServicesAccountingFirm"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -356,5 +359,175 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "month_type",
+      "value": 1,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "partners",
+      "value": 4,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "senior_accountants",
+      "value": 8,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "staff_accountants",
+      "value": 14,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tax_season_temps",
+      "value": 6,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "admin_support",
+      "value": 3,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "partner_draw",
+      "value": 28000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "senior_accountant_salary",
+      "value": 9500.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "staff_accountant_salary",
+      "value": 6000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "temp_cost",
+      "value": 4500.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "admin_salary",
+      "value": 4000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tax_prep_revenue_peak",
+      "value": 145000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "audit_revenue_peak",
+      "value": 65000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "advisory_revenue_peak",
+      "value": 35000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "bookkeeping_revenue_peak",
+      "value": 42000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tax_prep_revenue_offseason",
+      "value": 25000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "audit_revenue_offseason",
+      "value": 75000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "advisory_revenue_offseason",
+      "value": 48000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "bookkeeping_revenue_offseason",
+      "value": 38000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "office_lease",
+      "value": 14000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "software_subscriptions",
+      "value": 5500.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "professional_liability_insurance",
+      "value": 4000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "continuing_education",
+      "value": 2500.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "marketing_bd",
+      "value": 6000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

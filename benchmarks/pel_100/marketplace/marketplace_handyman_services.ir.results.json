@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "marketplace_handyman_services_bench"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -135,5 +138,42 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_bookings",
+      "value": 8500,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_job_value",
+      "value": 185.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "take_rate",
+      "value": 0.22,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "active_providers",
+      "value": 450,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "background_check_cost_per_provider",
+      "value": 45.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

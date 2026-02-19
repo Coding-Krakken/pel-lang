@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "telecom_mvno_bench"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -76,5 +79,42 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "total_subscribers",
+      "value": 85000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_arpu",
+      "value": 38.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "wholesale_cost_per_subscriber",
+      "value": 18.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "subscriber_acquisition_cost",
+      "value": 65.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "new_subscribers_monthly",
+      "value": 4200,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

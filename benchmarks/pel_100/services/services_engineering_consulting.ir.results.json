@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "services_engineering_consulting_bench"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -121,5 +124,49 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "billable_consultants",
+      "value": 24,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "billable_rate",
+      "value": 275.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "utilization_rate",
+      "value": 0.68,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_hours_per_month",
+      "value": 160,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "retainer_clients",
+      "value": 8,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "retainer_monthly_fee",
+      "value": 25000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

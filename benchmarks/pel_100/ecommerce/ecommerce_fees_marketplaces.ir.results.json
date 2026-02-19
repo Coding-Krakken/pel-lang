@@ -1,0 +1,179 @@
+{
+  "status": "success",
+  "model": {
+    "name": "ecommerce_fees_marketplaces"
+  },
+  "mode": "deterministic",
+  "seed": 42,
+  "timesteps": 12,
+  "variables": {
+    "own_store_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "marketplace_gmv": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "marketplace_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "total_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ]
+  },
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "revenue_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    }
+  ],
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_orders_own",
+      "value": 12000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_orders_marketplace",
+      "value": 8000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "aov",
+      "value": 65.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "own_store_margin_pct",
+      "value": 0.45,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "marketplace_fee_pct",
+      "value": 0.12,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
+}

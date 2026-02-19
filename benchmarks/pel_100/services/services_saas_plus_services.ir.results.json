@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "services_saas_plus_services"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -121,5 +124,35 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "saas_mrr",
+      "value": 120000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "services_monthly_revenue",
+      "value": 60000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "services_margin_pct",
+      "value": 0.3,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "saas_margin_pct",
+      "value": 0.8,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

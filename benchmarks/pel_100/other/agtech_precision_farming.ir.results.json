@@ -1,0 +1,193 @@
+{
+  "status": "success",
+  "model": {
+    "name": "agtech_precision_farming_bench"
+  },
+  "mode": "deterministic",
+  "seed": 42,
+  "timesteps": 12,
+  "variables": {
+    "total_acres": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "annual_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "imagery_costs_monthly": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "gross_profit": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ]
+  },
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    }
+  ],
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "farm_customers",
+      "value": 850,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_acres_per_farm",
+      "value": 1200,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "price_per_acre_annually",
+      "value": 3.5,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "satellite_imagery_cost_per_acre",
+      "value": 0.45,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "agronomist_team_costs",
+      "value": 85000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
+}

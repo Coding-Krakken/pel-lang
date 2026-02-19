@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "marketplace_pet_care_bench"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -149,5 +152,49 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_bookings",
+      "value": 18000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_booking_value",
+      "value": 45.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "platform_take_rate",
+      "value": 0.2,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "active_providers",
+      "value": 850,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "insurance_cost_per_booking",
+      "value": 2.5,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "customer_support_costs",
+      "value": 22000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

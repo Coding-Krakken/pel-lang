@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "saas_api_platform_tiered"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -132,5 +135,77 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "initial_customers",
+      "value": 250,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_growth_rate",
+      "value": 0.08,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_1_price",
+      "value": 29.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_2_price",
+      "value": 99.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_3_price",
+      "value": 499.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_1_pct",
+      "value": 0.5,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_2_pct",
+      "value": 0.3,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "tier_3_pct",
+      "value": 0.15,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "engineering_headcount",
+      "value": 12,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "cost_per_engineer",
+      "value": 15000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

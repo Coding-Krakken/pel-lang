@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "saas_cybersecurity_bench"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -62,5 +65,42 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "total_customers",
+      "value": 850,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_endpoints_per_customer",
+      "value": 120,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "price_per_endpoint",
+      "value": 4.5,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "threat_intel_costs",
+      "value": 25000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "soc_team_costs",
+      "value": 180000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

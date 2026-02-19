@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "services_training_platform"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -135,5 +138,35 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_signups",
+      "value": 6000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "conversion_rate",
+      "value": 0.08,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_price",
+      "value": 199.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "instructor_share",
+      "value": 0.6,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "fintech_consumer_lending"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -121,5 +124,42 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "outstanding_loans",
+      "value": 10000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_principal",
+      "value": 8000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_interest_rate",
+      "value": 0.12,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "default_rate_annual",
+      "value": 0.02,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "loss_given_default",
+      "value": 0.4,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

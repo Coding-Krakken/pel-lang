@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "marketplace_supply_growth"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -135,5 +138,49 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_seller_onboard",
+      "value": 120,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "churn_sellers_monthly",
+      "value": 0.02,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "active_sellers_initial",
+      "value": 2000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "platform_take",
+      "value": 0.15,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "buyer_conversion",
+      "value": 0.12,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_tx_value",
+      "value": 80.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

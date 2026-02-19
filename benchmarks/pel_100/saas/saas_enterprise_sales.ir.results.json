@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "saas_enterprise_sales"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -48,5 +51,35 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "enterprise_deals",
+      "value": 30,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_arr_per_deal",
+      "value": 250000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "average_contract_length_months",
+      "value": "24mo",
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "average_expected_renewal_rate",
+      "value": 0.85,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

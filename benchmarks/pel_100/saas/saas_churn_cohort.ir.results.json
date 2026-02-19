@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "saas_churn_cohort"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -48,5 +51,28 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "cohort_size",
+      "value": 1000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_retention_rate",
+      "value": 0.85,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "arpu",
+      "value": 49.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "ecommerce_subscription_box"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -48,5 +51,35 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "subscribers",
+      "value": 12000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_churn",
+      "value": 0.08,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_aov",
+      "value": 39.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "marketing_spend",
+      "value": 10000.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

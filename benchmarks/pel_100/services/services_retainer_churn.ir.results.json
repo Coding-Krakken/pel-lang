@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "services_retainer_churn"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -34,5 +37,28 @@
     ]
   },
   "constraint_violations": [],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "retainers",
+      "value": 50,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_churn",
+      "value": 0.03,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_fee",
+      "value": 7500.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

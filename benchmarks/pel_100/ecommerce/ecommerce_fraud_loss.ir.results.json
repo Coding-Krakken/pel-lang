@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "ecommerce_fraud_loss"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -149,5 +152,35 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "monthly_transactions",
+      "value": 40000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "aov",
+      "value": 35.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "fraud_rate",
+      "value": 0.003,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "chargeback_cost_pct",
+      "value": 0.8,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

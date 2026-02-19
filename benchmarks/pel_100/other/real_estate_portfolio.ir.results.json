@@ -1,5 +1,8 @@
 {
   "status": "success",
+  "model": {
+    "name": "real_estate_portfolio"
+  },
   "mode": "deterministic",
   "seed": 42,
   "timesteps": 12,
@@ -135,5 +138,42 @@
       "message": "Constraint violated"
     }
   ],
-  "policy_executions": []
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "properties",
+      "value": 25,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_nightly_rate",
+      "value": 180.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_occupancy_pct",
+      "value": 0.6,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_nights_per_month",
+      "value": "12d",
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "monthly_opex_per_property",
+      "value": 1200.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ]
 }

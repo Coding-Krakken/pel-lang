@@ -1,0 +1,46 @@
+{
+  "status": "failed",
+  "model": {
+    "name": "saas_trial_retention"
+  },
+  "timesteps_completed": 0,
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "positive_mrr",
+      "severity": "fatal",
+      "message": "Constraint violated"
+    }
+  ],
+  "assumptions": [
+    {
+      "name": "trial_users",
+      "value": 10000,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "trial_to_paid",
+      "value": 0.03,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "paid_retention_monthly",
+      "value": 0.88,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "paid_arpu",
+      "value": 79.0,
+      "source": "benchmark",
+      "method": "assumption",
+      "confidence": 1.0
+    }
+  ],
+  "reason": "Fatal constraint 'positive_mrr' violated at t=0"
+}
