@@ -89,13 +89,13 @@ param count: Fraction = 100.0                 // ✅ Correct
 var status: TimeSeries<Boolean>               // ✅ Correct
 ```
 
-### ❌ Invalid Types
+### ❌ Invalid Types (Do NOT Copy)
 
-```pel
-param probability_value: Probability = 0.25   // ❌ Invalid - use Fraction
-param is_active: Bool = true                  // ❌ Invalid - use Boolean
-# Note: TimeSeries with Bool type parameter is also invalid - use Boolean
-```
+**These types do not exist in PEL:**
+- `Probability` → Use `Fraction` instead
+- `Bool` → Use `Boolean` instead
+
+**CI validation will fail if you use these invalid types.**
 
 ## Syntax Patterns
 
@@ -140,11 +140,13 @@ param growth_rate: Rate per Month
 
 ### ❌ Broken Links (Do Not Use)
 
-```markdown
-- [Type System](/docs/model/types.md)           // ❌ Does not exist
-- [Runtime](/docs/runtime/execution.md)         // ❌ Does not exist
-- [Patterns](/docs/patterns/patterns.md)        // ❌ Does not exist
-```
+**Do not reference non-existent directories such as:**
+- `docs/model/` directory (does not exist)
+- `docs/runtime/` directory (does not exist)  
+- `docs/patterns/` directory (does not exist)
+- `docs/troubleshooting/` directory (does not exist)
+
+**CI validation will fail if you reference these paths. Use existing directories like `spec/`, `examples/`, or `stdlib/` instead.**
 
 ## Testing Your Tutorial
 
