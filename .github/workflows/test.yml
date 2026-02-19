@@ -27,7 +27,7 @@ jobs:
           python -m pip install .[dev,calibration]
 
       - name: Pytest
-        run: pytest tests/unit tests/integration --cov=compiler --cov=runtime --cov-fail-under=80
+        run: pytest tests/unit tests/integration tests/test_*calibration*.py --cov=compiler --cov=runtime --cov-fail-under=80
 
   conformance:
     runs-on: ubuntu-latest
