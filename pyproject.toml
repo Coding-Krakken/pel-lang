@@ -67,6 +67,7 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
     "pre-commit>=3.0.0",
+    "types-PyYAML>=6.0.0",  # Type stubs for mypy
 ]
 docs = [
     "sphinx>=6.0.0",
