@@ -174,7 +174,37 @@ func allocate_capacity(
   for i in 0..priorities.length - 1 {
     weighted[i] = total_capacity * (priorities[i] / total_priority)
   }
-  return weighted
+  // Cap weighted allocations at each demand to avoid over-allocating a line
+  var capped: Array<Rate per Month> = []
+  var allocated: Rate per Month = 0 / 1mo
+  for i in 0..demands.length - 1 {
+    var share = weighted[i]
+    // If demand smaller than allocated share, cap it
+    var cap = min(demands[i], share)
+    capped[i] = cap
+    allocated = allocated + cap
+  }
+
+  // If we under-allocated (due to caps), distribute remaining capacity
+  var remaining = total_capacity - allocated
+  if remaining > 0 / 1mo {
+    // Compute remaining demand (how much more each line can still take)
+    var remaining_need_sum = 0 / 1mo
+    for i in 0..demands.length - 1 {
+      var need = max(demands[i] - capped[i], 0 / 1mo)
+      remaining_need_sum = remaining_need_sum + need
+    }
+
+    if remaining_need_sum > 0 / 1mo {
+      // Distribute leftover proportionally to remaining need
+      for i in 0..demands.length - 1 {
+        var need = max(demands[i] - capped[i], 0 / 1mo)
+        capped[i] = capped[i] + (remaining * (need / remaining_need_sum))
+      }
+    }
+  }
+
+  return capped
 }
 
 /// Calculate maximum possible output given capacity constraint
@@ -304,20 +334,24 @@ func capacity_increment(
   
   // Step 1: Calculate how many increments we need (fractional)
   var ratio = needed_capacity / increment_size
-  
-  // Step 2: Ceiling with epsilon tolerance for float precision
-  // Use floor-based ceiling: floor(ratio) + 1 if ratio > floor(ratio) + epsilon
-  // This avoids the fragile round()-based approach that fails on float edge cases
-  // (e.g., 30.0/10.0 = 3.0000000000000004 would incorrectly round to 4)
+
+  // Step 2: Compute ceiling robustly while guarding against floating
+  // point noise. We use a small epsilon and round-based floor as a
+  // portable approach across runtimes, then ensure non-negative result.
   var epsilon = 0.000000001  // 1e-9 tolerance for floating-point comparison
-  var floored = round(ratio - 0.5)  // floor equivalent: round(x - 0.5)
+  var floored = round(ratio - 0.5)  // floor equivalent
   var remainder = ratio - floored
-  
+
   var ceiling = floored
   if remainder > epsilon {
-    ceiling = floored + 1.0  // Fractional part exceeds tolerance, round up
+    ceiling = floored + 1.0
   }
-  
+
+  // Safety clamp: never return negative increments
+  if ceiling < 0.0 {
+    ceiling = 0.0
+  }
+
   // Step 3: Convert back to capacity units
   return ceiling * increment_size
 }

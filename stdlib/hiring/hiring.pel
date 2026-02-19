@@ -493,6 +493,10 @@ func capacity_per_hire(
   // Capacity contribution over time, accounting for ramp
   // Approximation: average of 50% during ramp + 100% after
   var ramp_factor = (full_productivity_time - ramp_time / 2) / full_productivity_time
+
+  // Clamp ramp_factor to [0.0, 1.0] to avoid negative or >100% contributions
+  ramp_factor = max(0.0, min(1.0, ramp_factor))
+
   return capacity_per_person * ramp_factor
 }
 
