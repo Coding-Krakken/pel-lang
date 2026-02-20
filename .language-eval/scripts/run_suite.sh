@@ -62,9 +62,16 @@ LOGFILE="$OUTDIR/suite.${SUITE}.log"
 OUTFILE="$OUTDIR/suite.${SUITE}.json"
 
 python - "$SUITE" "$TARGET" "$REPEAT" "$WARMUP" "$LOGFILE" "$OUTFILE" <<'PY'
+import os
 import json
+import subprocess
 import sys
 from pathlib import Path
+
+try:
+  import yaml
+except ImportError:
+  yaml = None
 
 suite = sys.argv[1]
 target = sys.argv[2]
@@ -78,12 +85,43 @@ logfile.write_text(
     encoding="utf-8",
 )
 
+
+def _load_target(path: Path) -> dict:
+  if path.suffix.lower() in {".yaml", ".yml"}:
+    if yaml is None:
+      raise SystemExit("PyYAML is required to parse YAML target files")
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+  return json.loads(path.read_text(encoding="utf-8"))
+
 base = {
     "suite": suite,
     "status": "pass",
     "config": {"repeat": repeat, "warmup": warmup},
     "artifacts": {"log": str(logfile.name)},
 }
+
+target_payload = _load_target(Path(target))
+suite_command = str(target_payload.get("commands", {}).get(suite, "")).strip()
+execute_target_commands = os.getenv("LANG_EVAL_EXECUTE_TARGET_COMMANDS", "0") == "1"
+base["artifacts"]["configured_command"] = suite_command
+
+if execute_target_commands and suite_command:
+  command = suite_command.format(
+    target=target,
+    suite=suite,
+    outdir=str(outfile.parent),
+    repeat=repeat,
+    warmup=warmup,
+  )
+  proc = subprocess.run(command, shell=True, capture_output=True, text=True)
+  base["artifacts"]["executed_command"] = command
+  base["artifacts"]["command_exit_code"] = proc.returncode
+  if proc.stdout.strip():
+    base["artifacts"]["command_stdout_tail"] = proc.stdout.strip().splitlines()[-20:]
+  if proc.stderr.strip():
+    base["artifacts"]["command_stderr_tail"] = proc.stderr.strip().splitlines()[-20:]
+  if proc.returncode != 0:
+    base["status"] = "fail"
 
 if suite == "conformance":
     base["metrics"] = {

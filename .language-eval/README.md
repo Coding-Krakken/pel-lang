@@ -32,6 +32,11 @@ Useful flags:
 - `--warmup <n>` warmup runs
 - `--fast` run fast subset (`conformance`, `security`, `tooling`)
 
+Optional behavior:
+
+- Set `LANG_EVAL_EXECUTE_TARGET_COMMANDS=1` to execute `commands.<suite>` from target config during suite runs.
+- Default behavior remains scaffold-mode metrics emission for portability.
+
 Outputs are written under `.language-eval/reports/<timestamp>/`.
 
 ## CI gates
@@ -61,12 +66,20 @@ CI validates:
 
 # 2) Compare with baseline
 python .language-eval/scripts/compare_baseline.py \
-  --baseline .language-eval/baselines/baseline.example.json \
+  --target .language-eval/targets/example-target.yaml \
   --current .language-eval/reports/<timestamp>/results.normalized.json \
+  --scorecard .language-eval/reports/<timestamp>/scorecard.json \
   --out .language-eval/reports/<timestamp>/comparison.json
 
 # 3) Apply CI gate locally
 python .language-eval/scripts/ci_gate.py \
   --target .language-eval/targets/example-target.yaml \
   --report-dir .language-eval/reports/<timestamp>
+
+# 4) Determinism-only compare gate (recommended for fast-mode reruns)
+python .language-eval/scripts/ci_gate.py \
+  --target .language-eval/targets/example-target.yaml \
+  --report-dir .language-eval/reports/<timestamp_a> \
+  --compare-report-dir .language-eval/reports/<timestamp_b> \
+  --determinism-only
 ```

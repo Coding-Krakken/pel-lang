@@ -6,6 +6,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import platform
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +72,32 @@ def _write_summary(summary_path: Path, scorecard: dict[str, Any], comparison: di
     summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _environment_fingerprint(
+    target: dict[str, Any],
+    normalized_path: Path,
+    scorecard_path: Path,
+    comparison_path: Path,
+) -> dict[str, Any]:
+    return {
+        "os": platform.system().lower(),
+        "arch": platform.machine().lower(),
+        "python": platform.python_version(),
+        "python_implementation": platform.python_implementation(),
+        "target_platform": target.get("platform", {}),
+        "input_hashes": {
+            "normalized": _sha256(normalized_path),
+            "scorecard": _sha256(scorecard_path),
+            "comparison": _sha256(comparison_path),
+        },
+        "deterministic_timestamp": os.getenv("LANG_EVAL_TIMESTAMP") is not None,
+        "lang_eval_timestamp_env": os.getenv("LANG_EVAL_TIMESTAMP", ""),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", required=True)
@@ -96,6 +125,16 @@ def main() -> int:
     report_payload = {
         "target_id": scorecard.get("target_id", target.get("target_id", "unknown")),
         "generated_at": normalized.get("timestamp", "stable"),
+        "generated_by": {
+            "script": "emit_report.py",
+            "python": sys.version.split()[0],
+        },
+        "environment": _environment_fingerprint(
+            target,
+            Path(args.normalized),
+            Path(args.scorecard),
+            Path(args.comparison),
+        ),
         "overall_score": scorecard.get("overall_score", 0.0),
         "category_scores": scorecard.get("category_scores", {}),
         "suite_scores": scorecard.get("suite_scores", {}),
@@ -111,7 +150,7 @@ def main() -> int:
 
     report_json.write_text(json.dumps(report_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    digest = hashlib.sha256(report_json.read_bytes()).hexdigest()
+    digest = _sha256(report_json)
     (outdir / "report.sha256").write_text(digest + "\n", encoding="utf-8")
 
     print(f"Wrote {report_json}")
