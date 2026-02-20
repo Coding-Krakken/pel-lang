@@ -31,6 +31,7 @@ class IRGenerator:
             "time_horizon": model.time_horizon,
             "time_unit": model.time_unit,
             "nodes": [],
+            "equations": [],
             "constraints": [],
             "policies": []
         }
@@ -42,6 +43,11 @@ class IRGenerator:
         # Convert vars to nodes
         for var in model.vars:
             ir_model["nodes"].append(self.generate_var_node(var))
+
+        # Convert equations from statements
+        for stmt in model.statements:
+            if isinstance(stmt, Assignment):
+                ir_model["equations"].append(self.generate_equation(stmt))
 
         # Convert constraints
         for const in model.constraints:
@@ -96,6 +102,52 @@ class IRGenerator:
             node["dependencies"] = self.extract_dependencies(var.value)
 
         return node
+
+    def generate_equation(self, assignment: Assignment) -> dict[str, Any]:
+        """Generate IR equation from assignment statement.
+
+        Automatically categorizes equations into three types based on indexing pattern:
+        - initial: x[0] = value (initial conditions at t=0)
+        - recurrence_current: x[t] = f(x[t], y[t]) (current timestep dependencies)
+        - recurrence_next: x[t+1] = f(x[t], y[t]) (next timestep recurrence relations)
+        - direct: x = value (scalar assignments)
+
+        This categorization enables correct evaluation order in the runtime.
+
+        Args:
+            assignment: AST Assignment node representing an equation
+
+        Returns:
+            Dictionary containing equation IR with type, target, value, and dependencies
+        """
+        equation_id = f"eq_{self.node_counter}"
+        self.node_counter += 1
+
+        # Determine equation type based on target
+        target_expr = self.generate_expression(assignment.target)
+        value_expr = self.generate_expression(assignment.value)
+
+        # Detect equation type from target indexing pattern
+        equation_type = "direct"  # Default: x = expr
+        if target_expr.get("expr_type") == "Indexing":
+            index_expr = target_expr.get("index", {})
+            # Check if index is "0" (initial condition) or "t" or "t+1" (recurrence)
+            if index_expr.get("expr_type") == "Literal" and index_expr.get("literal_value") == 0:
+                equation_type = "initial"
+            elif index_expr.get("expr_type") == "Variable" and index_expr.get("variable_name") == "t":
+                equation_type = "recurrence_current"
+            elif (index_expr.get("expr_type") == "BinaryOp" and
+                  index_expr.get("operator") == "+" and
+                  index_expr.get("left", {}).get("variable_name") == "t"):
+                equation_type = "recurrence_next"
+
+        return {
+            "equation_id": equation_id,
+            "equation_type": equation_type,
+            "target": target_expr,
+            "value": value_expr,
+            "dependencies": self.extract_dependencies(assignment.value)
+        }
 
     def extract_dependencies(self, expr: Expression) -> list:
         """Extract variable dependencies from an expression."""
@@ -259,22 +311,51 @@ class IRGenerator:
         return result
 
     def generate_constraint(self, const: Constraint) -> dict[str, Any]:
-        """Generate IR constraint (stub)."""
-        return {
+        """Generate IR constraint with message."""
+        ir_constraint = {
             "constraint_id": f"const_{const.name}",
             "name": const.name,
             "condition": self.generate_expression(const.condition),
             "severity": const.severity
         }
+        if const.message:
+            ir_constraint["message"] = const.message
+        return ir_constraint
 
     def generate_policy(self, policy: Policy) -> dict[str, Any]:
-        """Generate IR policy (stub)."""
+        """Generate IR policy with proper condition and action generation."""
+        # Generate the trigger condition
+        trigger_ir = {
+            "trigger_type": policy.trigger.trigger_type,
+            "condition": self.generate_expression(policy.trigger.condition)
+        }
+
+        # Generate the action
+        action_ir = self.generate_action(policy.action)
+
         return {
             "policy_id": f"policy_{policy.name}",
             "name": policy.name,
-            "trigger": {"trigger_type": policy.trigger.trigger_type, "condition": {}},
-            "action": {"action_type": policy.action.action_type}
+            "trigger": trigger_ir,
+            "action": action_ir
         }
+
+    def generate_action(self, action: Action) -> dict[str, Any]:
+        """Generate IR for policy action."""
+        action_ir: dict[str, Any] = {"action_type": action.action_type}
+
+        if action.action_type == "assign":
+            action_ir["target"] = action.target
+            if action.value:
+                action_ir["value"] = self.generate_expression(action.value)
+        elif action.action_type == "block":
+            # Handle block of statements
+            action_ir["statements"] = [self.generate_action(stmt) for stmt in (action.statements or [])]
+        elif action.action_type == "emit_event":
+            action_ir["event_name"] = action.event_name
+            action_ir["args"] = {k: self.generate_expression(v) for k, v in (action.args or {}).items()}
+
+        return action_ir
 
     def generate_metadata(self, ir_model: dict[str, Any]) -> dict[str, Any]:
         """Generate metadata with model hash."""

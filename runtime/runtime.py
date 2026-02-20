@@ -12,11 +12,15 @@ Reference implementation v0.1.0
 
 import argparse
 import json
+import logging
 import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,6 +30,7 @@ class RuntimeConfig:
     seed: int = 42
     num_runs: int = 1000  # For Monte Carlo
     time_horizon: int | None = None  # Override model default
+    max_runs: int = 100000  # Safety limit to prevent excessive memory usage
 
 
 class PELRuntime:
@@ -102,18 +107,111 @@ class PELRuntime:
         # Determine time horizon
         T = self.config.time_horizon or model.get("time_horizon") or 12
 
-        # Time loop
-        timeseries_results: dict[str, list[Any]] = {node["name"]: [] for node in model["nodes"] if node["node_type"] == "var"}
+        # Initialize timeseries result storage
+        timeseries_results: dict[str, list[Any]] = {}
+        for node in model["nodes"]:
+            if node["node_type"] == "var":
+                timeseries_results[node["name"]] = []
+
         constraint_violations = []
         policy_executions = []
+        events = []
 
+        # Get equations from model
+        equations = model.get("equations", [])
+
+        # Organize equations by type and target variable
+        initial_eqs: dict[str, dict] = {}
+        recurrence_eqs: dict[str, dict] = {}
+        current_eqs: dict[str, dict] = {}
+
+        for eq in equations:
+            target_var = None
+            if eq["target"]["expr_type"] == "Indexing":
+                target_var = eq["target"]["expression"]["variable_name"]
+
+            # Validate target variable was extracted
+            if target_var is None:
+                logger.warning(f"Skipping equation with non-indexed target: {eq.get('equation_id', 'unknown')}")
+                continue
+
+            if eq["equation_type"] == "initial":
+                initial_eqs[target_var] = eq
+            elif eq["equation_type"] == "recurrence_next":
+                recurrence_eqs[target_var] = eq
+            elif eq["equation_type"] in ("recurrence_current", "direct"):
+                current_eqs[target_var] = eq
+
+        # Main time loop: Evaluate model across all timesteps
+        # Execution order per timestep: initial (t=0) → current → constraints → policies → recurrence
         for t in range(T):
-            # Evaluate variables for this timestep
-            for node in model["nodes"]:
-                if node["node_type"] == "var":
-                    # Simplified: assume value depends on t
-                    state[node["name"]] = 100 * (1 + 0.1) ** t  # Stub growth
-                    timeseries_results[node["name"]].append(state[node["name"]])
+            # Add current timestep to state for expression evaluation
+            state["t"] = t
+
+            # Phase 1: At t=0 only, evaluate initial conditions (e.g., customers[0] = initial_customers)
+            if t == 0:
+                for var_name, eq in initial_eqs.items():
+                    value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                    timeseries_results[var_name].append(value)
+
+            # Update state with timeseries arrays (for indexing like customers[t])
+            for var_name, results in timeseries_results.items():
+                state[var_name] = results
+
+            # Phase 2: Evaluate current timestep equations (revenue[t] = customers[t] * price)
+            # Uses iterative fixed-point evaluation to handle inter-dependencies between
+            # equations at the same timestep. For example, if x[t] depends on y[t] and
+            # y[t] depends on z[t], we iterate until all values stabilize or max iterations.
+            max_iterations = 10  # Safety limit to prevent infinite loops
+            converged = False
+            for iteration in range(max_iterations):
+                any_updated = False
+                for var_name, eq in current_eqs.items():
+                    # Check if this variable already has a value for this timestep
+                    if t < len(timeseries_results[var_name]):
+                        continue  # Already evaluated in a previous iteration
+
+                    try:
+                        value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                        # Validate value is valid (not None, not NaN)
+                        if value is not None and not (isinstance(value, float) and (value != value)):  # Check for NaN
+                            timeseries_results[var_name].append(value)
+                            state[var_name] = timeseries_results[var_name]
+                            any_updated = True
+                    except (KeyError, IndexError) as e:
+                        # Expected: Skip if dependencies not yet available or array index out of bounds
+                        logger.debug(f"Equation for '{var_name}' deferred at t={t}, iteration {iteration}: {e}")
+                        continue
+                    except (TypeError, ValueError, ZeroDivisionError, AttributeError) as e:
+                        # Known expression evaluation errors - log and skip this equation
+                        logger.warning(f"Error evaluating equation for '{var_name}' at t={t}: {type(e).__name__}: {e}")
+                        continue
+                    except Exception as e:
+                        # Unexpected error - log with full context for debugging
+                        logger.error(f"Unexpected error evaluating equation for '{var_name}' at t={t}: {type(e).__name__}: {e}", exc_info=True)
+                        continue
+
+                if not any_updated:
+                    converged = True
+                    break  # All equations evaluated or can't make progress
+
+            # Warn if convergence not reached
+            if not converged:
+                logger.warning(f"Equation evaluation did not converge in {max_iterations} iterations at t={t}. Some variables may have incorrect values.")
+
+            # Fill in any missing values with 0
+            for var_name in timeseries_results:
+                if var_name not in initial_eqs and var_name not in current_eqs and var_name not in recurrence_eqs:
+                    # This is a scalar variable, not a timeseries
+                    continue
+                if t >= len(timeseries_results[var_name]):
+                    # This shouldn't happen, but add a default value to prevent errors
+                    logger.warning(f"Variable '{var_name}' missing value at t={t}, defaulting to 0")
+                    timeseries_results[var_name].append(0)
+
+            # Update state again after evaluating current equations
+            for var_name, results in timeseries_results.items():
+                state[var_name] = results
 
             # Check constraints
             ordered_constraints = sorted(
@@ -127,12 +225,20 @@ class PELRuntime:
                 try:
                     condition_value = self.evaluate_expression(constraint["condition"], state)
                     if not condition_value:
+                        # Extract diagnostic information from the constraint
+                        diagnostics = self._extract_constraint_diagnostics(constraint["condition"], state)
+
                         violation = {
                             "timestep": t,
                             "constraint": constraint["name"],
                             "severity": constraint["severity"],
                             "message": constraint.get("message", "Constraint violated")
                         }
+
+                        # Add diagnostic information to violation
+                        if diagnostics:
+                            violation.update(diagnostics)
+
                         constraint_violations.append(violation)
 
                         if constraint["severity"] == "fatal":
@@ -145,20 +251,40 @@ class PELRuntime:
                                 "assumptions": assumptions,
                                 "reason": f"Fatal constraint '{constraint['name']}' violated at t={t}"
                             }
-                except Exception:
-                    # Skip constraints that can't be evaluated (e.g., out of bounds indexing)
+                except (KeyError, IndexError) as e:
+                    # Expected: Skip constraints that can't be evaluated (out of bounds indexing, missing variables)
+                    logger.debug(f"Constraint '{constraint['name']}' skipped at t={t}: {e}")
+                    pass
+                except (TypeError, ValueError, AttributeError) as e:
+                    # Known expression evaluation errors - log warning and continue
+                    logger.warning(f"Error evaluating constraint '{constraint['name']}' at t={t}: {type(e).__name__}: {e}")
+                    pass
+                except Exception as e:
+                    # Unexpected error - log with full context for debugging but continue checking other constraints
+                    logger.error(f"Unexpected error evaluating constraint '{constraint['name']}' at t={t}: {type(e).__name__}: {e}", exc_info=True)
                     pass
 
-            # Execute policies
+            # Execute policies in declaration order (per PEL specification)
+            # Policies are evaluated sequentially, with later policies seeing effects of earlier ones
             for policy in model.get("policies", []):
                 trigger_value = self.evaluate_expression(policy["trigger"]["condition"], state)
                 if trigger_value:
                     # Execute action
-                    self.execute_action(policy["action"], state)
+                    action_result = self.execute_action(policy["action"], state)
                     policy_executions.append({
                         "timestep": t,
                         "policy": policy["name"]
                     })
+                    # Collect events emitted by policy
+                    if action_result and "events" in action_result:
+                        events.extend(action_result["events"])
+
+            # Phase 3: Evaluate recurrence equations for next timestep (e.g., customers[t+1] = customers[t] + new - churned)
+            # These define how variables evolve from one timestep to the next
+            if t < T - 1:  # Don't compute beyond time horizon
+                for var_name, eq in recurrence_eqs.items():
+                    value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                    timeseries_results[var_name].append(value)
 
         return {
             "status": "success",
@@ -169,6 +295,7 @@ class PELRuntime:
             "variables": timeseries_results,
             "constraint_violations": constraint_violations,
             "policy_executions": policy_executions,
+            "events": events,
             "assumptions": assumptions
         }
 
@@ -178,11 +305,21 @@ class PELRuntime:
 
         Distributions sampled from full distribution with correlation.
         """
+        # Validate num_runs against max_runs safety limit
+        if self.config.num_runs > self.config.max_runs:
+            logger.warning(
+                f"Requested {self.config.num_runs} runs exceeds max_runs limit of {self.config.max_runs}. "
+                f"Capping at {self.config.max_runs} to prevent excessive memory usage."
+            )
+            actual_runs = self.config.max_runs
+        else:
+            actual_runs = self.config.num_runs
+
         model = ir_doc["model"]
         correlated_names, correlation_matrix = self._extract_correlation_spec(model)
 
         runs = []
-        for i in range(self.config.num_runs):
+        for i in range(actual_runs):
             # Create new config with different seed
             run_config = RuntimeConfig(
                 mode="deterministic",
@@ -206,13 +343,14 @@ class PELRuntime:
             )
             runs.append(result)
 
-        # Aggregate results (stub: just collect)
+        # Aggregate results
         return {
             "status": "success",
             "mode": "monte_carlo",
-            "num_runs": self.config.num_runs,
+            "num_runs": actual_runs,
+            "requested_runs": self.config.num_runs,
             "base_seed": self.config.seed,
-            "runs": runs[:10],  # Include first 10 for inspection
+            "runs": runs,  # Include all runs (not just first 10)
             "aggregates": {
                 "success_rate": sum(1 for r in runs if r["status"] == "success") / len(runs)
             }
@@ -483,12 +621,27 @@ class PELRuntime:
                 return left * right
             elif op == "/":
                 return left / right if right != 0 else float('inf')
+            elif op == "%":
+                return left % right if right != 0 else 0
             elif op == "==":
                 return left == right
+            elif op == "!=":
+                return left != right
             elif op == "<":
                 return left < right
+            elif op == "<=":
+                return left <= right
             elif op == ">":
                 return left > right
+            elif op == ">=":
+                return left >= right
+            elif op in ("&&", "and"):
+                return left and right
+            elif op in ("||", "or"):
+                return left or right
+            else:
+                # Unknown operator
+                return 0
 
         elif expr_type == "UnaryOp":
             operand = self.evaluate_expression(expr["operand"], state, deterministic)
@@ -609,15 +762,89 @@ class PELRuntime:
 
         return 0  # Default
 
-    def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> None:
-        """Execute policy action (stub)."""
-        action_type = action["action_type"]
+    def _extract_constraint_diagnostics(self, condition: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        """Extract diagnostic information from a constraint condition for actionable error messages.
+
+        For comparison operators (<=, >=, <, >, ==, !=), extract the actual values
+        being compared and calculate the violation amount.
+        """
+        diagnostics = {}
+
+        expr_type = condition.get("expr_type")
+        if expr_type == "BinaryOp":
+            operator = condition.get("operator")
+            # Only process comparison operators
+            if operator in ("<=", ">=", "<", ">", "==", "!="):
+                try:
+                    left_value = self.evaluate_expression(condition.get("left", {}), state)
+                    right_value = self.evaluate_expression(condition.get("right", {}), state)
+
+                    diagnostics["actual_value"] = left_value
+                    diagnostics["expected_value"] = right_value
+                    diagnostics["operator"] = operator
+
+                    # Calculate violation amount for numeric comparisons
+                    if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
+                        if operator in ("<=", "<"):
+                            # left should be <= right, but it's not
+                            # violation_amount is how much left exceeds right
+                            diagnostics["violation_amount"] = left_value - right_value
+                        elif operator in (">=", ">"):
+                            # left should be >= right, but it's not
+                            # violation_amount is how much left falls short of right
+                            diagnostics["violation_amount"] = right_value - left_value
+                        elif operator == "==":
+                            diagnostics["violation_amount"] = abs(left_value - right_value)
+
+                except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+                    # Expected errors during diagnostic extraction - skip diagnostics gracefully
+                    # This is best-effort; constraint violation will still be reported without diagnostics
+                    pass
+                except Exception as e:
+                    # Unexpected error during diagnostic extraction - log for debugging
+                    logger.debug(f"Unexpected error extracting constraint diagnostics: {type(e).__name__}: {e}")
+                    pass
+
+        return diagnostics
+
+    def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        """Execute policy action and return any events emitted."""
+        action_type = action.get("action_type")
+        events = []
 
         if action_type == "assign":
             target = action.get("target")
             value_expr = action.get("value", {})
             if target:
-                state[target] = self.evaluate_expression(value_expr, state)
+                value = self.evaluate_expression(value_expr, state)
+                state[target] = value
+
+        elif action_type == "block":
+            # Execute a block of statements sequentially
+            statements = action.get("statements", [])
+            for stmt in statements:
+                result = self.execute_action(stmt, state)
+                if result and "events" in result:
+                    events.extend(result["events"])
+
+        elif action_type == "emit_event":
+            # Event emission - capture for reporting
+            event_name = action.get("event_name", "unnamed_event")
+            event_args = action.get("args", {})
+            # Evaluate any expressions in event args
+            evaluated_args = {}
+            for key, val in event_args.items():
+                if isinstance(val, dict) and "expr_type" in val:
+                    evaluated_args[key] = self.evaluate_expression(val, state)
+                else:
+                    evaluated_args[key] = val
+            events.append({
+                "name": event_name,
+                "args": evaluated_args,
+                "timestep": state.get("t", -1)
+            })
+
+        return {"events": events}
 
 
 def main():

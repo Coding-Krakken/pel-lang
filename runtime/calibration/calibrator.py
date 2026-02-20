@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from .csv_connector import CSVConnector
 from .drift_detection import DriftDetector, DriftReport
@@ -36,6 +36,7 @@ class CalibrationConfig:
     Specifies which parameters to calibrate, data sources,
     and calibration settings.
     """
+
     csv_path: str
     model_path: str
     output_path: str | None = None
@@ -45,7 +46,7 @@ class CalibrationConfig:
     bootstrap_seed: int = 42
 
     @classmethod
-    def from_yaml(cls, yaml_path: Path) -> 'CalibrationConfig':
+    def from_yaml(cls, yaml_path: Path) -> "CalibrationConfig":
         """Load configuration from YAML file."""
         with open(yaml_path) as f:
             data = yaml.safe_load(f)
@@ -53,7 +54,7 @@ class CalibrationConfig:
 
     def to_yaml(self, yaml_path: Path) -> None:
         """Save configuration to YAML file."""
-        with open(yaml_path, 'w') as f:
+        with open(yaml_path, "w") as f:
             yaml.dump(asdict(self), f, default_flow_style=False)
 
 
@@ -65,6 +66,7 @@ class CalibrationResult:
     Contains fitted parameters, goodness-of-fit metrics,
     and drift analysis.
     """
+
     model_name: str
     timestamp: str
     parameters: dict[str, FitResult]
@@ -75,38 +77,38 @@ class CalibrationResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'model_name': self.model_name,
-            'timestamp': self.timestamp,
-            'parameters': {
+            "model_name": self.model_name,
+            "timestamp": self.timestamp,
+            "parameters": {
                 name: {
-                    'distribution': fit.distribution,
-                    'parameters': fit.parameters,
-                    'confidence_intervals': {
+                    "distribution": fit.distribution,
+                    "parameters": fit.parameters,
+                    "confidence_intervals": {
                         k: list(v) for k, v in fit.confidence_intervals.items()
                     },
-                    'aic': fit.aic,
-                    'bic': fit.bic,
-                    'ks_pvalue': fit.ks_pvalue,
+                    "aic": fit.aic,
+                    "bic": fit.bic,
+                    "ks_pvalue": fit.ks_pvalue,
                 }
                 for name, fit in self.parameters.items()
             },
-            'drift_reports': {
+            "drift_reports": {
                 name: {
-                    'mape': report.mape,
-                    'rmse': report.rmse,
-                    'cusum_detected': report.cusum_detected,
-                    'cusum_changepoint': report.cusum_changepoint,
-                    'drift_threshold_exceeded': report.drift_threshold_exceeded,
-                    'recommendations': report.recommendations,
+                    "mape": report.mape,
+                    "rmse": report.rmse,
+                    "cusum_detected": report.cusum_detected,
+                    "cusum_changepoint": report.cusum_changepoint,
+                    "drift_threshold_exceeded": report.drift_threshold_exceeded,
+                    "recommendations": report.recommendations,
                 }
                 for name, report in self.drift_reports.items()
             },
-            'updated_model': self.updated_model,
+            "updated_model": self.updated_model,
         }
 
     def to_json(self, json_path: Path) -> None:
         """Save results to JSON file."""
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     def to_markdown(self, md_path: Path) -> None:
@@ -126,65 +128,77 @@ class CalibrationResult:
         ]
 
         for param_name, fit in self.parameters.items():
-            lines.extend([
-                f"### {param_name}",
-                "",
-                f"**Distribution:** {fit.distribution}",
-                "",
-                "**Fitted Parameters:**",
-            ])
+            lines.extend(
+                [
+                    f"### {param_name}",
+                    "",
+                    f"**Distribution:** {fit.distribution}",
+                    "",
+                    "**Fitted Parameters:**",
+                ]
+            )
 
             for pname, pvalue in fit.parameters.items():
                 ci = fit.confidence_intervals[pname]
                 lines.append(f"- {pname}: {pvalue:.6f} (95% CI: [{ci[0]:.6f}, {ci[1]:.6f}])")
 
-            lines.extend([
-                "",
-                "**Goodness of Fit:**",
-                f"- AIC: {fit.aic:.2f}",
-                f"- BIC: {fit.bic:.2f}",
-                f"- Kolmogorov-Smirnov p-value: {fit.ks_pvalue:.4f}",
-                "",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "**Goodness of Fit:**",
+                    f"- AIC: {fit.aic:.2f}",
+                    f"- BIC: {fit.bic:.2f}",
+                    f"- Kolmogorov-Smirnov p-value: {fit.ks_pvalue:.4f}",
+                    "",
+                ]
+            )
 
         if self.drift_reports:
-            lines.extend([
-                "## Drift Detection",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Drift Detection",
+                    "",
+                ]
+            )
 
             for param_name, report in self.drift_reports.items():
-                lines.extend([
-                    f"### {param_name}",
-                    "",
-                    f"- MAPE: {report.mape:.2%}",
-                    f"- RMSE: {report.rmse:.4f}",
-                    f"- CUSUM Detected: {'Yes' if report.cusum_detected else 'No'}",
-                ])
+                lines.extend(
+                    [
+                        f"### {param_name}",
+                        "",
+                        f"- MAPE: {report.mape:.2%}",
+                        f"- RMSE: {report.rmse:.4f}",
+                        f"- CUSUM Detected: {'Yes' if report.cusum_detected else 'No'}",
+                    ]
+                )
 
                 if report.cusum_changepoint is not None:
                     lines.append(f"- Changepoint: Observation {report.cusum_changepoint}")
 
-                lines.extend([
-                    "",
-                    "**Recommendations:**",
-                ])
+                lines.extend(
+                    [
+                        "",
+                        "**Recommendations:**",
+                    ]
+                )
 
                 for rec in report.recommendations:
                     lines.append(f"- {rec}")
 
                 lines.append("")
 
-        lines.extend([
-            "## Summary",
-            "",
-            "Calibration completed successfully. Updated model parameters have been",
-            "fitted using Maximum Likelihood Estimation on historical data.",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Summary",
+                "",
+                "Calibration completed successfully. Updated model parameters have been",
+                "fitted using Maximum Likelihood Estimation on historical data.",
+                "",
+            ]
+        )
 
-        with open(md_path, 'w') as f:
-            f.write('\n'.join(lines))
+        with open(md_path, "w") as f:
+            f.write("\n".join(lines))
 
 
 class Calibrator:
@@ -209,9 +223,7 @@ class Calibrator:
         self.config = config
         self.csv_connector = CSVConnector()
         self.param_estimator = ParameterEstimator()
-        self.drift_detector = DriftDetector(
-            **(config.drift_config or {})
-        )
+        self.drift_detector = DriftDetector(**(config.drift_config or {}))
 
     def load_model(self, model_path: Path) -> dict[str, Any]:
         """Load PEL-IR model."""
@@ -220,7 +232,7 @@ class Calibrator:
 
     def save_model(self, model: dict[str, Any], output_path: Path) -> None:
         """Save updated PEL-IR model."""
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(model, f, indent=2)
 
     def calibrate(self) -> CalibrationResult:
@@ -232,7 +244,7 @@ class Calibrator:
         """
         # Load model
         model = self.load_model(Path(self.config.model_path))
-        model_name = model.get('model', {}).get('name', 'Unknown')
+        model_name = model.get("model", {}).get("name", "Unknown")
 
         # Load and prepare CSV data
         df = self.csv_connector.load_and_prepare(
@@ -249,18 +261,18 @@ class Calibrator:
 
         for param_name, param_config in self.config.parameters.items():
             # Extract data column
-            data_column = param_config.get('data_column', param_name)
+            data_column = param_config.get("data_column", param_name)
             data = self.csv_connector.extract_column(df, data_column)
 
             # Fit distribution
-            distribution = param_config.get('distribution', 'normal')
+            distribution = param_config.get("distribution", "normal")
 
-            if param_config.get('use_bootstrap', False):
+            if param_config.get("use_bootstrap", False):
                 fit_result = self.param_estimator.fit_with_bootstrap(
                     data,
                     distribution,
-                    n_bootstrap=param_config.get('bootstrap_samples', 1000),
-                    seed=param_config.get('bootstrap_seed', self.config.bootstrap_seed),
+                    n_bootstrap=param_config.get("bootstrap_samples", 1000),
+                    seed=param_config.get("bootstrap_seed", self.config.bootstrap_seed),
                 )
             else:
                 fit_result = self.param_estimator.fit_distribution(data, distribution)
@@ -268,8 +280,8 @@ class Calibrator:
             fitted_params[param_name] = fit_result
 
             # Drift detection (if predictions provided)
-            if 'predicted_column' in param_config:
-                predicted_column = param_config['predicted_column']
+            if "predicted_column" in param_config:
+                predicted_column = param_config["predicted_column"]
                 predicted = self.csv_connector.extract_column(df, predicted_column)
 
                 # Ensure same length
@@ -327,53 +339,54 @@ class Calibrator:
             Updated model dict
         """
         import copy
+
         updated_model = copy.deepcopy(model)
 
         # Update parameter nodes
-        for node in updated_model.get('model', {}).get('nodes', []):
-            if node.get('node_type') == 'param' and node.get('name') in fitted_params:
-                param_name = node['name']
+        for node in updated_model.get("model", {}).get("nodes", []):
+            if node.get("node_type") == "param" and node.get("name") in fitted_params:
+                param_name = node["name"]
                 fit = fitted_params[param_name]
 
                 # Update the value expression with fitted distribution
-                if fit.distribution == 'normal':
-                    node['value'] = {
-                        'expr_type': 'DistributionExpression',
-                        'distribution': 'normal',
-                        'params': {
-                            'mean': fit.parameters['mean'],
-                            'std': fit.parameters['std'],
-                        }
+                if fit.distribution == "normal":
+                    node["value"] = {
+                        "expr_type": "DistributionExpression",
+                        "distribution": "normal",
+                        "params": {
+                            "mean": fit.parameters["mean"],
+                            "std": fit.parameters["std"],
+                        },
                     }
-                elif fit.distribution == 'lognormal':
-                    node['value'] = {
-                        'expr_type': 'DistributionExpression',
-                        'distribution': 'lognormal',
-                        'params': {
-                            'mu': fit.parameters['mu'],
-                            'sigma': fit.parameters['sigma'],
-                        }
+                elif fit.distribution == "lognormal":
+                    node["value"] = {
+                        "expr_type": "DistributionExpression",
+                        "distribution": "lognormal",
+                        "params": {
+                            "mu": fit.parameters["mu"],
+                            "sigma": fit.parameters["sigma"],
+                        },
                     }
-                elif fit.distribution == 'beta':
-                    node['value'] = {
-                        'expr_type': 'DistributionExpression',
-                        'distribution': 'beta',
-                        'params': {
-                            'alpha': fit.parameters['alpha'],
-                            'beta': fit.parameters['beta'],
-                        }
+                elif fit.distribution == "beta":
+                    node["value"] = {
+                        "expr_type": "DistributionExpression",
+                        "distribution": "beta",
+                        "params": {
+                            "alpha": fit.parameters["alpha"],
+                            "beta": fit.parameters["beta"],
+                        },
                     }
 
                 # Add calibration metadata
                 # High KS p-value means data fits well (distribution not rejected),
                 # so we use p-value directly as a confidence indicator.
-                node['provenance'] = {
-                    'source': 'calibrated',
-                    'method': 'mle',
-                    'confidence': min(1.0, fit.ks_pvalue),
-                    'calibration_timestamp': datetime.now().isoformat(),
-                    'aic': fit.aic,
-                    'bic': fit.bic,
+                node["provenance"] = {
+                    "source": "calibrated",
+                    "method": "mle",
+                    "confidence": min(1.0, fit.ks_pvalue),
+                    "calibration_timestamp": datetime.now().isoformat(),
+                    "aic": fit.aic,
+                    "bic": fit.bic,
                 }
 
         return updated_model

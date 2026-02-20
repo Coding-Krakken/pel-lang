@@ -24,7 +24,7 @@ model SaasGrowth {
   }
   
   // Percentage who cancel each month
-  param churn_rate: Rate per Month = 0.05/1mo {
+  param churn_rate: Fraction = 0.05 {
     source: "industry_benchmark",
     method: "assumption",
     confidence: 0.60

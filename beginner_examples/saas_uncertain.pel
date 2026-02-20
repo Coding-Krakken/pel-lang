@@ -26,7 +26,7 @@ model SaasWithUncertainty {
   
   // Churn rate with uncertainty
   // We think 5%, but could be 3-7%
-  param churn_rate: Rate per Month = ~Normal(μ=0.05/1mo, σ=0.01/1mo) {
+  param churn_rate: Fraction = ~Normal(μ=0.05, σ=0.01) {
     source: "cohort_analysis",
     method: "fitted",
     confidence: 0.65
