@@ -127,12 +127,20 @@ class PELRuntime:
                 try:
                     condition_value = self.evaluate_expression(constraint["condition"], state)
                     if not condition_value:
+                        # Extract diagnostic information from the constraint
+                        diagnostics = self._extract_constraint_diagnostics(constraint["condition"], state)
+                        
                         violation = {
                             "timestep": t,
                             "constraint": constraint["name"],
                             "severity": constraint["severity"],
                             "message": constraint.get("message", "Constraint violated")
                         }
+                        
+                        # Add diagnostic information to violation
+                        if diagnostics:
+                            violation.update(diagnostics)
+                        
                         constraint_violations.append(violation)
 
                         if constraint["severity"] == "fatal":
@@ -206,13 +214,13 @@ class PELRuntime:
             )
             runs.append(result)
 
-        # Aggregate results (stub: just collect)
+        # Aggregate results
         return {
             "status": "success",
             "mode": "monte_carlo",
             "num_runs": self.config.num_runs,
             "base_seed": self.config.seed,
-            "runs": runs[:10],  # Include first 10 for inspection
+            "runs": runs,  # Include all runs (not just first 10)
             "aggregates": {
                 "success_rate": sum(1 for r in runs if r["status"] == "success") / len(runs)
             }
@@ -609,15 +617,67 @@ class PELRuntime:
 
         return 0  # Default
 
+    def _extract_constraint_diagnostics(self, condition: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        """Extract diagnostic information from a constraint condition for actionable error messages.
+        
+        For comparison operators (<=, >=, <, >, ==, !=), extract the actual values
+        being compared and calculate the violation amount.
+        """
+        diagnostics = {}
+        
+        expr_type = condition.get("expr_type")
+        if expr_type == "BinaryOp":
+            operator = condition.get("operator")
+            # Only process comparison operators
+            if operator in ("<=", ">=", "<", ">", "==", "!="):
+                try:
+                    left_value = self.evaluate_expression(condition.get("left", {}), state)
+                    right_value = self.evaluate_expression(condition.get("right", {}), state)
+                    
+                    diagnostics["actual_value"] = left_value
+                    diagnostics["expected_value"] = right_value
+                    diagnostics["operator"] = operator
+                    
+                    # Calculate violation amount for numeric comparisons
+                    if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
+                        if operator in ("<=", "<"):
+                            # left should be <= right, but it's not
+                            # violation_amount is how much left exceeds right
+                            diagnostics["violation_amount"] = left_value - right_value
+                        elif operator in (">=", ">"):
+                            # left should be >= right, but it's not
+                            # violation_amount is how much left falls short of right
+                            diagnostics["violation_amount"] = right_value - left_value
+                        elif operator == "==":
+                            diagnostics["violation_amount"] = abs(left_value - right_value)
+                
+                except Exception:
+                    # If we can't evaluate, skip diagnostics
+                    pass
+        
+        return diagnostics
+    
     def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> None:
-        """Execute policy action (stub)."""
-        action_type = action["action_type"]
+        """Execute policy action."""
+        action_type = action.get("action_type")
 
         if action_type == "assign":
             target = action.get("target")
             value_expr = action.get("value", {})
             if target:
-                state[target] = self.evaluate_expression(value_expr, state)
+                value = self.evaluate_expression(value_expr, state)
+                state[target] = value
+        
+        elif action_type == "block":
+            # Execute a block of statements sequentially
+            statements = action.get("statements", [])
+            for stmt in statements:
+                self.execute_action(stmt, state)
+        
+        elif action_type == "emit_event":
+            # Event emission is a no-op in the runtime
+            # Events are logged but don't affect computation
+            pass
 
 
 def main():

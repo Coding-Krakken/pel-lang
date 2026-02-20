@@ -259,22 +259,51 @@ class IRGenerator:
         return result
 
     def generate_constraint(self, const: Constraint) -> dict[str, Any]:
-        """Generate IR constraint (stub)."""
-        return {
+        """Generate IR constraint with message."""
+        ir_constraint = {
             "constraint_id": f"const_{const.name}",
             "name": const.name,
             "condition": self.generate_expression(const.condition),
             "severity": const.severity
         }
+        if const.message:
+            ir_constraint["message"] = const.message
+        return ir_constraint
 
     def generate_policy(self, policy: Policy) -> dict[str, Any]:
-        """Generate IR policy (stub)."""
+        """Generate IR policy with proper condition and action generation."""
+        # Generate the trigger condition
+        trigger_ir = {
+            "trigger_type": policy.trigger.trigger_type,
+            "condition": self.generate_expression(policy.trigger.condition)
+        }
+        
+        # Generate the action
+        action_ir = self.generate_action(policy.action)
+        
         return {
             "policy_id": f"policy_{policy.name}",
             "name": policy.name,
-            "trigger": {"trigger_type": policy.trigger.trigger_type, "condition": {}},
-            "action": {"action_type": policy.action.action_type}
+            "trigger": trigger_ir,
+            "action": action_ir
         }
+    
+    def generate_action(self, action: Action) -> dict[str, Any]:
+        """Generate IR for policy action."""
+        action_ir = {"action_type": action.action_type}
+        
+        if action.action_type == "assign":
+            action_ir["target"] = action.target
+            if action.value:
+                action_ir["value"] = self.generate_expression(action.value)
+        elif action.action_type == "block":
+            # Handle block of statements
+            action_ir["statements"] = [self.generate_action(stmt) for stmt in (action.statements or [])]
+        elif action.action_type == "emit_event":
+            action_ir["event_name"] = action.event_name
+            action_ir["args"] = {k: self.generate_expression(v) for k, v in (action.args or {}).items()}
+        
+        return action_ir
 
     def generate_metadata(self, ir_model: dict[str, Any]) -> dict[str, Any]:
         """Generate metadata with model hash."""
