@@ -1,0 +1,1008 @@
+{
+  "status": "success",
+  "model": {
+    "name": "ProductDevelopment"
+  },
+  "mode": "deterministic",
+  "seed": 42,
+  "timesteps": 18,
+  "variables": {
+    "revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "engineers": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "designers": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_payroll": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "tools_and_infrastructure": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_rd_spend": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "cumulative_spend": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "budget_remaining": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_cash_flow": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "cash_balance": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "engineer_to_designer_ratio": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_hiring_costs": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "rd_to_revenue_ratio": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ]
+  },
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "budget_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "healthy_engineer_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "healthy_rd_ratio",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "maintain_cash_reserve",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "positive_cash_flow_eventually",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "team_size_reasonable",
+      "severity": "warning",
+      "message": "Constraint violated"
+    }
+  ],
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "initial_engineers",
+      "value": 8,
+      "source": "hr_system_feb_2026",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_engineer_salary",
+      "value": 140000.0,
+      "source": "compensation_benchmarks",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "initial_designers",
+      "value": 2,
+      "source": "hr_system_feb_2026",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "avg_designer_salary",
+      "value": 110000.0,
+      "source": "compensation_benchmarks",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "monthly_revenue",
+      "value": 250000.0,
+      "source": "finance_dashboard_jan_2026",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "revenue_growth_rate",
+      "value": 0.08,
+      "source": "growth_plan_2026",
+      "method": "assumption",
+      "confidence": 0.7
+    },
+    {
+      "name": "total_budget",
+      "value": 1500000.0,
+      "source": "board_approved_budget",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "minimum_cash_reserve",
+      "value": 300000.0,
+      "source": "finance_policy",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "cost_per_engineering_hire",
+      "value": 25000.0,
+      "source": "recruiting_2025_actual",
+      "method": "derived",
+      "confidence": 0.85
+    },
+    {
+      "name": "cost_per_design_hire",
+      "value": 20000.0,
+      "source": "recruiting_2025_actual",
+      "method": "derived",
+      "confidence": 0.85
+    },
+    {
+      "name": "quarterly_engineer_hires",
+      "value": 1,
+      "source": "hiring_plan_2026",
+      "method": "assumption",
+      "confidence": 0.75
+    },
+    {
+      "name": "quarterly_designer_hires",
+      "value": 0.5,
+      "source": "hiring_plan_2026",
+      "method": "assumption",
+      "confidence": 0.75
+    }
+  ]
+}

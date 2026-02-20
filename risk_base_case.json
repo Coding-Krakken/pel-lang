@@ -1,0 +1,827 @@
+{
+  "status": "success",
+  "model": {
+    "name": "RiskScenarioPlanning"
+  },
+  "mode": "deterministic",
+  "seed": 42,
+  "timesteps": 18,
+  "variables": {
+    "selected_growth_rate": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "selected_cost_multiplier": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_burn": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "monthly_profit": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "cash_balance": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "runway_months": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "total_revenue_12m": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ],
+    "avg_monthly_profit": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024,
+      313.8428376721003,
+      345.2271214393104,
+      379.7498335832414,
+      417.7248169415656,
+      459.4972986357222,
+      505.4470284992945
+    ]
+  },
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 12,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 13,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 14,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 15,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 16,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "cash_positive",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "healthy_growth",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "profitability_target",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "runway_critical",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 17,
+      "constraint": "runway_warning",
+      "severity": "warning",
+      "message": "Constraint violated"
+    }
+  ],
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "scenario_type",
+      "value": 2.0,
+      "source": "scenario_planning_2026",
+      "method": "assumption",
+      "confidence": 1.0
+    },
+    {
+      "name": "current_revenue",
+      "value": 500000.0,
+      "source": "financials_feb_2026",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "current_burn_rate",
+      "value": 350000.0,
+      "source": "financials_feb_2026",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "current_cash_balance",
+      "value": 3000000.0,
+      "source": "bank_balance_feb_2026",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "pessimistic_growth_rate",
+      "value": 0.02,
+      "source": "risk_analysis",
+      "method": "assumption",
+      "confidence": 0.6
+    },
+    {
+      "name": "pessimistic_churn_increase",
+      "value": 1.5,
+      "source": "risk_analysis",
+      "method": "assumption",
+      "confidence": 0.6
+    },
+    {
+      "name": "pessimistic_cost_increase",
+      "value": 1.15,
+      "source": "inflation_risk",
+      "method": "assumption",
+      "confidence": 0.7
+    },
+    {
+      "name": "base_growth_rate",
+      "value": 0.08,
+      "source": "growth_plan_2026",
+      "method": "assumption",
+      "confidence": 0.75
+    },
+    {
+      "name": "base_churn_increase",
+      "value": 1.0,
+      "source": "current_metrics",
+      "method": "assumption",
+      "confidence": 0.9
+    },
+    {
+      "name": "base_cost_increase",
+      "value": 1.05,
+      "source": "budget_plan",
+      "method": "assumption",
+      "confidence": 0.85
+    },
+    {
+      "name": "optimistic_growth_rate",
+      "value": 0.15,
+      "source": "expansion_plan",
+      "method": "assumption",
+      "confidence": 0.5
+    },
+    {
+      "name": "optimistic_churn_decrease",
+      "value": 0.8,
+      "source": "retention_initiative",
+      "method": "assumption",
+      "confidence": 0.6
+    },
+    {
+      "name": "optimistic_cost_increase",
+      "value": 1.1,
+      "source": "efficiency_gains",
+      "method": "assumption",
+      "confidence": 0.7
+    }
+  ]
+}

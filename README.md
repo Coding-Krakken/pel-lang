@@ -21,7 +21,37 @@ Core goals:
 
 ---
 
-## Quick Start
+## 🎓 Complete Beginner? Start Here!
+
+**👋 New to programming?** We have a comprehensive learning package designed for business users with zero coding experience!
+
+### 🚀 [START_HERE.md](START_HERE.md) ← Click here to begin!
+
+This gives you:
+- ✅ Complete beginner tutorial with real-world examples
+- ✅ 4 ready-to-run business models (coffee shop, SaaS, hiring, etc.)
+- ✅ Copy-paste commands for everything
+- ✅ Results viewer for beautiful formatted output
+- ✅ Command cheat sheet for quick reference
+
+**One-command quick start:**
+```bash
+./beginner_examples/run_all_examples.sh
+```
+
+Then view results:
+```bash
+python3 beginner_examples/view_results.py beginner_examples/coffee_results.json
+```
+
+**Or go step-by-step:**
+- 📖 [BEGINNER_TUTORIAL.md](BEGINNER_TUTORIAL.md) - Interactive guided lessons
+- 📁 [beginner_examples/](beginner_examples/) - Working model files
+- 📋 [COMMAND_CHEATSHEET.md](COMMAND_CHEATSHEET.md) - All commands in one place
+
+---
+
+## Quick Start (For Developers)
 
 ### 1) Clone and install
 

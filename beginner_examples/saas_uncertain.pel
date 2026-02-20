@@ -1,0 +1,50 @@
+// SaaS Business with Uncertainty
+// Beginner Tutorial Part 3 - Monte Carlo simulation
+
+model SaasWithUncertainty {
+  param price_per_customer: Currency<USD> = $50 {
+    source: "pricing_page",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param initial_customers: Count<Customers> = 100 {
+    source: "dashboard",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // Uncertain customer acquisition
+  // Instead of exactly 20, we think it's between 15-25
+  // Most likely 20
+  param new_customers_per_month: Count<Customers> = ~Normal(μ=20, σ=3) {
+    source: "marketing_forecast",
+    method: "fitted",
+    confidence: 0.70,
+    notes: "Historical data shows average 20, stddev 3"
+  }
+  
+  // Churn rate with uncertainty
+  // We think 5%, but could be 3-7%
+  param churn_rate: Rate per Month = ~Normal(μ=0.05/1mo, σ=0.01/1mo) {
+    source: "cohort_analysis",
+    method: "fitted",
+    confidence: 0.65
+  }
+  
+  param monthly_costs: Currency<USD> = $2_000 {
+    source: "budget",
+    method: "assumption",
+    confidence: 0.80
+  }
+  
+  var customers: TimeSeries<Count<Customers>>
+  customers[0] = initial_customers
+  customers[t+1] = customers[t] + new_customers_per_month - (customers[t] * churn_rate)
+  
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[t] = customers[t] * price_per_customer
+  
+  var profit: TimeSeries<Currency<USD>>
+  profit[t] = revenue[t] - monthly_costs
+}

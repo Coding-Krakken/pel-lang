@@ -1,0 +1,34 @@
+// Coffee Shop Revenue Forecast
+// Beginner Tutorial Part 1
+
+model CoffeeShop {
+  // How much money you make right now
+  param current_revenue: Currency<USD> = $5_000 {
+    source: "bank_statement_jan_2026",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Your monthly expenses
+  param monthly_costs: Currency<USD> = $3_500 {
+    source: "expense_tracker",
+    method: "observed",
+    confidence: 0.90
+  }
+  
+  // How fast you expect to grow each month
+  param growth_rate: Rate per Month = 0.08/1mo {
+    source: "marketing_plan",
+    method: "assumption",
+    confidence: 0.60
+  }
+  
+  // Calculate revenue over time
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[0] = current_revenue
+  revenue[t+1] = revenue[t] * (1 + growth_rate)
+  
+  // Calculate profit each month
+  var profit: TimeSeries<Currency<USD>>
+  profit[t] = revenue[t] - monthly_costs
+}

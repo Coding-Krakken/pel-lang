@@ -1,0 +1,191 @@
+// Strategic Risk Scenario Analysis
+// Compare Base Case, Optimistic, and Pessimistic scenarios
+// Useful for board presentations and strategic planning
+
+model RiskScenarioPlanning {
+  // =============================================================================
+  // SCENARIO SELECTOR
+  // =============================================================================
+  
+  // Scenario type: 1 = Pessimistic, 2 = Base Case, 3 = Optimistic
+  param scenario_type: Fraction = 2.0 {
+    source: "scenario_planning_2026",
+    method: "assumption",
+    confidence: 1.0,
+    notes: "1=Pessimistic, 2=Base, 3=Optimistic"
+  }
+  
+  // =============================================================================
+  // CURRENT STATE (BASELINE)
+  // =============================================================================
+  
+  param current_revenue: Currency<USD> = $500_000 {
+    source: "financials_feb_2026",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Current monthly revenue"
+  }
+  
+  param current_burn_rate: Currency<USD> = $350_000 {
+    source: "financials_feb_2026",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Current monthly operating expenses"
+  }
+  
+  param current_cash_balance: Currency<USD> = $3_000_000 {
+    source: "bank_balance_feb_2026",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // =============================================================================
+  // SCENARIO-SPECIFIC PARAMETERS
+  // =============================================================================
+  
+  // PESSIMISTIC SCENARIO: Economic downturn, competition increases
+  param pessimistic_growth_rate: Rate per Month = 0.02/1mo {
+    source: "risk_analysis",
+    method: "assumption",
+    confidence: 0.60,
+    notes: "2% growth if market turns unfavorable"
+  }
+  
+  param pessimistic_churn_increase: Fraction = 1.50 {
+    source: "risk_analysis",
+    method: "assumption",
+    confidence: 0.60,
+    notes: "50% increase in customer churn"
+  }
+  
+  param pessimistic_cost_increase: Fraction = 1.15 {
+    source: "inflation_risk",
+    method: "assumption",
+    confidence: 0.70,
+    notes: "15% cost increase from inflation"
+  }
+  
+  // BASE CASE SCENARIO: Business as usual
+  param base_growth_rate: Rate per Month = 0.08/1mo {
+    source: "growth_plan_2026",
+    method: "assumption",
+    confidence: 0.75,
+    notes: "8% monthly growth - current trajectory"
+  }
+  
+  param base_churn_increase: Fraction = 1.0 {
+    source: "current_metrics",
+    method: "assumption",
+    confidence: 0.90,
+    notes: "Churn remains constant"
+  }
+  
+  param base_cost_increase: Fraction = 1.05 {
+    source: "budget_plan",
+    method: "assumption",
+    confidence: 0.85,
+    notes: "5% cost increase from planned hiring"
+  }
+  
+  // OPTIMISTIC SCENARIO: Market expansion, product-market fit achieved
+  param optimistic_growth_rate: Rate per Month = 0.15/1mo {
+    source: "expansion_plan",
+    method: "assumption",
+    confidence: 0.50,
+    notes: "15% growth with successful product launch"
+  }
+  
+  param optimistic_churn_decrease: Fraction = 0.80 {
+    source: "retention_initiative",
+    method: "assumption",
+    confidence: 0.60,
+    notes: "20% reduction in churn from new features"
+  }
+  
+  param optimistic_cost_increase: Fraction = 1.10 {
+    source: "efficiency_gains",
+    method: "assumption",
+    confidence: 0.70,
+    notes: "10% cost increase despite growth (economies of scale)"
+  }
+  
+  // =============================================================================
+  // SCENARIO SELECTION LOGIC (Simplified)
+  // =============================================================================
+  
+  // Select growth rate based on scenario
+  var selected_growth_rate: Rate per Month
+  selected_growth_rate = base_growth_rate  // Simplified - would use conditional logic
+  
+  var selected_cost_multiplier: Fraction
+  selected_cost_multiplier = base_cost_increase
+  
+  // =============================================================================
+  // PROJECTIONS
+  // =============================================================================
+  
+  // Revenue over time
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[0] = current_revenue
+  revenue[t+1] = revenue[t] * (1 + selected_growth_rate)
+  
+  // Operating expenses (burn rate)
+  var monthly_burn: TimeSeries<Currency<USD>>
+  monthly_burn[0] = current_burn_rate
+  monthly_burn[t+1] = monthly_burn[0] * selected_cost_multiplier
+  
+  // Monthly profit/loss
+  var monthly_profit: TimeSeries<Currency<USD>>
+  monthly_profit[t] = revenue[t] - monthly_burn[t]
+  
+  // Cash runway
+  var cash_balance: TimeSeries<Currency<USD>>
+  cash_balance[0] = current_cash_balance
+  cash_balance[t+1] = cash_balance[t] + monthly_profit[t+1]
+  
+  // Months of runway remaining
+  var runway_months: TimeSeries<Fraction>
+  runway_months[t] = cash_balance[t] / monthly_burn[t]
+  
+  // =============================================================================
+  // KEY METRICS
+  // =============================================================================
+  
+  var total_revenue_12m: Currency<USD>
+  total_revenue_12m = revenue[0] + revenue[1] + revenue[2] + revenue[3] + revenue[4] + revenue[5] + 
+                      revenue[6] + revenue[7] + revenue[8] + revenue[9] + revenue[10] + revenue[11]
+  
+  var avg_monthly_profit: Currency<USD>
+  avg_monthly_profit = (monthly_profit[0] + monthly_profit[1] + monthly_profit[2] + monthly_profit[3] + 
+                        monthly_profit[4] + monthly_profit[5] + monthly_profit[6] + monthly_profit[7] + 
+                        monthly_profit[8] + monthly_profit[9] + monthly_profit[10] + monthly_profit[11]) / 12
+  
+  // =============================================================================
+  // RISK INDICATORS
+  // =============================================================================
+  
+  constraint runway_critical: runway_months[t] > 3.0 {
+    severity: error,
+    message: "Cash runway below 3 months - immediate action required"
+  }
+  
+  constraint runway_warning: runway_months[t] > 6.0 {
+    severity: warning,
+    message: "Cash runway below 6 months - begin fundraising"
+  }
+  
+  constraint profitability_target: monthly_profit[12] > $0 {
+    severity: warning,
+    message: "Not profitable by month 12"
+  }
+  
+  constraint cash_positive: cash_balance[t] > $0 {
+    severity: error,
+    message: "Cash balance depleted - business failure"
+  }
+  
+  constraint healthy_growth: revenue[t+1] > revenue[t] {
+    severity: warning,
+    message: "Revenue declining month-over-month"
+  }
+}

@@ -1,0 +1,206 @@
+// Manufacturing & Inventory Model
+// Production planning with uncertain demand and capacity constraints
+
+model ManufacturingInventory {
+  // =============================================================================
+  // PRODUCTION CAPACITY
+  // =============================================================================
+  
+  param production_lines: Fraction = 3.0 {
+    source: "factory_operations",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Currently operational production lines"
+  }
+  
+  param units_per_line_per_day: Fraction = 500.0 {
+    source: "equipment_specifications",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Maximum capacity per line per day"
+  }
+  
+  param operational_efficiency: Fraction = 0.85 {
+    source: "oee_metrics_jan_2026",
+    method: "derived",
+    confidence: 0.90,
+    notes: "Overall Equipment Effectiveness"
+  }
+  
+  param working_days_per_month: Fraction = 22 {
+    source: "production_calendar",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // Calculate monthly production capacity
+  var max_monthly_capacity: Fraction
+  max_monthly_capacity = production_lines * units_per_line_per_day * working_days_per_month
+  
+  var effective_monthly_capacity: Fraction
+  effective_monthly_capacity = max_monthly_capacity * operational_efficiency
+  
+  // =============================================================================
+  // DEMAND & ORDERS
+  // =============================================================================
+  
+  param baseline_monthly_demand: Fraction = 25_000.0 {
+    source: "sales_forecast_q1_2026",
+    method: "derived",
+    confidence: 0.75,
+    notes: "Expected monthly demand in units"
+  }
+  
+  param demand_growth_rate: Rate per Month = 0.05/1mo {
+    source: "market_analysis",
+    method: "assumption",
+    confidence: 0.60,
+    notes: "5% monthly demand growth"
+  }
+  
+  // Demand with uncertainty (for Monte Carlo)
+  param demand_variability: Fraction = 0.15 {
+    source: "historical_volatility",
+    method: "derived",
+    confidence: 0.80,
+    notes: "±15% demand variation"
+  }
+  
+  // Track demand over time
+  var monthly_demand: TimeSeries<Fraction>
+  monthly_demand[0] = baseline_monthly_demand
+  monthly_demand[t+1] = monthly_demand[t] * (1 + demand_growth_rate)
+  
+  // =============================================================================
+  // INVENTORY MANAGEMENT
+  // =============================================================================
+  
+  param initial_inventory: Fraction = 5_000.0 {
+    source: "warehouse_system_feb_2026",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param safety_stock_days: Fraction = 10.0 {
+    source: "inventory_policy",
+    method: "assumption",
+    confidence: 0.90,
+    notes: "10 days of safety stock"
+  }
+  
+  param holding_cost_per_unit_per_month: Currency<USD> = $2 {
+    source: "warehouse_costs",
+    method: "derived",
+    confidence: 0.85,
+    notes: "Storage, insurance, handling"
+  }
+  
+  // Safety stock level (in units)
+  var safety_stock_level: Fraction
+  safety_stock_level = baseline_monthly_demand * (safety_stock_days / working_days_per_month)
+  
+  // Production decision: produce to meet demand + maintain safety stock
+  var monthly_production: TimeSeries<Fraction>
+  monthly_production[t] = monthly_demand[t]  // Simplified: produce to meet demand
+  
+  // Inventory tracking
+  var inventory: TimeSeries<Fraction>
+  inventory[0] = initial_inventory
+  inventory[t+1] = inventory[t] + monthly_production[t+1] - monthly_demand[t+1]
+  
+  // Inventory holding costs
+  var monthly_holding_cost: TimeSeries<Currency<USD>>
+  monthly_holding_cost[t] = inventory[t] * holding_cost_per_unit_per_month
+  
+  // =============================================================================
+  // COSTS & PRICING
+  // =============================================================================
+  
+  param cost_per_unit: Currency<USD> = $15 {
+    source: "cost_accounting",
+    method: "derived",
+    confidence: 0.90,
+    notes: "Materials + direct labor"
+  }
+  
+  param selling_price_per_unit: Currency<USD> = $45 {
+    source: "pricing_strategy",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  param fixed_monthly_overhead: Currency<USD> = $75_000 {
+    source: "finance_budget", 
+    method: "observed",
+    confidence: 0.90,
+    notes: "Rent, salaries, utilities"
+  }
+  
+  // Unit economics
+  var unit_margin: Currency<USD>
+  unit_margin = selling_price_per_unit - cost_per_unit
+  
+  // Monthly financials
+  var monthly_revenue: TimeSeries<Currency<USD>>
+  monthly_revenue[t] = monthly_demand[t] * selling_price_per_unit
+  
+  var monthly_cogs: TimeSeries<Currency<USD>>
+  monthly_cogs[t] = monthly_production[t] * cost_per_unit
+  
+  var monthly_total_costs: TimeSeries<Currency<USD>>
+  monthly_total_costs[t] = monthly_cogs[t] + fixed_monthly_overhead + monthly_holding_cost[t]
+  
+  var monthly_profit: TimeSeries<Currency<USD>>
+  monthly_profit[t] = monthly_revenue[t] - monthly_total_costs[t]
+  
+  // =============================================================================
+  // CAPACITY UTILIZATION
+  // =============================================================================
+  
+  var capacity_utilization: TimeSeries<Fraction>
+  capacity_utilization[t] = monthly_production[t] / effective_monthly_capacity
+  
+  var demand_coverage_ratio: TimeSeries<Fraction>
+  demand_coverage_ratio[t] = inventory[t] / (monthly_demand[t] / working_days_per_month)  // Days of inventory
+  
+  // =============================================================================
+  // STOCKOUT RISK
+  // =============================================================================
+  
+  var stockout_risk: TimeSeries<Fraction>
+  stockout_risk[t] = (safety_stock_level - inventory[t]) / safety_stock_level
+  
+  // =============================================================================
+  // BUSINESS CONSTRAINTS
+  // =============================================================================
+  
+  constraint no_negative_inventory: inventory[t] >= 0 {
+    severity: error,
+    message: "Stockout detected - cannot fulfill orders"
+  }
+  
+  constraint maintain_safety_stock: inventory[t] >= safety_stock_level * 0.5 {
+    severity: warning,
+    message: "Inventory below 50% of safety stock - risk of stockout"
+  }
+  
+  constraint capacity_not_exceeded: capacity_utilization[t] <= 1.0 {
+    severity: error,
+    message: "Production exceeds capacity - need additional lines or shifts"
+  }
+  
+  constraint healthy_utilization: capacity_utilization[t] >= 0.70 && capacity_utilization[t] <= 0.95 {
+    severity: warning,
+    message: "Capacity utilization outside 70-95% healthy range"
+  }
+  
+  constraint profitable_operations: monthly_profit[t] > $0 {
+    severity: warning,
+    message: "Monthly operations unprofitable"
+  }
+  
+  constraint inventory_not_excessive: inventory[t] <= safety_stock_level * 3.0 {
+    severity: warning,
+    message: "Inventory exceeds 3x safety stock - tied up capital"
+  }
+}

@@ -1,0 +1,60 @@
+// Freelance Consulting Business Model
+// Planning my first year as an independent consultant
+
+model ConsultingBusiness {
+  // Current client revenue per month
+  param current_monthly_revenue: Currency<USD> = $8_000 {
+    source: "january_2026_invoices",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Current contract with 2 clients"
+  }
+  
+  // Monthly expenses
+  param software_tools: Currency<USD> = $200 {
+    source: "subscription_costs",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Slack, Zoom, Adobe, etc."
+  }
+  
+  param marketing_budget: Currency<USD> = $500 {
+    source: "marketing_plan",
+    method: "assumption",
+    confidence: 0.80,
+    notes: "LinkedIn ads, networking events"
+  }
+  
+  param home_office: Currency<USD> = $300 {
+    source: "budget",
+    method: "assumption",
+    confidence: 0.90,
+    notes: "Internet, utilities allocation"
+  }
+  
+  // Expected growth rate
+  param monthly_growth_rate: Rate per Month = 0.10/1mo {
+    source: "business_plan",
+    method: "assumption",
+    confidence: 0.50,
+    notes: "Target: add 1 new client every 2 months"
+  }
+  
+  // Calculate total expenses
+  var total_expenses: Currency<USD>
+  total_expenses = software_tools + marketing_budget + home_office
+  
+  // Revenue projection over time
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[0] = current_monthly_revenue
+  revenue[t+1] = revenue[t] * (1 + monthly_growth_rate)
+  
+  // Calculate profit each month
+  var profit: TimeSeries<Currency<USD>>
+  profit[t] = revenue[t] - total_expenses
+  
+  // Calculate cumulative profit (runway)
+  var cumulative_profit: TimeSeries<Currency<USD>>
+  cumulative_profit[0] = profit[0]
+  cumulative_profit[t+1] = cumulative_profit[t] + profit[t+1]
+}

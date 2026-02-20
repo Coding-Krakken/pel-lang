@@ -1,0 +1,749 @@
+{
+  "status": "success",
+  "model": {
+    "name": "ManufacturingInventory"
+  },
+  "mode": "deterministic",
+  "seed": 42,
+  "timesteps": 12,
+  "variables": {
+    "max_monthly_capacity": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "effective_monthly_capacity": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_demand": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "safety_stock_level": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_production": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "inventory": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_holding_cost": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "unit_margin": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_revenue": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_cogs": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_total_costs": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "monthly_profit": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "capacity_utilization": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "demand_coverage_ratio": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ],
+    "stockout_risk": [
+      100.0,
+      110.00000000000001,
+      121.00000000000001,
+      133.10000000000005,
+      146.41000000000005,
+      161.05100000000004,
+      177.1561000000001,
+      194.87171000000012,
+      214.35888100000017,
+      235.7947691000002,
+      259.3742460100002,
+      285.31167061100024
+    ]
+  },
+  "constraint_violations": [
+    {
+      "timestep": 0,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 0,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 1,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 2,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 3,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 4,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 5,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 6,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 7,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 8,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 9,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 10,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "capacity_not_exceeded",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "healthy_utilization",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "inventory_not_excessive",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "maintain_safety_stock",
+      "severity": "warning",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "no_negative_inventory",
+      "severity": "error",
+      "message": "Constraint violated"
+    },
+    {
+      "timestep": 11,
+      "constraint": "profitable_operations",
+      "severity": "warning",
+      "message": "Constraint violated"
+    }
+  ],
+  "policy_executions": [],
+  "assumptions": [
+    {
+      "name": "production_lines",
+      "value": 3.0,
+      "source": "factory_operations",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "units_per_line_per_day",
+      "value": 500.0,
+      "source": "equipment_specifications",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "operational_efficiency",
+      "value": 0.85,
+      "source": "oee_metrics_jan_2026",
+      "method": "derived",
+      "confidence": 0.9
+    },
+    {
+      "name": "working_days_per_month",
+      "value": 22,
+      "source": "production_calendar",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "baseline_monthly_demand",
+      "value": 25000.0,
+      "source": "sales_forecast_q1_2026",
+      "method": "derived",
+      "confidence": 0.75
+    },
+    {
+      "name": "demand_growth_rate",
+      "value": 0.05,
+      "source": "market_analysis",
+      "method": "assumption",
+      "confidence": 0.6
+    },
+    {
+      "name": "demand_variability",
+      "value": 0.15,
+      "source": "historical_volatility",
+      "method": "derived",
+      "confidence": 0.8
+    },
+    {
+      "name": "initial_inventory",
+      "value": 5000.0,
+      "source": "warehouse_system_feb_2026",
+      "method": "observed",
+      "confidence": 1.0
+    },
+    {
+      "name": "safety_stock_days",
+      "value": 10.0,
+      "source": "inventory_policy",
+      "method": "assumption",
+      "confidence": 0.9
+    },
+    {
+      "name": "holding_cost_per_unit_per_month",
+      "value": 2.0,
+      "source": "warehouse_costs",
+      "method": "derived",
+      "confidence": 0.85
+    },
+    {
+      "name": "cost_per_unit",
+      "value": 15.0,
+      "source": "cost_accounting",
+      "method": "derived",
+      "confidence": 0.9
+    },
+    {
+      "name": "selling_price_per_unit",
+      "value": 45.0,
+      "source": "pricing_strategy",
+      "method": "observed",
+      "confidence": 0.95
+    },
+    {
+      "name": "fixed_monthly_overhead",
+      "value": 75000.0,
+      "source": "finance_budget",
+      "method": "observed",
+      "confidence": 0.9
+    }
+  ]
+}

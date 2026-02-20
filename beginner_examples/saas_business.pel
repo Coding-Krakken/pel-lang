@@ -1,0 +1,52 @@
+// SaaS Subscription Business Model
+// Beginner Tutorial Part 2
+
+model SaasGrowth {
+  // Price per customer per month
+  param price_per_customer: Currency<USD> = $50 {
+    source: "pricing_page",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // How many customers you start with
+  param initial_customers: Count<Customers> = 100 {
+    source: "dashboard_feb_2026",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // New customers each month
+  param new_customers_per_month: Count<Customers> = 20 {
+    source: "marketing_forecast",
+    method: "assumption",
+    confidence: 0.70
+  }
+  
+  // Percentage who cancel each month
+  param churn_rate: Rate per Month = 0.05/1mo {
+    source: "industry_benchmark",
+    method: "assumption",
+    confidence: 0.60
+  }
+  
+  // Your operating costs
+  param monthly_costs: Currency<USD> = $2_000 {
+    source: "budget",
+    method: "assumption",
+    confidence: 0.80
+  }
+  
+  // Calculate customer count over time
+  var customers: TimeSeries<Count<Customers>>
+  customers[0] = initial_customers
+  customers[t+1] = customers[t] + new_customers_per_month - (customers[t] * churn_rate)
+  
+  // Calculate monthly revenue
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[t] = customers[t] * price_per_customer
+  
+  // Calculate profit
+  var profit: TimeSeries<Currency<USD>>
+  profit[t] = revenue[t] - monthly_costs
+}

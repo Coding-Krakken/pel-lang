@@ -1,0 +1,174 @@
+// Marketing Performance Model
+// Customer Acquisition Cost (CAC) vs Lifetime Value (LTV)
+// Critical metric: LTV:CAC ratio should be >= 3:1 for healthy business
+
+model MarketingPerformance {
+  // =============================================================================
+  // MARKETING SPEND & ACQUISITION
+  // =============================================================================
+  
+  // Monthly marketing budget allocation
+  param paid_ads_budget: Currency<USD> = $15_000 {
+    source: "marketing_budget_2026",
+    method: "assumption",
+    confidence: 0.95,
+    notes: "Google Ads + LinkedIn + Facebook"
+  }
+  
+  param content_marketing_budget: Currency<USD> = $5_000 {
+    source: "marketing_budget_2026",
+    method: "assumption",
+    confidence: 0.90,
+    notes: "Blog, SEO, content creation"
+  }
+  
+  param events_budget: Currency<USD> = $3_000 {
+    source: "marketing_budget_2026",
+    method: "assumption",
+    confidence: 0.85,
+    notes: "Conferences, webinars, meetups"
+  }
+  
+  // Calculate total marketing spend
+  var total_marketing_spend: Currency<USD>
+  total_marketing_spend = paid_ads_budget + content_marketing_budget + events_budget
+  
+  // Customer acquisition from each channel
+  param customers_from_paid_ads: Count<Customers> = 25 {
+    source: "analytics_jan_2026",
+    method: "observed",
+    confidence: 0.90,
+    notes: "Average monthly conversions"
+  }
+  
+  param customers_from_content: Count<Customers> = 15 {
+    source: "analytics_jan_2026",
+    method: "observed",
+    confidence: 0.80,
+    notes: "Organic + content-driven"
+  }
+  
+  param customers_from_events: Count<Customers> = 10 {
+    source: "analytics_jan_2026",
+    method: "observed",
+    confidence: 0.75,
+    notes: "Event-driven leads"
+  }
+  
+  var total_new_customers: Count<Customers>
+  total_new_customers = customers_from_paid_ads + customers_from_content + customers_from_events
+  
+  // =============================================================================
+  // CUSTOMER ACQUISITION COST (CAC)
+  // =============================================================================
+  
+  // Blended CAC across all channels
+  var blended_cac: Currency<USD>
+  blended_cac = total_marketing_spend / total_new_customers
+  
+  // Channel-specific CAC
+  var cac_paid_ads: Currency<USD>
+  cac_paid_ads = paid_ads_budget / customers_from_paid_ads
+  
+  var cac_content: Currency<USD>
+  cac_content = content_marketing_budget / customers_from_content
+  
+  var cac_events: Currency<USD>
+  cac_events = events_budget / customers_from_events
+  
+  // =============================================================================
+  // CUSTOMER LIFETIME VALUE (LTV)
+  // =============================================================================
+  
+  param average_monthly_revenue_per_customer: Currency<USD> = $99 {
+    source: "billing_system",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Average subscription price"
+  }
+  
+  param monthly_churn_rate: Rate per Month = 0.05/1mo {
+    source: "cohort_analysis_q4_2025",
+    method: "derived",
+    confidence: 0.85,
+    notes: "5% monthly churn = 20 month average lifetime"
+  }
+  
+  param gross_margin: Fraction = 0.80 {
+    source: "finance",
+    method: "derived",
+    confidence: 0.90,
+    notes: "80% margin after COGS"
+  }
+  
+  // Calculate average customer lifetime in months
+  // Formula: 1 / churn_rate
+  var average_customer_lifetime_months: Fraction
+  average_customer_lifetime_months = 1.0 / monthly_churn_rate
+  
+  // Calculate LTV
+  // Formula: (Avg Monthly Revenue * Gross Margin * Avg Lifetime)
+  var customer_ltv: Currency<USD>
+  customer_ltv = average_monthly_revenue_per_customer * gross_margin * average_customer_lifetime_months
+  
+  // =============================================================================
+  // KEY METRICS & RATIOS  
+  // =============================================================================
+  
+  // LTV:CAC Ratio - should be >= 3:1 for healthy SaaS
+  var ltv_to_cac_ratio: Fraction
+  ltv_to_cac_ratio = customer_ltv / blended_cac
+  
+  // Payback period in months - time to recover CAC
+  var cac_payback_months: Fraction
+  cac_payback_months = blended_cac / (average_monthly_revenue_per_customer * gross_margin)
+  
+  // Monthly profit per customer (after recovering CAC)
+  var monthly_profit_per_customer: Currency<USD>
+  monthly_profit_per_customer = (average_monthly_revenue_per_customer * gross_margin)
+  
+  // =============================================================================
+  // CHANNEL EFFICIENCY ANALYSIS
+  // =============================================================================
+  
+  // LTV:CAC by channel
+  var ltv_to_cac_paid_ads: Fraction
+  ltv_to_cac_paid_ads = customer_ltv / cac_paid_ads
+  
+  var ltv_to_cac_content: Fraction
+  ltv_to_cac_content = customer_ltv / cac_content
+  
+  var ltv_to_cac_events: Fraction
+  ltv_to_cac_events = customer_ltv / cac_events
+  
+  // =============================================================================
+  // GROWTH PROJECTIONS
+  // =============================================================================
+  
+  // If we maintain this marketing spend, project revenue growth
+  var monthly_new_revenue: TimeSeries<Currency<USD>>
+  monthly_new_revenue[t] = total_new_customers * average_monthly_revenue_per_customer
+  
+  // Track cumulative customer base over time
+  var cumulative_customers: TimeSeries<Count<Customers>>
+  cumulative_customers[0] = total_new_customers
+  cumulative_customers[t+1] = cumulative_customers[t] * (1 - monthly_churn_rate) + total_new_customers
+  
+  // Monthly recurring revenue (MRR) over time
+  var mrr: TimeSeries<Currency<USD>>
+  mrr[t] = cumulative_customers[t] * average_monthly_revenue_per_customer
+  
+  // Total marketing investment over time
+  var cumulative_marketing_spend: TimeSeries<Currency<USD>>
+  cumulative_marketing_spend[0] = total_marketing_spend
+  cumulative_marketing_spend[t+1] = cumulative_marketing_spend[t] + total_marketing_spend
+  
+  // Profit over time (MRR * margin - marketing spend)
+  var monthly_profit: TimeSeries<Currency<USD>>
+  monthly_profit[t] = (mrr[t] * gross_margin) - total_marketing_spend
+  
+  // Cumulative profit
+  var cumulative_profit: TimeSeries<Currency<USD>>
+  cumulative_profit[0] = monthly_profit[0]
+  cumulative_profit[t+1] = cumulative_profit[t] + monthly_profit[t+1]
+}

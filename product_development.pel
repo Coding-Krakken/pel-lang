@@ -1,0 +1,197 @@
+// Product Development Budget Model
+// Automatic resource allocation with business constraints and adaptive policies
+
+model ProductDevelopment {
+  // =============================================================================
+  // TEAM CONFIGURATION
+  // =============================================================================
+  
+  param initial_engineers: Count<Employees> = 8 {
+    source: "hr_system_feb_2026",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Current engineering team size"
+  }
+  
+  param avg_engineer_salary: Currency<USD> = $140_000 {
+    source: "compensation_benchmarks",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Annual salary per engineer"
+  }
+  
+  param initial_designers: Count<Employees> = 2 {
+    source: "hr_system_feb_2026",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  param avg_designer_salary: Currency<USD> = $110_000 {
+    source: "compensation_benchmarks",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // =============================================================================
+  // BUDGET & REVENUE
+  // =============================================================================
+  
+  param monthly_revenue: Currency<USD> = $250_000 {
+    source: "finance_dashboard_jan_2026",
+    method: "observed",
+    confidence: 0.95,
+    notes: "Current monthly recurring revenue"
+  }
+  
+  param revenue_growth_rate: Rate per Month = 0.08/1mo {
+    source: "growth_plan_2026",
+    method: "assumption",
+    confidence: 0.70,
+    notes: "8% monthly growth target"
+  }
+  
+  param total_budget: Currency<USD> = $1_500_000 {
+    source: "board_approved_budget",
+    method: "observed",
+    confidence: 1.0,
+    notes: "Annual R&D budget for 2026"
+  }
+  
+  param minimum_cash_reserve: Currency<USD> = $300_000 {
+    source: "finance_policy",
+    method: "assumption",
+    confidence: 1.0,
+    notes: "3-month runway requirement"
+  }
+  
+  // =============================================================================
+  // HIRING COSTS
+  // =============================================================================
+  
+  param cost_per_engineering_hire: Currency<USD> = $25_000 {
+    source: "recruiting_2025_actual",
+    method: "derived",
+    confidence: 0.85,
+    notes: "Recruitment, onboarding, equipment"
+  }
+  
+  param cost_per_design_hire: Currency<USD> = $20_000 {
+    source: "recruiting_2025_actual",
+    method: "derived",
+    confidence: 0.85
+  }
+  
+  // =============================================================================
+  // TIME SERIES CALCULATIONS
+  // =============================================================================
+  
+  // Revenue projection
+  var revenue: TimeSeries<Currency<USD>>
+  revenue[0] = monthly_revenue
+  revenue[t+1] = revenue[t] * (1 + revenue_growth_rate)
+  
+  // Team growth (starts conservative, can be increased by policies)
+  var engineers: TimeSeries<Count<Employees>>
+  engineers[0] = initial_engineers
+  engineers[t+1] = engineers[t]  // No automatic growth - driven by policies
+  
+  var designers: TimeSeries<Count<Employees>>
+  designers[0] = initial_designers
+  designers[t+1] = designers[t]  // No automatic growth - driven by policies
+  
+  // Monthly payroll
+  var monthly_payroll: TimeSeries<Currency<USD>>
+  monthly_payroll[t] = (engineers[t] * avg_engineer_salary / 12) + (designers[t] * avg_designer_salary / 12)
+  
+  // Tools & infrastructure costs (scales with team)
+  var tools_and_infrastructure: TimeSeries<Currency<USD>>
+  tools_and_infrastructure[t] = (engineers[t] + designers[t]) * $500  // $500/person/month
+  
+  // Total R&D spend per month
+  var monthly_rd_spend: TimeSeries<Currency<USD>>
+  monthly_rd_spend[t] = monthly_payroll[t] + tools_and_infrastructure[t]
+  
+  // Cumulative spend tracking
+  var cumulative_spend: TimeSeries<Currency<USD>>
+  cumulative_spend[0] = monthly_rd_spend[0]
+  cumulative_spend[t+1] = cumulative_spend[t] + monthly_rd_spend[t+1]
+  
+  // Budget remaining
+  var budget_remaining: TimeSeries<Currency<USD>>
+  budget_remaining[t] = total_budget - cumulative_spend[t]
+  
+  // Cash flow (revenue - expenses)
+  var monthly_cash_flow: TimeSeries<Currency<USD>>
+  monthly_cash_flow[t] = revenue[t] - monthly_rd_spend[t]
+  
+  // Cash balance
+  var cash_balance: TimeSeries<Currency<USD>>
+  cash_balance[0] = minimum_cash_reserve + $200_000  // Start above minimum
+  cash_balance[t+1] = cash_balance[t] + monthly_cash_flow[t+1]
+  
+  // Team efficiency (engineer-to-designer ratio)
+  var engineer_to_designer_ratio: TimeSeries<Fraction>
+  engineer_to_designer_ratio[t] = engineers[t] / designers[t]
+  
+  // =============================================================================
+  // BUSINESS CONSTRAINTS (Hard Rules)
+  // =============================================================================
+  
+  constraint budget_not_exceeded: cumulative_spend[t] <= total_budget {
+    severity: error,
+    message: "Annual R&D budget exceeded - requires board approval"
+  }
+  
+  constraint maintain_cash_reserve: cash_balance[t] >= minimum_cash_reserve {
+    severity: error,
+    message: "Cash reserve below minimum - company at risk"
+  }
+  
+  constraint healthy_engineer_ratio: engineer_to_designer_ratio[t] >= 3.0 && engineer_to_designer_ratio[t] <= 6.0 {
+    severity: warning,
+    message: "Team ratio outside healthy 3:1 to 6:1 range"
+  }
+  
+  constraint team_size_reasonable: (engineers[t] + designers[t]) <= 50 {
+    severity: warning,
+    message: "Team size exceeding 50 - consider organizational structure"
+  }
+  
+  // =============================================================================
+  // GROWTH PROJECTIONS (Manual hiring plan)
+  // =============================================================================
+  
+  // Hiring plan: Add engineers quarterly if cash flow is positive
+  param quarterly_engineer_hires: Count<Employees> = 1 {
+    source: "hiring_plan_2026",
+    method: "assumption",
+    confidence: 0.75,
+    notes: "Conservative hiring: 1 engineer per quarter"
+  }
+  
+  param quarterly_designer_hires: Count<Employees> = 0.5 {
+    source: "hiring_plan_2026",
+    method: "assumption",
+    confidence: 0.75,
+    notes: "1 designer every 6 months"
+  }
+  
+  // Monthly hiring costs over time
+  var monthly_hiring_costs: TimeSeries<Currency<USD>>
+  monthly_hiring_costs[t] = $0  // Simplified - could model quarterly spikes
+  
+  // Revenue to R&D ratio (should be ~30-40% for healthy SaaS)
+  var rd_to_revenue_ratio: TimeSeries<Fraction>
+  rd_to_revenue_ratio[t] = monthly_rd_spend[t] / revenue[t]
+  
+  // Additional constraint on spending ratio
+  constraint healthy_rd_ratio: rd_to_revenue_ratio[t] <= 0.50 {
+    severity: warning,
+    message: "R&D spending exceeds 50% of revenue - unsustainable"
+  }
+  
+  constraint positive_cash_flow_eventually: monthly_cash_flow[12] > $0 {
+    severity: warning,
+    message: "Should reach positive cash flow by month 12"
+  }
+}

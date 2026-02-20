@@ -1,0 +1,51 @@
+// Engineering Hiring and Salary Budget
+// Beginner Tutorial Part 4
+
+model HiringPlan {
+  // Current team size
+  param initial_engineers: Count<Employees> = 5 {
+    source: "hr_system",
+    method: "observed",
+    confidence: 1.0
+  }
+  
+  // Average starting salary
+  param starting_salary: Currency<USD> = $120_000 {
+    source: "offer_letters_2026",
+    method: "observed",
+    confidence: 0.95
+  }
+  
+  // Hiring rate (per month, so 0.67 = 2 per quarter)
+  param hiring_rate: Count<Employees> = 0.67 {
+    source: "hiring_plan_2026",
+    method: "assumption",
+    confidence: 0.70,
+    notes: "Target: 2 engineers per quarter"
+  }
+  
+  // Annual raise percentage (3% per year = 0.25% per month)
+  param monthly_raise_rate: Rate per Month = 0.0025/1mo {
+    source: "compensation_policy",
+    method: "assumption",
+    confidence: 0.90
+  }
+  
+  // Calculate headcount over time
+  var headcount: TimeSeries<Count<Employees>>
+  headcount[0] = initial_engineers
+  headcount[t+1] = headcount[t] + hiring_rate
+  
+  // Calculate average salary (grows with raises)
+  var avg_salary: TimeSeries<Currency<USD>>
+  avg_salary[0] = starting_salary
+  avg_salary[t+1] = avg_salary[t] * (1 + monthly_raise_rate)
+  
+  // Calculate total monthly payroll
+  var monthly_payroll: TimeSeries<Currency<USD>>
+  monthly_payroll[t] = headcount[t] * avg_salary[t]
+  
+  // Calculate annual salary budget (payroll * 12)
+  var annual_budget: TimeSeries<Currency<USD>>
+  annual_budget[t] = monthly_payroll[t] * 12
+}
