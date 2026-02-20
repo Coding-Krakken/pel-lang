@@ -113,22 +113,31 @@ execute_target_commands = os.getenv("LANG_EVAL_EXECUTE_TARGET_COMMANDS", "0") ==
 base["artifacts"]["configured_command"] = suite_command
 
 if execute_target_commands and suite_command:
-  command = suite_command.format(
-    target=target,
-    suite=suite,
-    outdir=str(outfile.parent),
-    repeat=repeat,
-    warmup=warmup,
-  )
-  proc = subprocess.run(command, shell=True, capture_output=True, text=True)
-  base["artifacts"]["executed_command"] = command
-  base["artifacts"]["command_exit_code"] = proc.returncode
-  if proc.stdout.strip():
-    base["artifacts"]["command_stdout_tail"] = proc.stdout.strip().splitlines()[-20:]
-  if proc.stderr.strip():
-    base["artifacts"]["command_stderr_tail"] = proc.stderr.strip().splitlines()[-20:]
-  if proc.returncode != 0:
-    base["status"] = "fail"
+  try:
+    formatted_command = suite_command.format(
+      target=target,
+      suite=suite,
+      outdir=str(outfile.parent),
+      repeat=repeat,
+      warmup=warmup,
+    )
+    import shlex
+    command_parts = shlex.split(formatted_command)
+    proc = subprocess.run(command_parts, capture_output=True, text=True, timeout=600)
+    base[\"artifacts\"][\"executed_command\"] = formatted_command
+    base[\"artifacts\"][\"command_exit_code\"] = proc.returncode
+    if proc.stdout.strip():
+      base[\"artifacts\"][\"command_stdout_tail\"] = proc.stdout.strip().splitlines()[-20:]
+    if proc.stderr.strip():
+      base[\"artifacts\"][\"command_stderr_tail\"] = proc.stderr.strip().splitlines()[-20:]
+    if proc.returncode != 0:
+      base[\"status\"] = \"fail\"
+  except subprocess.TimeoutExpired:
+    base[\"status\"] = \"fail\"
+    base[\"artifacts\"][\"error\"] = f\"Suite execution timed out after 600 seconds\"
+  except (ValueError, IndexError) as e:
+    base[\"status\"] = \"fail\"
+    base[\"artifacts\"][\"error\"] = f\"Command execution failed: {str(e)}\"
 
 if suite == "conformance":
     base["metrics"] = {

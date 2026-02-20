@@ -1,35 +1,90 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Coding-Krakken/pel-lang/languages-eval/schemas/report.schema.json",
   "title": "Language Evaluation Report",
   "type": "object",
   "required": ["target_id", "generated_at", "overall_score", "category_scores", "suite_scores", "artifacts"],
+  "additionalProperties": false,
   "properties": {
-    "target_id": {"type": "string"},
-    "generated_at": {"type": "string"},
-    "overall_score": {"type": "number", "minimum": 0, "maximum": 5},
-    "category_scores": {"type": "object", "additionalProperties": {"type": "number"}},
-    "suite_scores": {"type": "object", "additionalProperties": {"type": "number"}},
+    "target_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 5.0
+    },
+    "generated_by": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "script": {
+          "type": "string"
+        },
+        "python": {
+          "type": "string"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "category_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 5.0
+      }
+    },
+    "suite_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 5.0
+      }
+    },
     "comparisons": {
       "type": "object",
-      "properties": {
-        "baseline": {"type": "string"},
-        "regressions": {"type": "array", "items": {"type": "object"}},
-        "deltas": {"type": "object", "additionalProperties": {"type": "number"}}
-      },
-      "additionalProperties": true
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "string"},
+          {"type": "boolean"},
+          {"type": "array"},
+          {"type": "object"},
+          {"type": "null"}
+        ]
+      }
     },
     "artifacts": {
       "type": "object",
       "required": ["results_raw", "results_normalized", "scorecard", "report_md", "summary_md"],
+      "additionalProperties": true,
       "properties": {
-        "results_raw": {"type": "string"},
-        "results_normalized": {"type": "string"},
-        "scorecard": {"type": "string"},
-        "report_md": {"type": "string"},
-        "summary_md": {"type": "string"}
-      },
-      "additionalProperties": true
+        "results_raw": {
+          "type": "string"
+        },
+        "results_normalized": {
+          "type": "string"
+        },
+        "scorecard": {
+          "type": "string"
+        },
+        "report_md": {
+          "type": "string"
+        },
+        "summary_md": {
+          "type": "string"
+        }
+      }
     }
-  },
-  "additionalProperties": true
+  }
 }

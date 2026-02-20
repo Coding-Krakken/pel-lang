@@ -21,9 +21,16 @@ SUITE_GLOB = "suite.*.json"
 
 
 def _load_target(path: Path) -> dict[str, Any]:
-    if path.suffix.lower() in {".yaml", ".yml"}:
-        return yaml.safe_load(path.read_text(encoding="utf-8"))
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        if path.suffix.lower() in {".yaml", ".yml"}:
+            return yaml.safe_load(path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
+    except FileNotFoundError as exc:
+        raise SystemExit(f"File not found: {path}") from exc
 
 
 def _clamp_score(value: float) -> float:
