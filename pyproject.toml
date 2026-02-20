@@ -76,11 +76,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pel-lang/pel"
-Documentation = "https://github.com/pel-lang/pel/tree/main/spec"
-Repository = "https://github.com/pel-lang/pel"
-Issues = "https://github.com/pel-lang/pel/issues"
-"Commercial License" = "https://github.com/pel-lang/pel/blob/main/COMMERCIAL-LICENSE.md"
+Homepage = "https://github.com/Coding-Krakken/pel-lang"
+Documentation = "https://github.com/Coding-Krakken/pel-lang/tree/main/spec"
+Repository = "https://github.com/Coding-Krakken/pel-lang"
+Issues = "https://github.com/Coding-Krakken/pel-lang/issues"
+"Commercial License" = "https://github.com/Coding-Krakken/pel-lang/blob/main/COMMERCIAL-LICENSE.md"
 
 [project.scripts]
 pel = "runtime.runtime:main"

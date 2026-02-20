@@ -97,7 +97,7 @@
 
 ### 3.1 Official Test Suite
 
-**Repository:** `github.com/pel-lang/pel-conformance`
+**Repository:** `github.com/Coding-Krakken/pel-conformance`
 
 **Structure:**
 ```
@@ -183,7 +183,7 @@ implementation:
   version: "0.1.0"
   language: "Python"
   license: "AGPL-3.0-or-later OR Commercial"
-  url: "https://github.com/pel-lang/pel-reference"
+  url: "https://github.com/Coding-Krakken/pel-reference"
   
 conformance:
   level: extended
@@ -358,7 +358,7 @@ Memory peak: 150 MB
 **If you find a conformant implementation producing wrong results:**
 
 1. Isolate minimal test case
-2. File issue: `github.com/pel-lang/pel/issues`
+2. File issue: `github.com/Coding-Krakken/pel-lang/issues`
 3. Tag: `conformance-violation`
 4. Include: implementation name, version, test input, expected output, actual output
 
@@ -368,7 +368,7 @@ Memory peak: 150 MB
 
 ### 10.1 Official Reference
 
-**Repository:** `github.com/pel-lang/pel-reference`
+**Repository:** `github.com/Coding-Krakken/pel-reference`
 
 **Language:** Python 3.11+
 
@@ -424,7 +424,7 @@ Memory peak: 150 MB
 
 ### Q3: How do I report ambiguities in the spec?
 
-**File issue:** `github.com/pel-lang/pel/issues` with tag `spec-clarification`
+**File issue:** `github.com/Coding-Krakken/pel-lang/issues` with tag `spec-clarification`
 
 ### Q4: Can I charge for my implementation?
 
@@ -467,5 +467,5 @@ Memory peak: 150 MB
 ---
 
 **Document Maintainers:** PEL Core Team  
-**Conformance Registry:** [github.com/pel-lang/conformance-registry](https://github.com/pel-lang/conformance-registry)  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Conformance Registry:** [github.com/Coding-Krakken/conformance-registry](https://github.com/Coding-Krakken/conformance-registry)  
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)

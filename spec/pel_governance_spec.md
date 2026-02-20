@@ -412,4 +412,4 @@ For publication-ready models:
 ---
 
 **Document Maintainers:** PEL Core Team  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)

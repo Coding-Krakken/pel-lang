@@ -514,4 +514,4 @@ Before production deployment:
 
 **Document Maintainers:** PEL Core Team  
 **Security Contact:** security@pel-lang.org (GPG: 0x12345678)  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)

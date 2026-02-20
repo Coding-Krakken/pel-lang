@@ -667,10 +667,10 @@ def test_currency_conversion():
 
 ### Where to Ask
 
-1. **GitHub Issues**: [github.com/pel-lang/pel/issues](https://github.com/pel-lang/pel/issues)  
+1. **GitHub Issues**: [github.com/Coding-Krakken/pel-lang/issues](https://github.com/Coding-Krakken/pel-lang/issues)  
    For bugs, CI failures, unexpected behavior
 
-2. **GitHub Discussions**: [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)  
+2. **GitHub Discussions**: [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)  
    For questions, best practices, general help
 
 3. **PR Comments**: Ask maintainers for specific feedback on your PR
@@ -736,4 +736,4 @@ When CI fails:
 ---
 
 **Last updated:** 2026-02-18  
-**Questions?** Open an issue on [GitHub](https://github.com/pel-lang/pel/issues)
+**Questions?** Open an issue on [GitHub](https://github.com/Coding-Krakken/pel-lang/issues)

@@ -457,6 +457,6 @@ Before merge, verify:
 ---
 
 **Questions about merge requirements?**  
-Ask in [GitHub Discussions](https://github.com/pel-lang/pel/discussions) or open an issue.
+Ask in [GitHub Discussions](https://github.com/Coding-Krakken/pel-lang/discussions) or open an issue.
 
 **Last updated:** 2026-02-18

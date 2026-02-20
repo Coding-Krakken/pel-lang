@@ -869,7 +869,7 @@ validation:
     method: "Generate random valid models, verify properties"
     
   conformance_testing:
-    test_suite: "pel-conformance (github.com/pel-lang/pel-conformance)"
+    test_suite: "pel-conformance (github.com/Coding-Krakken/pel-conformance)"
     levels:
       - "Core: Basic compilation, type checking, deterministic runtime"
       - "Extended: Monte Carlo, correlation, sensitivity"

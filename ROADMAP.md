@@ -551,4 +551,4 @@ By the end of 2026, PEL will have:
 
 **Next Review:** April 2026  
 **Roadmap Owner:** PEL Core Team  
-**Community Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Community Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)

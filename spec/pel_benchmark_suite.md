@@ -398,7 +398,7 @@ PEL-UX Human Factors:
 
 ### 7.2 Benchmark Artifacts
 
-**Public repository:** `github.com/pel-lang/pel-benchmarks`
+**Public repository:** `github.com/Coding-Krakken/pel-benchmarks`
 
 **Contents:**
 - `/pel-100/`: 100 archetype models in 4 languages
@@ -442,7 +442,7 @@ PEL-UX Human Factors:
 
 **Submission process:**
 1. Create benchmark following this spec
-2. Open PR to `pel-lang/pel-benchmarks`
+2. Open PR to `Coding-Krakken/pel-benchmarks`
 3. Core team review
 4. Merge and include in CI
 
@@ -465,5 +465,5 @@ PEL-UX Human Factors:
 ---
 
 **Document Maintainers:** PEL Core Team  
-**Benchmark Repository:** [github.com/pel-lang/pel-benchmarks](https://github.com/pel-lang/pel-benchmarks)  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Benchmark Repository:** [github.com/Coding-Krakken/pel-benchmarks](https://github.com/Coding-Krakken/pel-benchmarks)  
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)

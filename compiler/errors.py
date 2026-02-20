@@ -319,5 +319,5 @@ class InternalError(CompilerError):
             "E9999",
             f"Internal compiler error: {message}",
             location,
-            hint="This is a compiler bug. Please report at https://github.com/pel-lang/pel/issues"
+            hint="This is a compiler bug. Please report at https://github.com/Coding-Krakken/pel-lang/issues"
         )

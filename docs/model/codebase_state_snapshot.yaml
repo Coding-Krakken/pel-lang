@@ -10,7 +10,7 @@
 metadata:
   snapshot_date: "2026-02-13T00:00:00Z"
   pel_version: "0.1.0"
-  repository: "https://github.com/pel-lang/pel"
+  repository: "https://github.com/Coding-Krakken/pel-lang"
   total_loc_implementation: 6000
   total_loc_specification: 20000
   specification_documents: 11

@@ -561,7 +561,7 @@ You've learned how to:
 
 - [Calibration Module README](../../runtime/calibration/README.md)
 - [Calibration Examples](../../examples/CALIBRATION_EXAMPLES.md)
-- [Issue #25: Calibration MVP Specification](https://github.com/pel-lang/pel/issues/25)
+- [Issue #25: Calibration MVP Specification](https://github.com/Coding-Krakken/pel-lang/issues/25)
 - [ROADMAP.md](../../ROADMAP.md) - Phase 7: Digital Twin
 
 ## Exercises

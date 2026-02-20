@@ -1397,5 +1397,5 @@ Potential future additions (not in v0.1):
 ---
 
 **Document Maintainers:** PEL Core Team  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)  
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)  
 **Canonical URL:** https://spec.pel-lang.org/v0.1/language

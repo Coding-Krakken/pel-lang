@@ -394,7 +394,7 @@ error[V003]: Parameter 'churnRate' missing provenance
 
 ## 7. Test Suite
 
-**Repository:** `github.com/pel-lang/pel-conformance/ir-validation-tests`
+**Repository:** `github.com/Coding-Krakken/pel-conformance/ir-validation-tests`
 
 **Structure:**
 ```
@@ -420,4 +420,4 @@ error[V003]: Parameter 'churnRate' missing provenance
 ---
 
 **Document Maintainers:** PEL Core Team  
-**Feedback:** [github.com/pel-lang/pel/discussions](https://github.com/pel-lang/pel/discussions)
+**Feedback:** [github.com/Coding-Krakken/pel-lang/discussions](https://github.com/Coding-Krakken/pel-lang/discussions)
