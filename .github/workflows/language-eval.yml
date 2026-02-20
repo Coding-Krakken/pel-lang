@@ -45,8 +45,13 @@ jobs:
           PY
 
   run-language-eval:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: validate-target
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11"]
+      fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,7 +59,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: pip
 
       - name: Install dependencies
@@ -64,9 +69,11 @@ jobs:
           pip install jsonschema
 
       - name: Ensure runner scripts are executable
+        if: runner.os != 'Windows'
         run: chmod +x .language-eval/scripts/run_all.sh .language-eval/scripts/run_suite.sh
 
       - name: Run language eval (fast on PR, full on main/pre-main)
+        shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             ./.language-eval/scripts/run_all.sh \
@@ -80,6 +87,7 @@ jobs:
           fi
 
       - name: Re-run for determinism check
+        shell: bash
         env:
           LANG_EVAL_TIMESTAMP: stable
         run: |
@@ -102,6 +110,7 @@ jobs:
           fi
 
       - name: CI gate
+        shell: bash
         run: |
           python .language-eval/scripts/ci_gate.py \
             --target .language-eval/targets/example-target.yaml \
@@ -114,11 +123,12 @@ jobs:
 
       - name: Upload language-eval report artifacts
         uses: actions/upload-artifact@v4
-        with:
+        with:-${{ matrix.os }}
           name: language-eval-report
           path: |
             .language-eval/reports/current/
 
       - name: PR summary
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && runner.os == 'Linux'
+        shell: bash
         run: cat .language-eval/reports/current/summary.md >> "$GITHUB_STEP_SUMMARY"

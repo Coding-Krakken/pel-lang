@@ -10,7 +10,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: run_suite.sh --target <target.yaml> --suite <name> --outdir <dir> [--repeat N] [--warmup N]
+Usage: run_suite.sh --target <target.yaml> --suite <name> --outdir <dir> [--repeat N] [--warmup N] [--timeout N]
 
 Runs one language-eval suite and writes suite.<name>.json under outdir.
 
@@ -20,6 +20,7 @@ Options:
   --outdir   Output directory
   --repeat   Measured repetitions (default: 5)
   --warmup   Warmup iterations (default: 1)
+  --timeout  Suite timeout in seconds (default: 600, 0 = no timeout)
   -h, --help Show this help
 EOF
 }
@@ -29,6 +30,7 @@ SUITE=""
 OUTDIR=""
 REPEAT=5
 WARMUP=1
+TIMEOUT=600
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -42,6 +44,8 @@ while [[ $# -gt 0 ]]; do
       REPEAT="$2"; shift 2 ;;
     --warmup)
       WARMUP="$2"; shift 2 ;;
+    --timeout)
+      TIMEOUT="$2"; shift 2 ;;
     -h|--help)
       usage; exit 0 ;;
     *)
@@ -68,7 +72,7 @@ mkdir -p "$OUTDIR"
 LOGFILE="$OUTDIR/suite.${SUITE}.log"
 OUTFILE="$OUTDIR/suite.${SUITE}.json"
 
-python - "$SUITE" "$TARGET" "$REPEAT" "$WARMUP" "$LOGFILE" "$OUTFILE" <<'PY'
+python - "$SUITE" "$TARGET" "$REPEAT" "$WARMUP" "$TIMEOUT" "$LOGFILE" "$OUTFILE" <<'PY'
 import os
 import json
 import subprocess
@@ -84,11 +88,12 @@ suite = sys.argv[1]
 target = sys.argv[2]
 repeat = int(sys.argv[3])
 warmup = int(sys.argv[4])
-logfile = Path(sys.argv[5])
-outfile = Path(sys.argv[6])
+timeout_seconds = int(sys.argv[5])
+logfile = Path(sys.argv[6])
+outfile = Path(sys.argv[7])
 
 logfile.write_text(
-    f"suite={suite}\ntarget={target}\nrepeat={repeat}\nwarmup={warmup}\n",
+    f"suite={suite}\ntarget={target}\nrepeat={repeat}\nwarmup={warmup}\ntimeout={timeout_seconds}s\n",
     encoding="utf-8",
 )
 
@@ -103,7 +108,7 @@ def _load_target(path: Path) -> dict:
 base = {
     "suite": suite,
     "status": "pass",
-    "config": {"repeat": repeat, "warmup": warmup},
+    "config": {"repeat": repeat, "warmup": warmup, "timeout": timeout_seconds},
     "artifacts": {"log": str(logfile.name)},
 }
 
@@ -123,7 +128,8 @@ if execute_target_commands and suite_command:
     )
     import shlex
     command_parts = shlex.split(formatted_command)
-    proc = subprocess.run(command_parts, capture_output=True, text=True, timeout=600)
+    timeout_arg = None if timeout_seconds == 0 else timeout_seconds
+    proc = subprocess.run(command_parts, capture_output=True, text=True, timeout=timeout_arg)
     base["artifacts"]["executed_command"] = formatted_command
     base["artifacts"]["command_exit_code"] = proc.returncode
     if proc.stdout.strip():
@@ -134,7 +140,7 @@ if execute_target_commands and suite_command:
       base["status"] = "fail"
   except subprocess.TimeoutExpired:
     base["status"] = "fail"
-    base["artifacts"]["error"] = "Suite execution timed out after 600 seconds"
+    base["artifacts"]["error"] = f"Suite execution timed out after {timeout_seconds} seconds"
   except (ValueError, IndexError) as e:
     base["status"] = "fail"
     base["artifacts"]["error"] = f"Command execution failed: {str(e)}"

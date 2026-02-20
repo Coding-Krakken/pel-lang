@@ -10,7 +10,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: run_all.sh --target <target.yaml> [--outdir <dir>] [--repeat N] [--warmup N] [--fast]
+Usage: run_all.sh --target <target.yaml> [--outdir <dir>] [--repeat N] [--warmup N] [--timeout N] [--jobs N] [--fast]
 
 Runs all enabled suites for a target, normalizes results, computes scorecard,
 and emits markdown/json reports under .language-eval/reports/<timestamp>/.
@@ -20,6 +20,8 @@ Options:
   --outdir   Explicit output directory (default: .language-eval/reports/<timestamp>)
   --repeat   Repetitions for performance-like suites (default: 5)
   --warmup   Warmup iterations (default: 1)
+  --timeout  Per-suite timeout in seconds (default: 600, 0 = no timeout)
+  --jobs     Number of parallel suite jobs (default: 1 = sequential)
   --fast     Run fast subset only (conformance, security, tooling)
   -h, --help Show this help
 EOF
@@ -29,6 +31,8 @@ TARGET=""
 OUTDIR=""
 REPEAT=5
 WARMUP=1
+TIMEOUT=600
+JOBS=1
 FAST=0
 
 while [[ $# -gt 0 ]]; do
@@ -41,6 +45,10 @@ while [[ $# -gt 0 ]]; do
       REPEAT="$2"; shift 2 ;;
     --warmup)
       WARMUP="$2"; shift 2 ;;
+    --timeout)
+      TIMEOUT="$2"; shift 2 ;;
+    --jobs)
+      JOBS="$2"; shift 2 ;;
     --fast)
       FAST=1; shift ;;
     -h|--help)
@@ -97,14 +105,46 @@ if [[ -z "$SUITES" ]]; then
 fi
 
 echo "Running suites into: $OUTDIR"
+echo "Configuration: repeat=$REPEAT, warmup=$WARMUP, timeout=${TIMEOUT}s, jobs=$JOBS"
+
+# Run suites in parallel if jobs > 1
+pids=()
+active_jobs=0
+
 for suite in $SUITES; do
-  "$ROOT/scripts/run_suite.sh" \
-    --target "$TARGET" \
-    --suite "$suite" \
-    --outdir "$OUTDIR" \
-    --repeat "$REPEAT" \
-    --warmup "$WARMUP"
+  # Wait if we've hit the parallel job limit
+  while [[ $active_jobs -ge $JOBS ]]; do
+    # Wait for any job to complete
+    wait -n 2>/dev/null || true
+    active_jobs=$((active_jobs - 1))
+  done
+  
+  # Launch suite in background if parallel, foreground if sequential
+  if [[ $JOBS -gt 1 ]]; then
+    "$ROOT/scripts/run_suite.sh" \
+      --target "$TARGET" \
+      --suite "$suite" \
+      --outdir "$OUTDIR" \
+      --repeat "$REPEAT" \
+      --warmup "$WARMUP" \
+      --timeout "$TIMEOUT" &
+    pids+=($!)
+    active_jobs=$((active_jobs + 1))
+  else
+    "$ROOT/scripts/run_suite.sh" \
+      --target "$TARGET" \
+      --suite "$suite" \
+      --outdir "$OUTDIR" \
+      --repeat "$REPEAT" \
+      --warmup "$WARMUP" \
+      --timeout "$TIMEOUT"
+  fi
 done
+
+# Wait for all background jobs to complete
+if [[ ${#pids[@]} -gt 0 ]]; then
+  wait "${pids[@]}"
+fi
 
 python "$ROOT/scripts/normalize_results.py" \
   --target "$TARGET" \

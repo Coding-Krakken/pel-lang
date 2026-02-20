@@ -28,8 +28,10 @@ This framework provides a repeatable way to evaluate a language implementation (
 Useful flags:
 
 - `--outdir <path>` custom output location
-- `--repeat <n>` benchmark repetitions
-- `--warmup <n>` warmup runs
+- `--repeat <n>` benchmark repetitions (default: 5)
+- `--warmup <n>` warmup runs (default: 1)
+- `--timeout <n>` per-suite timeout in seconds (default: 600, 0 = no timeout)
+- `--jobs <n>` number of parallel suite jobs (default: 1 = sequential)
 - `--fast` run fast subset (`conformance`, `security`, `tooling`)
 
 Optional behavior:
@@ -49,6 +51,24 @@ CI validates:
 - No regressions beyond configured tolerance against baseline (scoped to categories covered by executed suites)
 - Deterministic `report.json` hash across two equivalent runs
 
+## Baseline management
+
+Check baseline age to ensure baselines remain relevant:
+
+```bash
+# Check if baselines are stale (warns at 90 days, errors at 180 days)
+python .language-eval/scripts/check_baseline_age.py \
+  .language-eval/baselines/*.json
+
+# Custom thresholds
+python .language-eval/scripts/check_baseline_age.py \
+  --warning-days 60 \
+  --error-days 120 \
+  .language-eval/baselines/baseline.example.json
+```
+
+See [BASELINE_MANAGEMENT.md](BASELINE_MANAGEMENT.md) for full baseline lifecycle documentation.
+
 ## Interpret reports
 
 - `results.raw.json`: per-suite raw measurements
@@ -61,8 +81,11 @@ CI validates:
 ## Quick workflow
 
 ```bash
-# 1) Run all suites
-./.language-eval/scripts/run_all.sh --target .language-eval/targets/example-target.yaml
+# 1) Run all suites (with parallel execution for speed)
+./.language-eval/scripts/run_all.sh \
+  --target .language-eval/targets/example-target.yaml \
+  --jobs 3 \
+  --timeout 300
 
 # 2) Compare with baseline
 python .language-eval/scripts/compare_baseline.py \
@@ -82,4 +105,18 @@ python .language-eval/scripts/ci_gate.py \
   --report-dir .language-eval/reports/<timestamp_a> \
   --compare-report-dir .language-eval/reports/<timestamp_b> \
   --determinism-only
+```
+
+## Performance optimization
+
+**Parallel execution:** Use `--jobs N` to run multiple suites concurrently:
+```bash
+# Run 3 suites in parallel (reduces total execution time)
+./.language-eval/scripts/run_all.sh --target <target> --jobs 3
+```
+
+**Timeouts:** Prevent slow suites from blocking CI:
+```bash
+# Each suite must complete within 300 seconds
+./.language-eval/scripts/run_all.sh --target <target> --timeout 300
 ```
