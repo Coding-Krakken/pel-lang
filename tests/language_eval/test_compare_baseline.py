@@ -7,16 +7,13 @@
 
 """Tests for compare_baseline.py: regression detection and scope awareness."""
 
-import json
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
 
 # Import the compare_baseline module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / ".language-eval" / "scripts"))
-import compare_baseline
 
 
 @pytest.fixture
@@ -69,11 +66,11 @@ class TestRegressionDetection:
     def test_no_regression_when_scores_stable(self, mock_baseline_scorecard):
         """Verify no regression detected when scores are stable."""
         current = mock_baseline_scorecard.copy()
-        
+
         # Manually compute deltas
         baseline_scores = mock_baseline_scorecard["category_scores"]
         current_scores = current["category_scores"]
-        
+
         for category in baseline_scores:
             delta = current_scores[category] - baseline_scores[category]
             assert delta == 0.0
@@ -82,7 +79,7 @@ class TestRegressionDetection:
         """Verify regression detected when score drops significantly."""
         baseline_scores = mock_baseline_scorecard["category_scores"]
         current_scores = mock_current_scorecard["category_scores"]
-        
+
         # performance dropped from 4.0 to 3.5
         delta = current_scores["performance"] - baseline_scores["performance"]
         assert delta == pytest.approx(-0.5, abs=0.01)
@@ -90,16 +87,14 @@ class TestRegressionDetection:
 
     def test_tolerance_threshold_applied(self):
         """Verify regression tolerance threshold is respected."""
-        baseline = {"category_scores": {"performance": 4.0}}
-        current_ok = {"category_scores": {"performance": 3.85}}  # -3.75% (within 5% tolerance)
-        current_bad = {"category_scores": {"performance": 3.7}}  # -7.5% (exceeds 5% tolerance)
-        
         # Mock the tolerance check logic
         tolerance_pct = 5.0
-        
-        delta_ok = (3.85 - 4.0) / 4.0 * 100  # -3.75%
-        delta_bad = (3.7 - 4.0) / 4.0 * 100  # -7.5%
-        
+
+        # -3.75% delta (within 5% tolerance)
+        delta_ok = (3.85 - 4.0) / 4.0 * 100
+        # -7.5% delta (exceeds 5% tolerance)
+        delta_bad = (3.7 - 4.0) / 4.0 * 100
+
         assert abs(delta_ok) < tolerance_pct
         assert abs(delta_bad) > tolerance_pct
 
@@ -111,11 +106,10 @@ class TestScopeAwareness:
         """Verify regression check only applies to categories covered by executed suites."""
         # If only conformance suite ran, should only check correctness/reliability
         # This requires understanding the CATEGORY_SUITE_DEPENDENCIES mapping
-        
+
         # Simplified test: verify that categories not covered by executed suites are skipped
         executed_suites = ["conformance"]
-        all_categories = ["correctness", "security", "performance", "tooling", "human_factors"]
-        
+
         # Mock the dependency mapping (from compare_baseline.py)
         category_suite_deps = {
             "correctness": ["conformance"],
@@ -124,12 +118,12 @@ class TestScopeAwareness:
             "tooling": ["tooling"],
             "human_factors": ["human_factors"],
         }
-        
+
         evaluated_categories = []
         for category, required_suites in category_suite_deps.items():
             if all(suite in executed_suites for suite in required_suites):
                 evaluated_categories.append(category)
-        
+
         assert "correctness" in evaluated_categories
         assert "security" not in evaluated_categories
 

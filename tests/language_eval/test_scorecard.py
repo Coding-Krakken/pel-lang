@@ -16,7 +16,6 @@ import pytest
 
 # Import the scorecard module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / ".language-eval" / "scripts"))
-import scorecard
 
 
 @pytest.fixture
@@ -87,7 +86,7 @@ class TestWeightResolution:
             # Test the logic directly
             profile = mock_target_config["weight_profile"]
             weights = mock_weights_default["profiles"][profile]
-            
+
             assert weights["correctness"] == 0.35
             assert weights["security"] == 0.25
             assert weights["performance"] == 0.20
@@ -99,10 +98,10 @@ class TestWeightResolution:
             "correctness": 0.50,
             "performance": 0.10,
         }
-        
+
         # Simulate override logic
         merged = {**profile_weights, **overrides}
-        
+
         assert merged["correctness"] == 0.50  # override
         assert merged["security"] == 0.25  # from profile
         assert merged["performance"] == 0.10  # override
@@ -124,14 +123,14 @@ class TestScoreCalculation:
             "security": 5.0,
             "performance": 4.0,
         }
-        
+
         # Manual calculation: sum(weight * score) for present categories
         overall = (
             weights["correctness"] * category_scores["correctness"] +
             weights["security"] * category_scores["security"] +
             weights["performance"] * category_scores["performance"]
         )
-        
+
         # Expected: 0.35*4.5 + 0.25*5.0 + 0.20*4.0 = 1.575 + 1.25 + 0.8 = 3.625
         assert overall == pytest.approx(3.625, abs=0.01)
 
@@ -139,10 +138,10 @@ class TestScoreCalculation:
         """Verify overall score only includes present categories."""
         weights = mock_weights_default["profiles"]["web_backend"]
         category_scores = {"correctness": 5.0}
-        
+
         # Only correctness present, weight=0.35, score=5.0
         overall = weights["correctness"] * category_scores["correctness"]
-        
+
         # Overall = 0.35 * 5.0 = 1.75
         assert overall == pytest.approx(1.75, abs=0.01)
 
