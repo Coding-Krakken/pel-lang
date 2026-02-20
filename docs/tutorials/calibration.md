@@ -44,7 +44,7 @@ You're modeling a SaaS business with:
 The model before calibration (`calibration_saas_churn.pel`):
 
 ```pel
-param monthly_churn_rate: Probability ~ Beta(alpha: 2, beta: 20)
+param monthly_churn_rate: Fraction ~ Beta(alpha: 2, beta: 20)
     with provenance(
         source: "assumption",
         method: "expert_estimate", 
@@ -402,7 +402,7 @@ Automate recalibration in CI/CD pipeline:
 
 Always maintain provenance:
 ```pel
-param churn_rate: Probability ~ Beta(alpha: 11.47, beta: 131.99)
+param churn_rate: Fraction ~ Beta(alpha: 11.47, beta: 131.99)
     with provenance(
         source: "calibrated",
         method: "mle", 
@@ -559,10 +559,10 @@ You've learned how to:
 
 ## Further Reading
 
-- [Calibration Module README](../runtime/calibration/README.md)
-- [Calibration Examples](../examples/CALIBRATION_EXAMPLES.md)
+- [Calibration Module README](../../runtime/calibration/README.md)
+- [Calibration Examples](../../examples/CALIBRATION_EXAMPLES.md)
 - [Issue #25: Calibration MVP Specification](https://github.com/pel-lang/pel/issues/25)
-- [ROADMAP.md](../ROADMAP.md) - Phase 7: Digital Twin
+- [ROADMAP.md](../../ROADMAP.md) - Phase 7: Digital Twin
 
 ## Exercises
 

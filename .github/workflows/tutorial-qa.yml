@@ -1,0 +1,295 @@
+name: Tutorial Quality Assurance
+
+on:
+  pull_request:
+    paths:
+      - 'docs/tutorials/**'
+      - 'README.md'
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'docs/tutorials/**'
+      - 'README.md'
+
+jobs:
+  validate-tutorial-code:
+    name: Validate Tutorial Code Blocks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Validate PEL code in tutorials
+        run: |
+          python scripts/validate_tutorial_code.py --verbose
+
+  check-broken-links:
+    name: Check for Broken Links
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check internal links
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for broken internal links..."
+          errors=0
+          
+          # Check for non-existent directory references (absolute paths)
+          for dir in '/docs/model/' '/docs/runtime/' '/docs/patterns/' '/docs/troubleshooting/' '/docs/deployment/'; do
+            if grep -rn "$dir" docs/tutorials/ README.md 2>/dev/null; then
+              echo "❌ Found references to non-existent ${dir} directory"
+              errors=$((errors + 1))
+            fi
+          done
+          
+          # Check for broken relative paths to non-existent directories
+          # Note: ../runtime/ excluded because runtime/calibration/ exists and is valid
+          # Note: CONTRIBUTING.md excluded as it documents what NOT to do
+          for reldir in '../model/' '../deployment/' '../patterns/'; do
+            if grep -rn "$reldir" $(find docs/tutorials -name "*.md" ! -name "CONTRIBUTING.md") 2>/dev/null; then
+              echo "❌ Found relative references to non-existent ${reldir} directory"
+              errors=$((errors + 1))
+            fi
+          done
+          
+          if [ "$errors" -gt 0 ]; then
+            echo "❌ Found $errors broken link issues"
+            exit 1
+          fi
+          
+          echo "✅ No broken internal links found"
+      
+      - name: Verify spec references
+        run: |
+          set -euo pipefail
+          echo "🔍 Verifying spec file references..."
+          
+          errors=0
+          # Extract all spec file references and verify they exist
+          while IFS= read -r spec_file; do
+            if [ ! -f "$spec_file" ]; then
+              echo "❌ Referenced spec file does not exist: $spec_file"
+              errors=$((errors + 1))
+            fi
+          done < <(grep -roh 'spec/[^)]*\.md' docs/tutorials/ README.md 2>/dev/null | sort -u)
+          
+          if [ "$errors" -gt 0 ]; then
+            exit 1
+          fi
+          
+          echo "✅ All spec references valid"
+
+  validate-metadata:
+    name: Validate Tutorial Metadata
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check tutorial time estimates
+        run: |
+          echo "🔍 Validating tutorial metadata..."
+          
+          # Extract time estimates from individual tutorials
+          declare -A times
+          times["01"]="15"
+          times["02"]="20"
+          times["03"]="25"
+          times["04"]="25"
+          times["05"]="20"
+          times["06"]="30"
+          times["07"]="25"
+          times["08"]="30"
+          times["09"]="40"
+          times["10"]="35"
+          
+          total=0
+          for t in "${times[@]}"; do
+            total=$((total + t))
+          done
+          
+          echo "Total tutorial time: ${total} minutes ($(echo "scale=1; $total/60" | bc) hours)"
+          
+          # Check that README.md reflects correct total
+          if ! grep -q "4.5 hours" docs/tutorials/README.md; then
+            echo "⚠️  Tutorial README should reference 4.5 hours total time"
+          fi
+          
+          echo "✅ Metadata validation complete"
+      
+      - name: Verify tutorial numbering
+        run: |
+          echo "🔍 Checking tutorial file numbering..."
+          
+          expected_files=(
+            "docs/tutorials/your_first_model_15min.md"
+            "docs/tutorials/02_economic_types.md"
+            "docs/tutorials/03_uncertainty_distributions.md"
+            "docs/tutorials/04_constraints_policies.md"
+            "docs/tutorials/05_provenance_governance.md"
+            "docs/tutorials/06_time_series_modeling.md"
+            "docs/tutorials/07_stdlib_functions.md"
+            "docs/tutorials/calibration.md"
+            "docs/tutorials/09_migration_spreadsheets.md"
+            "docs/tutorials/10_production_deployment.md"
+          )
+          
+          for file in "${expected_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Expected tutorial file missing: $file"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All expected tutorial files present"
+
+  consistency-check:
+    name: Check Consistency
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for deprecated types
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for deprecated/invalid type names..."
+          errors=0
+          
+          # Check for Probability used as a type (in code blocks, type declarations, JSON output)
+          # Match: param/var declarations, JSON "type" fields, and type hierarchy diagrams
+          if grep -rn ': Probability\b' docs/tutorials/*.md | grep -v '//\|#\|<!--' | grep -v 'CONTRIBUTING\|not.*Probability\|not a.*type\|Use.*Fraction'; then
+            echo "❌ Found 'Probability' used as a type (should be 'Fraction')"
+            errors=$((errors + 1))
+          fi
+          
+          if grep -rn '"type": "Probability"' docs/tutorials/*.md; then
+            echo "❌ Found '\"type\": \"Probability\"' in JSON output (should be '\"type\": \"Fraction\"')"
+            errors=$((errors + 1))
+          fi
+          
+          if grep -rn '<Bool>' docs/tutorials/*.md; then
+            echo "❌ Found 'Bool' type (should be 'Boolean')"
+            errors=$((errors + 1))
+          fi
+          
+          if [ "$errors" -gt 0 ]; then
+            exit 1
+          fi
+          
+          echo "✅ No deprecated types found in code examples"
+      
+      - name: Check for invalid syntax patterns
+        run: |
+          echo "🔍 Checking for known invalid syntax patterns..."
+          
+          # Check for old correlation syntax
+          if grep -r 'with correlation(' docs/tutorials/*.md; then
+            echo "❌ Found old 'with correlation(...)' syntax"
+            echo "    Should use 'correlated_with: [...]' in provenance block"
+            exit 1
+          fi
+          
+          echo "✅ No invalid syntax patterns found"
+      
+      - name: Verify stdlib function names
+        run: |
+          echo "🔍 Checking stdlib function references..."
+          
+          # Check for known incorrect function names
+          if grep -r 'ltv_discounted' docs/tutorials/*.md; then
+            echo "❌ Found 'ltv_discounted' (should be 'ltv_with_discount')"
+            exit 1
+          fi
+          
+          echo "✅ Stdlib function references look correct"
+
+  security-check:
+    name: Security Best Practices
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for security antipatterns
+        run: |
+          echo "🔍 Checking for security antipatterns in tutorials..."
+          
+          # Tutorial 10 should have security controls
+          if ! grep -q 'ALLOWED_MODELS' docs/tutorials/10_production_deployment.md; then
+            echo "❌ Tutorial 10 should demonstrate model allowlisting"
+            exit 1
+          fi
+          
+          if ! grep -q 'os.path.commonpath' docs/tutorials/10_production_deployment.md; then
+            echo "❌ Tutorial 10 should demonstrate path traversal protection"
+            exit 1
+          fi
+          
+          # Should not have examples of direct path construction without validation
+          if grep -q 'f"{MODEL_DIR}/{model_name}"' docs/tutorials/10_production_deployment.md; then
+            echo "❌ Tutorial 10 should not show unvalidated path construction"
+            exit 1
+          fi
+          
+          echo "✅ Security best practices demonstrated correctly"
+
+  summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [validate-tutorial-code, check-broken-links, validate-metadata, consistency-check, security-check]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        env:
+          VALIDATE_RESULT: ${{ needs.validate-tutorial-code.result }}
+          LINKS_RESULT: ${{ needs.check-broken-links.result }}
+          METADATA_RESULT: ${{ needs.validate-metadata.result }}
+          CONSISTENCY_RESULT: ${{ needs.consistency-check.result }}
+          SECURITY_RESULT: ${{ needs.security-check.result }}
+        run: |
+          status_icon() {
+            case "$1" in
+              success) echo "✅";;
+              failure) echo "❌";;
+              cancelled) echo "⏭️";;
+              skipped) echo "⏭️";;
+              *) echo "❓";;
+            esac
+          }
+          
+          echo "## Tutorial Quality Assurance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tutorial code validation | $(status_icon "$VALIDATE_RESULT") $VALIDATE_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Broken link detection | $(status_icon "$LINKS_RESULT") $LINKS_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Metadata validation | $(status_icon "$METADATA_RESULT") $METADATA_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Consistency checks | $(status_icon "$CONSISTENCY_RESULT") $CONSISTENCY_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security best practices | $(status_icon "$SECURITY_RESULT") $SECURITY_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Fail if any required job failed
+          failed=0
+          for result in "$VALIDATE_RESULT" "$LINKS_RESULT" "$METADATA_RESULT" "$CONSISTENCY_RESULT" "$SECURITY_RESULT"; do
+            if [ "$result" = "failure" ]; then
+              failed=$((failed + 1))
+            fi
+          done
+          
+          if [ "$failed" -gt 0 ]; then
+            echo "❌ $failed check(s) failed. Tutorial suite is NOT production-ready." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "📚 Tutorial suite is production-ready!" >> $GITHUB_STEP_SUMMARY
+          fi

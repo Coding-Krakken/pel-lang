@@ -153,6 +153,48 @@ Running this model:
 
 ---
 
+## Learning Resources
+
+### 📚 Tutorial Learning Path
+
+Complete **10-tutorial series** that takes you from "Hello World" to production deployment:
+
+**🚀 Quick Start (1 hour)**:
+1. [Your First Model in 15 Minutes](docs/tutorials/your_first_model_15min.md) - Build, run, analyze
+2. [Understanding Economic Types](docs/tutorials/02_economic_types.md) - Master the type system
+3. [Uncertainty & Distributions](docs/tutorials/03_uncertainty_distributions.md) - Model risk
+
+**📊 Core Tutorials**:
+4. [Constraints & Policies](docs/tutorials/04_constraints_policies.md) - Enforce business rules
+5. [Provenance & Governance](docs/tutorials/05_provenance_governance.md) - Document assumptions
+6. [Time-Series Modeling](docs/tutorials/06_time_series_modeling.md) - Dynamic values over time
+7. [Stdlib Functions & Modules](docs/tutorials/07_stdlib_functions.md) - Pre-built components
+
+**🎯 Advanced Topics**:
+8. [Calibration Basics](docs/tutorials/calibration.md) - Fit models to real data
+9. [Migration from Spreadsheets](docs/tutorials/09_migration_spreadsheets.md) - Convert Excel models
+10. [Production Deployment](docs/tutorials/10_production_deployment.md) - CI/CD, versioning, monitoring
+
+➡️ **[View Full Tutorial Suite](docs/tutorials/README.md)** - Complete learning path with diagrams, recommended paths, and metadata
+
+### 📖 Documentation
+
+- **[Language Specification](spec/)** - Complete formal spec
+- **[Type System Guide](spec/pel_type_system.md)** - Economic types reference
+- **[Standard Library](stdlib/README.md)** - Stdlib module reference  
+- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Excel → PEL conversion
+- **[Example Models](examples/)** - Production-quality examples
+
+### 🤝 Community
+
+- **[GitHub Discussions](https://github.com/Coding-Krakken/pel-lang/discussions)** - Ask questions, share models
+- **[Issue Tracker](https://github.com/Coding-Krakken/pel-lang/issues)** - Report bugs, request features
+- **[Contributing Guide](CONTRIBUTING.md)** - Contribute to PEL
+
+**Total Tutorial Time**: ~4.5 hours (Quick Start: 1 hour)
+
+---
+
 ## Repository Structure
 
 ```
