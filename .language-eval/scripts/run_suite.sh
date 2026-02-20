@@ -61,6 +61,10 @@ if [[ -z "$TARGET" || -z "$SUITE" || -z "$OUTDIR" ]]; then
   exit 2
 fi
 
+# Normalize suite name (trim whitespace and convert to lowercase for comparison)
+# This handles potential CRLF issues on Windows
+SUITE=$(echo "$SUITE" | tr -d '\r' | xargs)
+
 case "$SUITE" in
   conformance|security|performance|tooling|human_factors) ;;
   *)

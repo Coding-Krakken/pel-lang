@@ -60,7 +60,7 @@ def check_baseline_age(
 
     # Try to extract creation date from baseline
     created_at_str = baseline.get("created_at", baseline.get("generated_at", ""))
-    
+
     if not created_at_str:
         logger.warning("Baseline %s has no created_at or generated_at timestamp", baseline_path.name)
         return 1
@@ -75,7 +75,7 @@ def check_baseline_age(
         msg = f"Invalid date format in baseline: {created_at_str}"
         logger.exception("Failed to parse baseline date")
         raise SystemExit(msg) from exc
-    
+
     age_days = (today - created_at).days
 
     logger.info("Baseline: %s", baseline_path.name)

@@ -99,6 +99,9 @@ print("\n".join(enabled))
 PY
 )
 
+# Normalize suite list (remove carriage returns that might come from Windows)
+SUITES=$(echo "$SUITES" | tr -d '\r')
+
 if [[ -z "$SUITES" ]]; then
   echo "No suites selected for execution." >&2
   exit 3
