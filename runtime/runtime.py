@@ -102,18 +102,86 @@ class PELRuntime:
         # Determine time horizon
         T = self.config.time_horizon or model.get("time_horizon") or 12
 
-        # Time loop
-        timeseries_results: dict[str, list[Any]] = {node["name"]: [] for node in model["nodes"] if node["node_type"] == "var"}
+        # Initialize timeseries result storage
+        timeseries_results: dict[str, list[Any]] = {}
+        for node in model["nodes"]:
+            if node["node_type"] == "var":
+                timeseries_results[node["name"]] = []
+        
         constraint_violations = []
         policy_executions = []
+        events = []
 
+        # Get equations from model
+        equations = model.get("equations", [])
+        
+        # Organize equations by type and target variable
+        initial_eqs: dict[str, dict] = {}
+        recurrence_eqs: dict[str, dict] = {}
+        current_eqs: dict[str, dict] = {}
+        
+        for eq in equations:
+            target_var = None
+            if eq["target"]["expr_type"] == "Indexing":
+                target_var = eq["target"]["expression"]["variable_name"]
+            
+            if eq["equation_type"] == "initial":
+                initial_eqs[target_var] = eq
+            elif eq["equation_type"] == "recurrence_next":
+                recurrence_eqs[target_var] = eq
+            elif eq["equation_type"] in ("recurrence_current", "direct"):
+                current_eqs[target_var] = eq
+
+        # Time loop
         for t in range(T):
-            # Evaluate variables for this timestep
-            for node in model["nodes"]:
-                if node["node_type"] == "var":
-                    # Simplified: assume value depends on t
-                    state[node["name"]] = 100 * (1 + 0.1) ** t  # Stub growth
-                    timeseries_results[node["name"]].append(state[node["name"]])
+            # Add timestep to state
+            state["t"] = t
+            
+            # At t=0, evaluate initial conditions first
+            if t == 0:
+                for var_name, eq in initial_eqs.items():
+                    value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                    timeseries_results[var_name].append(value)
+            
+            # Update state with timeseries arrays (for indexing like customers[t])
+            for var_name, results in timeseries_results.items():
+                state[var_name] = results
+            
+            # Evaluate current timestep equations (revenue[t] = customers[t] * price)
+            # May need multiple passes if there are dependencies between current equations
+            max_iterations = 10
+            for iteration in range(max_iterations):
+                any_updated = False
+                for var_name, eq in current_eqs.items():
+                    # Check if this variable already has a value for this timestep
+                    if t < len(timeseries_results[var_name]):
+                        continue  # Already evaluated
+                    
+                    try:
+                        value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                        if value is not None and not (isinstance(value, float) and (value != value)):  # Check for NaN
+                            timeseries_results[var_name].append(value)
+                            state[var_name] = timeseries_results[var_name]
+                            any_updated = True
+                    except Exception:
+                        # Skip if we can't evaluate yet (missing dependencies)
+                        continue
+                
+                if not any_updated:
+                    break  # All equations evaluated or can't make progress
+            
+            # Fill in any missing values with 0
+            for var_name in timeseries_results:
+                if var_name not in initial_eqs and var_name not in current_eqs and var_name not in recurrence_eqs:
+                    # This is a scalar variable, not a timeseries
+                    continue
+                if t >= len(timeseries_results[var_name]):
+                    # This shouldn't happen, but add a default value to prevent errors
+                    timeseries_results[var_name].append(0)
+            
+            # Update state again after evaluating current equations
+            for var_name, results in timeseries_results.items():
+                state[var_name] = results
 
             # Check constraints
             ordered_constraints = sorted(
@@ -162,11 +230,20 @@ class PELRuntime:
                 trigger_value = self.evaluate_expression(policy["trigger"]["condition"], state)
                 if trigger_value:
                     # Execute action
-                    self.execute_action(policy["action"], state)
+                    action_result = self.execute_action(policy["action"], state)
                     policy_executions.append({
                         "timestep": t,
                         "policy": policy["name"]
                     })
+                    # Collect events emitted by policy
+                    if action_result and "events" in action_result:
+                        events.extend(action_result["events"])
+            
+            # Evaluate recurrence equations for next timestep (customers[t+1] = ...)
+            if t < T - 1:  # Don't compute beyond time horizon
+                for var_name, eq in recurrence_eqs.items():
+                    value = self.evaluate_expression(eq["value"], state, deterministic=deterministic)
+                    timeseries_results[var_name].append(value)
 
         return {
             "status": "success",
@@ -177,6 +254,7 @@ class PELRuntime:
             "variables": timeseries_results,
             "constraint_violations": constraint_violations,
             "policy_executions": policy_executions,
+            "events": events,
             "assumptions": assumptions
         }
 
@@ -491,12 +569,27 @@ class PELRuntime:
                 return left * right
             elif op == "/":
                 return left / right if right != 0 else float('inf')
+            elif op == "%":
+                return left % right if right != 0 else 0
             elif op == "==":
                 return left == right
+            elif op == "!=":
+                return left != right
             elif op == "<":
                 return left < right
+            elif op == "<=":
+                return left <= right
             elif op == ">":
                 return left > right
+            elif op == ">=":
+                return left >= right
+            elif op in ("&&", "and"):
+                return left and right
+            elif op in ("||", "or"):
+                return left or right
+            else:
+                # Unknown operator
+                return 0
 
         elif expr_type == "UnaryOp":
             operand = self.evaluate_expression(expr["operand"], state, deterministic)
@@ -657,9 +750,10 @@ class PELRuntime:
         
         return diagnostics
     
-    def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> None:
-        """Execute policy action."""
+    def execute_action(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        """Execute policy action and return any events emitted."""
         action_type = action.get("action_type")
+        events = []
 
         if action_type == "assign":
             target = action.get("target")
@@ -672,12 +766,28 @@ class PELRuntime:
             # Execute a block of statements sequentially
             statements = action.get("statements", [])
             for stmt in statements:
-                self.execute_action(stmt, state)
+                result = self.execute_action(stmt, state)
+                if result and "events" in result:
+                    events.extend(result["events"])
         
         elif action_type == "emit_event":
-            # Event emission is a no-op in the runtime
-            # Events are logged but don't affect computation
-            pass
+            # Event emission - capture for reporting
+            event_name = action.get("event_name", "unnamed_event")
+            event_args = action.get("args", {})
+            # Evaluate any expressions in event args
+            evaluated_args = {}
+            for key, val in event_args.items():
+                if isinstance(val, dict) and "expr_type" in val:
+                    evaluated_args[key] = self.evaluate_expression(val, state)
+                else:
+                    evaluated_args[key] = val
+            events.append({
+                "name": event_name,
+                "args": evaluated_args,
+                "timestep": state.get("t", -1)
+            })
+        
+        return {"events": events}
 
 
 def main():

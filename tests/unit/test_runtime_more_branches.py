@@ -134,7 +134,7 @@ def test_runtime_evaluate_expression_binary_op_unknown_operator_falls_back_to_ze
     runtime = PELRuntime(RuntimeConfig(mode="deterministic", seed=1))
     expr = {
         "expr_type": "BinaryOp",
-        "operator": "!=",  # not implemented in runtime
+        "operator": "@@",  # truly unknown operator
         "left": {"expr_type": "Literal", "literal_value": 1},
         "right": {"expr_type": "Literal", "literal_value": 2},
     }

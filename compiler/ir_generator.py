@@ -31,6 +31,7 @@ class IRGenerator:
             "time_horizon": model.time_horizon,
             "time_unit": model.time_unit,
             "nodes": [],
+            "equations": [],
             "constraints": [],
             "policies": []
         }
@@ -42,6 +43,11 @@ class IRGenerator:
         # Convert vars to nodes
         for var in model.vars:
             ir_model["nodes"].append(self.generate_var_node(var))
+
+        # Convert equations from statements
+        for stmt in model.statements:
+            if isinstance(stmt, Assignment):
+                ir_model["equations"].append(self.generate_equation(stmt))
 
         # Convert constraints
         for const in model.constraints:
@@ -96,6 +102,37 @@ class IRGenerator:
             node["dependencies"] = self.extract_dependencies(var.value)
 
         return node
+
+    def generate_equation(self, assignment: Assignment) -> dict[str, Any]:
+        """Generate IR equation from assignment statement."""
+        equation_id = f"eq_{self.node_counter}"
+        self.node_counter += 1
+
+        # Determine equation type based on target
+        target_expr = self.generate_expression(assignment.target)
+        value_expr = self.generate_expression(assignment.value)
+        
+        # Detect equation type from target indexing pattern
+        equation_type = "direct"  # Default: x = expr
+        if target_expr.get("expr_type") == "Indexing":
+            index_expr = target_expr.get("index", {})
+            # Check if index is "0" (initial condition) or "t" or "t+1" (recurrence)
+            if index_expr.get("expr_type") == "Literal" and index_expr.get("literal_value") == 0:
+                equation_type = "initial"
+            elif index_expr.get("expr_type") == "Variable" and index_expr.get("variable_name") == "t":
+                equation_type = "recurrence_current"
+            elif (index_expr.get("expr_type") == "BinaryOp" and 
+                  index_expr.get("operator") == "+" and
+                  index_expr.get("left", {}).get("variable_name") == "t"):
+                equation_type = "recurrence_next"
+        
+        return {
+            "equation_id": equation_id,
+            "equation_type": equation_type,
+            "target": target_expr,
+            "value": value_expr,
+            "dependencies": self.extract_dependencies(assignment.value)
+        }
 
     def extract_dependencies(self, expr: Expression) -> list:
         """Extract variable dependencies from an expression."""
