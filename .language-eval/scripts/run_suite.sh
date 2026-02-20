@@ -124,20 +124,20 @@ if execute_target_commands and suite_command:
     import shlex
     command_parts = shlex.split(formatted_command)
     proc = subprocess.run(command_parts, capture_output=True, text=True, timeout=600)
-    base[\"artifacts\"][\"executed_command\"] = formatted_command
-    base[\"artifacts\"][\"command_exit_code\"] = proc.returncode
+    base["artifacts"]["executed_command"] = formatted_command
+    base["artifacts"]["command_exit_code"] = proc.returncode
     if proc.stdout.strip():
-      base[\"artifacts\"][\"command_stdout_tail\"] = proc.stdout.strip().splitlines()[-20:]
+      base["artifacts"]["command_stdout_tail"] = proc.stdout.strip().splitlines()[-20:]
     if proc.stderr.strip():
-      base[\"artifacts\"][\"command_stderr_tail\"] = proc.stderr.strip().splitlines()[-20:]
+      base["artifacts"]["command_stderr_tail"] = proc.stderr.strip().splitlines()[-20:]
     if proc.returncode != 0:
-      base[\"status\"] = \"fail\"
+      base["status"] = "fail"
   except subprocess.TimeoutExpired:
-    base[\"status\"] = \"fail\"
-    base[\"artifacts\"][\"error\"] = f\"Suite execution timed out after 600 seconds\"
+    base["status"] = "fail"
+    base["artifacts"]["error"] = "Suite execution timed out after 600 seconds"
   except (ValueError, IndexError) as e:
-    base[\"status\"] = \"fail\"
-    base[\"artifacts\"][\"error\"] = f\"Command execution failed: {str(e)}\"
+    base["status"] = "fail"
+    base["artifacts"]["error"] = f"Command execution failed: {str(e)}"
 
 if suite == "conformance":
     base["metrics"] = {
