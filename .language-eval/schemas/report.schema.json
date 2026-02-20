@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Language Evaluation Report",
+  "type": "object",
+  "required": ["target_id", "generated_at", "overall_score", "category_scores", "suite_scores", "artifacts"],
+  "properties": {
+    "target_id": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "overall_score": {"type": "number", "minimum": 0, "maximum": 5},
+    "category_scores": {"type": "object", "additionalProperties": {"type": "number"}},
+    "suite_scores": {"type": "object", "additionalProperties": {"type": "number"}},
+    "comparisons": {
+      "type": "object",
+      "properties": {
+        "baseline": {"type": "string"},
+        "regressions": {"type": "array", "items": {"type": "object"}},
+        "deltas": {"type": "object", "additionalProperties": {"type": "number"}}
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["results_raw", "results_normalized", "scorecard", "report_md", "summary_md"],
+      "properties": {
+        "results_raw": {"type": "string"},
+        "results_normalized": {"type": "string"},
+        "scorecard": {"type": "string"},
+        "report_md": {"type": "string"},
+        "summary_md": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

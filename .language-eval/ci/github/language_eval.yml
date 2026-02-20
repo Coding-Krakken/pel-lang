@@ -1,0 +1,123 @@
+name: language-eval
+
+on:
+  push:
+    branches:
+      - main
+      - pre-main
+  pull_request:
+    branches:
+      - pre-main
+
+jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,calibration]
+          pip install jsonschema
+
+      - name: Validate target schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import yaml
+          import jsonschema
+
+          root = Path('.language-eval')
+          schema = json.loads((root / 'schemas' / 'target.schema.json').read_text())
+          target = yaml.safe_load((root / 'targets' / 'example-target.yaml').read_text())
+          jsonschema.validate(target, schema)
+          print('Target schema validation passed.')
+          PY
+
+  run-language-eval:
+    runs-on: ubuntu-latest
+    needs: validate-target
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,calibration]
+          pip install jsonschema
+
+      - name: Ensure runner scripts are executable
+        run: chmod +x .language-eval/scripts/run_all.sh .language-eval/scripts/run_suite.sh
+
+      - name: Run language eval (fast on PR, full on main/pre-main)
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/current \
+              --fast
+          else
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/current
+          fi
+
+      - name: Re-run for determinism check
+        env:
+          LANG_EVAL_TIMESTAMP: stable
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/determinism_a \
+              --fast
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/determinism_b \
+              --fast
+          else
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/determinism_a
+            ./.language-eval/scripts/run_all.sh \
+              --target .language-eval/targets/example-target.yaml \
+              --outdir .language-eval/reports/determinism_b
+          fi
+
+      - name: CI gate
+        run: |
+          python .language-eval/scripts/ci_gate.py \
+            --target .language-eval/targets/example-target.yaml \
+            --report-dir .language-eval/reports/current
+          python .language-eval/scripts/ci_gate.py \
+            --target .language-eval/targets/example-target.yaml \
+            --report-dir .language-eval/reports/determinism_a \
+            --compare-report-dir .language-eval/reports/determinism_b
+
+      - name: Upload language-eval report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: language-eval-report
+          path: |
+            .language-eval/reports/current/
+            .language-eval/reports/current/report.sha256
+
+      - name: PR summary
+        if: github.event_name == 'pull_request'
+        run: cat .language-eval/reports/current/summary.md >> "$GITHUB_STEP_SUMMARY"

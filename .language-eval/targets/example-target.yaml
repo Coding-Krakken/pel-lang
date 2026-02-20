@@ -1,0 +1,43 @@
+target_id: pel-example
+language:
+  name: PEL
+  version: "0.1.0"
+  implementation: "python-runtime"
+platform:
+  os: linux
+  arch: x86_64
+  python: "3.11"
+commands:
+  conformance: "python -m pytest tests/conformance -q"
+  security: "python .language-eval/scripts/run_suite.sh --target {target} --suite security --outdir {outdir}"
+  performance: "python .language-eval/scripts/run_suite.sh --target {target} --suite performance --outdir {outdir} --repeat {repeat} --warmup {warmup}"
+  tooling: "python .language-eval/scripts/run_suite.sh --target {target} --suite tooling --outdir {outdir}"
+  human_factors: "python .language-eval/scripts/run_suite.sh --target {target} --suite human_factors --outdir {outdir}"
+enabled_suites:
+  - conformance
+  - security
+  - performance
+  - tooling
+  - human_factors
+required_suites:
+  - conformance
+  - security
+  - tooling
+weight_profile: web_backend
+weight_overrides: {}
+baseline: .language-eval/baselines/baseline.example.json
+thresholds:
+  regression_tolerance_pct: 5.0
+  min_overall_score: 2.5
+  require_deterministic_report: true
+  require_artifacts:
+    - results.raw.json
+    - results.normalized.json
+    - scorecard.json
+    - report.json
+    - report.md
+expected_failures_file: .language-eval/suites/conformance/expected_failures.yaml
+allowlisted_regressions: []
+metadata:
+  maintainer: pel-core
+  notes: Example target for framework validation

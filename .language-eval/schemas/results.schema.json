@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Canonical Normalized Results",
+  "type": "object",
+  "required": ["target_id", "timestamp", "suites", "metrics"],
+  "properties": {
+    "target_id": {"type": "string"},
+    "timestamp": {"type": "string"},
+    "suites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "metrics"],
+        "properties": {
+          "name": {"type": "string"},
+          "status": {"type": "string", "enum": ["pass", "fail"]},
+          "metrics": {"type": "object", "additionalProperties": {"type": ["number", "string", "boolean", "object", "array", "null"]}},
+          "artifacts": {"type": "object", "additionalProperties": {"type": ["string", "array", "object", "null"]}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["category_inputs"],
+      "properties": {
+        "category_inputs": {"type": "object", "additionalProperties": {"type": "number"}}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

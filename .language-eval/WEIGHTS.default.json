@@ -1,0 +1,31 @@
+{
+  "profiles": {
+    "default": {
+      "correctness_semantics": 0.16,
+      "security_properties": 0.11,
+      "runtime_performance": 0.12,
+      "compiler_toolchain_performance": 0.07,
+      "reliability": 0.09,
+      "dx_productivity": 0.09,
+      "tooling_static_analysis": 0.09,
+      "interop_integration": 0.07,
+      "portability_deployment": 0.05,
+      "concurrency_model": 0.05,
+      "large_codebase_fitness": 0.04,
+      "ecosystem_health": 0.04,
+      "governance_long_term_risk": 0.02
+    }
+  },
+  "profile_references": {
+    "systems": "WEIGHTS.templates/systems.json",
+    "web_backend": "WEIGHTS.templates/web_backend.json",
+    "scripting": "WEIGHTS.templates/scripting.json",
+    "embedded": "WEIGHTS.templates/embedded.json",
+    "data_ml": "WEIGHTS.templates/data_ml.json"
+  },
+  "rules": {
+    "weight_sum_must_equal": 1.0,
+    "tolerance": 1e-6,
+    "target_override_allowed": true
+  }
+}

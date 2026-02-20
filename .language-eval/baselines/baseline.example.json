@@ -1,0 +1,33 @@
+{
+  "target_id": "pel-example",
+  "version": "0.1.0",
+  "created_at": "2026-02-19T00:00:00Z",
+  "environment": {
+    "os": "linux",
+    "arch": "x86_64",
+    "python": "3.11"
+  },
+  "overall_score": 3.4,
+  "category_scores": {
+    "correctness_semantics": 3.6,
+    "security_properties": 3.5,
+    "runtime_performance": 3.2,
+    "compiler_toolchain_performance": 3.1,
+    "reliability": 3.4,
+    "dx_productivity": 3.6,
+    "tooling_static_analysis": 3.5,
+    "interop_integration": 3.3,
+    "portability_deployment": 3.2,
+    "concurrency_model": 3.0,
+    "large_codebase_fitness": 3.1,
+    "ecosystem_health": 3.4,
+    "governance_long_term_risk": 3.8
+  },
+  "suite_metrics": {
+    "conformance": {"pass_rate": 0.97},
+    "security": {"policy_pass_rate": 0.95},
+    "performance": {"p95_latency_ms": 58.0, "rss_mb": 215.0},
+    "tooling": {"formatter_idempotence_rate": 1.0, "lsp_p95_ms": 120.0},
+    "human_factors": {"checklist_coverage": 0.8}
+  }
+}
