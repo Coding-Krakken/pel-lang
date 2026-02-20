@@ -1,0 +1,7 @@
+expected_failures:
+  - id: conformance-example-001
+    reason: Placeholder until conformance fixture migration completes
+    owner: pel-core
+    introduced: "2026-02-19"
+    expiry: "2026-06-30"
+    severity: low

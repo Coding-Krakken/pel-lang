@@ -1,0 +1,18 @@
+{
+  "profile": "web_backend",
+  "weights": {
+    "correctness_semantics": 0.14,
+    "security_properties": 0.13,
+    "runtime_performance": 0.13,
+    "compiler_toolchain_performance": 0.06,
+    "reliability": 0.11,
+    "dx_productivity": 0.10,
+    "tooling_static_analysis": 0.10,
+    "interop_integration": 0.08,
+    "portability_deployment": 0.05,
+    "concurrency_model": 0.04,
+    "large_codebase_fitness": 0.03,
+    "ecosystem_health": 0.02,
+    "governance_long_term_risk": 0.01
+  }
+}

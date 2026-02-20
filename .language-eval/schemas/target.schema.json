@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Language Evaluation Target",
+  "type": "object",
+  "required": [
+    "target_id",
+    "language",
+    "platform",
+    "enabled_suites",
+    "required_suites",
+    "weight_profile",
+    "baseline",
+    "thresholds"
+  ],
+  "properties": {
+    "target_id": {"type": "string", "minLength": 1},
+    "language": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "implementation": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "platform": {"type": "object", "additionalProperties": true},
+    "commands": {"type": "object", "additionalProperties": {"type": "string"}},
+    "enabled_suites": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["conformance", "security", "performance", "tooling", "human_factors"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "required_suites": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["conformance", "security", "performance", "tooling", "human_factors"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "weight_profile": {
+      "type": "string",
+      "enum": ["systems", "web_backend", "scripting", "embedded", "data_ml", "default"]
+    },
+    "weight_overrides": {
+      "type": "object",
+      "additionalProperties": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+    },
+    "baseline": {"type": "string", "minLength": 1},
+    "thresholds": {
+      "type": "object",
+      "required": ["regression_tolerance_pct", "min_overall_score", "require_deterministic_report"],
+      "properties": {
+        "regression_tolerance_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "min_overall_score": {"type": "number", "minimum": 0, "maximum": 5},
+        "require_deterministic_report": {"type": "boolean"},
+        "require_artifacts": {"type": "array", "items": {"type": "string"}},
+        "min_category_scores": {
+          "type": "object",
+          "description": "Per-category minimum score requirements (optional)",
+          "additionalProperties": {"type": "number", "minimum": 0, "maximum": 5}
+        }
+      },
+      "additionalProperties": false
+    },
+    "scoring_overrides": {
+      "type": "object",
+      "description": "Override scoring formula parameters per category (optional)",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "string"}
+          ]
+        }
+      }
+    },
+    "expected_failures_file": {"type": "string"},
+    "allowlisted_regressions": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,5 @@
+# .safety-policy.toml
+# Safety configuration for dependency vulnerability scanning
+[tool.safety]
+ignore = []
+full-report = true

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Coding-Krakken/pel-lang/languages-eval/schemas/results.schema.json",
+  "title": "Canonical Normalized Results",
+  "type": "object",
+  "required": ["target_id", "timestamp", "suites", "metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "target_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "suites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "metrics"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["conformance", "security", "performance", "tooling", "human_factors"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "skip", "error"],
+            "description": "pass=all checks passed, fail=some checks failed, skip=not executed, error=fatal error"
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "artifacts": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["category_inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "category_inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 5.0
+          }
+        }
+      }
+    }
+  }
+}

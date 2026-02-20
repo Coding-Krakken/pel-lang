@@ -1,0 +1,18 @@
+{
+  "profile": "embedded",
+  "weights": {
+    "correctness_semantics": 0.18,
+    "security_properties": 0.13,
+    "runtime_performance": 0.16,
+    "compiler_toolchain_performance": 0.08,
+    "reliability": 0.11,
+    "dx_productivity": 0.05,
+    "tooling_static_analysis": 0.07,
+    "interop_integration": 0.05,
+    "portability_deployment": 0.06,
+    "concurrency_model": 0.05,
+    "large_codebase_fitness": 0.03,
+    "ecosystem_health": 0.02,
+    "governance_long_term_risk": 0.01
+  }
+}
