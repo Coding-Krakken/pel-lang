@@ -27,22 +27,6 @@ def test_ci_gate_determinism_only_ignores_regression_checks(tmp_path: Path) -> N
     (schema_dir / "results.schema.json").write_text(json.dumps(permissive_schema), encoding="utf-8")
     (schema_dir / "report.schema.json").write_text(json.dumps(permissive_schema), encoding="utf-8")
 
-    target = {
-        "target_id": "t1",
-        "required_suites": ["conformance", "security", "tooling"],
-        "thresholds": {
-            "regression_tolerance_pct": 5.0,
-            "min_overall_score": 3.5,
-            "require_deterministic_report": True,
-            "require_artifacts": [
-                "results.raw.json",
-                "results.normalized.json",
-                "scorecard.json",
-                "report.json",
-                "report.md",
-            ],
-        },
-    }
     target_path = target_dir / "example-target.yaml"
     target_path.write_text(
         "\n".join(
