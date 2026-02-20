@@ -21,7 +21,8 @@ from typing import Any
 
 import yaml
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -30,14 +31,17 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
-        logging.error(f"Invalid YAML in {path}: {exc}")
-        raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
+        msg = f"Invalid YAML in {path}: {exc}"
+        logger.exception("Failed to load YAML file")
+        raise SystemExit(msg) from exc
     except json.JSONDecodeError as exc:
-        logging.error(f"Invalid JSON in {path}: {exc}")
-        raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
+        msg = f"Invalid JSON in {path}: {exc}"
+        logger.exception("Failed to load JSON file")
+        raise SystemExit(msg) from exc
     except FileNotFoundError as exc:
-        logging.error(f"File not found: {path}")
-        raise SystemExit(f"File not found: {path}") from exc
+        msg = f"File not found: {path}"
+        logger.error("File not found: %s", path)
+        raise SystemExit(msg) from exc
 
 
 def _validate_with_schema(schema_path: Path, payload_path: Path) -> None:
@@ -193,7 +197,7 @@ def main() -> int:
                 f"Non-deterministic report generation: {report_hash} != {other_hash}"
             )
 
-    logging.info("CI gate passed.")
+    logger.info("CI gate passed.")
     return 0
 
 

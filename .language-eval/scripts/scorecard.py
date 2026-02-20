@@ -18,7 +18,8 @@ from typing import Any
 
 import yaml
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -27,14 +28,17 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
-        logging.error(f"Invalid YAML in {path}: {exc}")
-        raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
+        msg = f"Invalid YAML in {path}: {exc}"
+        logger.exception("Failed to load YAML file")
+        raise SystemExit(msg) from exc
     except json.JSONDecodeError as exc:
-        logging.error(f"Invalid JSON in {path}: {exc}")
-        raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
+        msg = f"Invalid JSON in {path}: {exc}"
+        logger.exception("Failed to load JSON file")
+        raise SystemExit(msg) from exc
     except FileNotFoundError as exc:
-        logging.error(f"File not found: {path}")
-        raise SystemExit(f"File not found: {path}") from exc
+        msg = f"File not found: {path}"
+        logger.error("File not found: %s", path)
+        raise SystemExit(msg) from exc
 
 
 def _resolve_weights(root: Path, weights_file: Path, target: dict[str, Any]) -> dict[str, float]:
@@ -47,8 +51,9 @@ def _resolve_weights(root: Path, weights_file: Path, target: dict[str, Any]) -> 
         references = default_data.get("profile_references", {})
         profile_path = references.get(weight_profile)
         if not profile_path:
-            logging.error(f"Unknown weight profile: {weight_profile}")
-            raise SystemExit(f"Unknown weight profile: {weight_profile}")
+            msg = f"Unknown weight profile: {weight_profile}"
+            logger.error("Unknown weight profile: %s", weight_profile)
+            raise SystemExit(msg)
         selected = _load(root / profile_path)["weights"]
 
     overrides = target.get("weight_overrides", {})
@@ -56,8 +61,9 @@ def _resolve_weights(root: Path, weights_file: Path, target: dict[str, Any]) -> 
 
     total = sum(float(value) for value in resolved.values())
     if abs(total - 1.0) > 1e-6:
-        logging.error(f"Weight sum must equal 1.0 (got {total:.6f})")
-        raise SystemExit(f"Weight sum must equal 1.0 (got {total:.6f})")
+        msg = f"Weight sum must equal 1.0 (got {total:.6f})"
+        logger.error("Weight sum must equal 1.0 (got %.6f)", total)
+        raise SystemExit(msg)
 
     return {key: float(value) for key, value in resolved.items()}
 
@@ -119,7 +125,7 @@ def main() -> int:
     }
 
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    logging.info(f"Wrote {out_path}")
+    logger.info("Wrote %s", out_path)
     return 0
 
 

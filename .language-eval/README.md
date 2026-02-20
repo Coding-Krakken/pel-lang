@@ -67,6 +67,19 @@ python .language-eval/scripts/check_baseline_age.py \
   .language-eval/baselines/baseline.example.json
 ```
 
+Validate baseline file structure:
+
+```bash
+# Validate all baselines against schema
+python .language-eval/scripts/validate_baselines.py \
+  .language-eval/baselines/*.json
+
+# Strict mode (fail on any validation errors)
+python .language-eval/scripts/validate_baselines.py \
+  --strict \
+  .language-eval/baselines/*.json
+```
+
 See [BASELINE_MANAGEMENT.md](BASELINE_MANAGEMENT.md) for full baseline lifecycle documentation.
 
 ## Interpret reports

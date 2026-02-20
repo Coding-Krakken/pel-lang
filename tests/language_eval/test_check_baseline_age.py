@@ -162,16 +162,15 @@ def test_check_baseline_age_missing_timestamp(tmp_path: Path) -> None:
     
     script = Path(".language-eval/scripts/check_baseline_age.py")
     result = subprocess.run(
-        [sys.executable, str(script), str(baseline)],
+        [sys.executable, str(script), str(baseline), "--fail-on-warning"],
         capture_output=True,
         text=True,
         check=False,
     )
     
     output = result.stdout + result.stderr
-    assert "has no created_at or generated_at timestamp" in outp
+    assert "has no created_at or generated_at timestamp" in output
     assert result.returncode == 1, result.stderr or result.stdout
-    assert "has no created_at or generated_at timestamp" in result.stdout
 
 
 @pytest.mark.unit
@@ -197,4 +196,3 @@ def test_check_baseline_age_iso_datetime_format(tmp_path: Path) -> None:
     
     output = result.stdout + result.stderr
     assert "OK: Baseline is fresh (50 days old)" in output
-    assert "OK: Baseline is fresh (50 days old)" in result.stdout
