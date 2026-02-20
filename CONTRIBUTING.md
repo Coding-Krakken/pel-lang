@@ -873,6 +873,21 @@ See LICENSE and COMMERCIAL-LICENSE.md for details.
 
 ---
 
+## Error Handling & Logging
+- Use the `logging` module instead of `print` for all output except CLI help.
+- Raise descriptive exceptions and avoid generic `SystemExit` where possible.
+- Always provide actionable error messages.
+
+## Security
+- Never commit secrets or credentials.
+- Use static analysis tools (e.g., `bandit`, `safety`) before submitting PRs.
+- Report vulnerabilities via security@pel-lang.org.
+
+## Architecture Diagrams
+- See `docs/language_eval_architecture.mmd` and `docs/language_eval_architecture.md` for a visual overview of the framework.
+
+---
+
 ## Questions?
 
 - **General questions:** [GitHub Discussions](https://github.com/pel-lang/pel/discussions)

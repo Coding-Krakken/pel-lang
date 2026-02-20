@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
+
 import argparse
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 CATEGORY_SUITE_DEPENDENCIES: dict[str, set[str]] = {
     "correctness_semantics": {"conformance"},
@@ -40,10 +43,13 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
+        logging.error(f"Invalid YAML in {path}: {exc}")
         raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
+        logging.error(f"Invalid JSON in {path}: {exc}")
         raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
     except FileNotFoundError as exc:
+        logging.error(f"File not found: {path}")
         raise SystemExit(f"File not found: {path}") from exc
 
 
@@ -83,6 +89,7 @@ def main() -> int:
 
     baseline_path = _resolve_path(str(target.get("baseline", "")), target_path)
     if not baseline_path.exists():
+        logging.error(f"Baseline not found: {baseline_path}")
         raise SystemExit(f"Baseline not found: {baseline_path}")
 
     baseline = _load(baseline_path)
@@ -157,7 +164,7 @@ def main() -> int:
     }
 
     Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"Wrote {args.out}")
+    logging.info(f"Wrote {args.out}")
     return 0
 
 

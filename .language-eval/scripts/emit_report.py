@@ -10,14 +10,17 @@
 
 from __future__ import annotations
 
+
 import argparse
 import hashlib
 import json
+import logging
 import os
 import platform
 import sys
 from pathlib import Path
 from typing import Any
+logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 import yaml
 
@@ -28,10 +31,13 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
+        logging.error(f"Invalid YAML in {path}: {exc}")
         raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
+        logging.error(f"Invalid JSON in {path}: {exc}")
         raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
     except FileNotFoundError as exc:
+        logging.error(f"File not found: {path}")
         raise SystemExit(f"File not found: {path}") from exc
 
 
@@ -167,10 +173,10 @@ def main() -> int:
     digest = _sha256(report_json)
     (outdir / "report.sha256").write_text(digest + "\n", encoding="utf-8")
 
-    print(f"Wrote {report_json}")
-    print(f"Wrote {report_md}")
-    print(f"Wrote {summary_md}")
-    print(f"Wrote {outdir / 'report.sha256'}")
+    logging.info(f"Wrote {report_json}")
+    logging.info(f"Wrote {report_md}")
+    logging.info(f"Wrote {summary_md}")
+    logging.info(f"Wrote {outdir / 'report.sha256'}")
     return 0
 
 

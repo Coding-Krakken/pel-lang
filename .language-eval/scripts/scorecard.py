@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
+
 import argparse
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -24,10 +27,13 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
+        logging.error(f"Invalid YAML in {path}: {exc}")
         raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
+        logging.error(f"Invalid JSON in {path}: {exc}")
         raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
     except FileNotFoundError as exc:
+        logging.error(f"File not found: {path}")
         raise SystemExit(f"File not found: {path}") from exc
 
 
@@ -41,6 +47,7 @@ def _resolve_weights(root: Path, weights_file: Path, target: dict[str, Any]) -> 
         references = default_data.get("profile_references", {})
         profile_path = references.get(weight_profile)
         if not profile_path:
+            logging.error(f"Unknown weight profile: {weight_profile}")
             raise SystemExit(f"Unknown weight profile: {weight_profile}")
         selected = _load(root / profile_path)["weights"]
 
@@ -49,6 +56,7 @@ def _resolve_weights(root: Path, weights_file: Path, target: dict[str, Any]) -> 
 
     total = sum(float(value) for value in resolved.values())
     if abs(total - 1.0) > 1e-6:
+        logging.error(f"Weight sum must equal 1.0 (got {total:.6f})")
         raise SystemExit(f"Weight sum must equal 1.0 (got {total:.6f})")
 
     return {key: float(value) for key, value in resolved.items()}
@@ -111,7 +119,7 @@ def main() -> int:
     }
 
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"Wrote {out_path}")
+    logging.info(f"Wrote {out_path}")
     return 0
 
 

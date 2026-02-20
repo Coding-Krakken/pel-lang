@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
+
 import argparse
 import datetime as dt
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
+logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 import yaml
 
@@ -27,10 +30,13 @@ def _load(path: Path) -> dict[str, Any]:
             return yaml.safe_load(path.read_text(encoding="utf-8"))
         return json.loads(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
+        logging.error(f"Invalid YAML in {path}: {exc}")
         raise SystemExit(f"Invalid YAML in {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
+        logging.error(f"Invalid JSON in {path}: {exc}")
         raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
     except FileNotFoundError as exc:
+        logging.error(f"File not found: {path}")
         raise SystemExit(f"File not found: {path}") from exc
 
 
@@ -187,7 +193,7 @@ def main() -> int:
                 f"Non-deterministic report generation: {report_hash} != {other_hash}"
             )
 
-    print("CI gate passed.")
+    logging.info("CI gate passed.")
     return 0
 
 

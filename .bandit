@@ -1,0 +1,6 @@
+# .bandit
+# Bandit configuration for static security analysis
+[bandit]
+target = .
+exclude = tests,docs,benchmarks,htmlcov,tmp
+skips = B101,B404

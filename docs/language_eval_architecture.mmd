@@ -1,0 +1,26 @@
+graph TD
+    A[User/Contributor] -->|CLI/Script| B(Language Eval Scripts)
+    B --> C[Scorecard]
+    B --> D[Emit Report]
+    B --> E[Compare Baseline]
+    B --> F[CI Gate]
+    C -->|JSON| G[Normalized Results]
+    D -->|Markdown/JSON| H[Reports]
+    E -->|JSON| I[Regression/Delta]
+    F -->|CI Status| J[Pass/Fail]
+    G --> D
+    G --> E
+    G --> F
+    H --> J
+    I --> F
+    D --> F
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+    style D fill:#bfb,stroke:#333,stroke-width:2px
+    style E fill:#bfb,stroke:#333,stroke-width:2px
+    style F fill:#bfb,stroke:#333,stroke-width:2px
+    style G fill:#fff,stroke:#333,stroke-width:1px
+    style H fill:#fff,stroke:#333,stroke-width:1px
+    style I fill:#fff,stroke:#333,stroke-width:1px
+    style J fill:#ffb,stroke:#333,stroke-width:2px
