@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# Copyright 2026 PEL Project Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This file is part of PEL (Programmable Economic Language).
+# PEL is dual-licensed under AGPL-3.0 and a commercial license.
+# See LICENSE and COMMERCIAL-LICENSE.md for details.
+
 """Compute weighted category and overall scorecard from normalized results."""
 
 from __future__ import annotations
@@ -61,7 +68,7 @@ def main() -> int:
     category_inputs = normalized["metrics"]["category_inputs"]
 
     category_scores: dict[str, float] = {}
-    for category, weight in weights.items():
+    for category, _weight in weights.items():
         score = float(category_inputs.get(category, 0.0))
         category_scores[category] = round(score, 4)
 

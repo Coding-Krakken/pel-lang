@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# Copyright 2026 PEL Project Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This file is part of PEL (Programmable Economic Language).
+# PEL is dual-licensed under AGPL-3.0 and a commercial license.
+# See LICENSE and COMMERCIAL-LICENSE.md for details.
+
 """Normalize suite-specific outputs into canonical results schema."""
 
 from __future__ import annotations
@@ -9,7 +16,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 SUITE_GLOB = "suite.*.json"
 

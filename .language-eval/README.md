@@ -46,7 +46,7 @@ CI validates:
 - Target config against `target.schema.json`
 - Raw/normalized/report outputs against schemas
 - Presence of all required suite outputs
-- No regressions beyond configured tolerance against baseline
+- No regressions beyond configured tolerance against baseline (scoped to categories covered by executed suites)
 - Deterministic `report.json` hash across two equivalent runs
 
 ## Interpret reports
