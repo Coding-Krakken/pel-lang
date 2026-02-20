@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-
 import argparse
 import json
 import logging
@@ -18,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 CATEGORY_SUITE_DEPENDENCIES: dict[str, set[str]] = {

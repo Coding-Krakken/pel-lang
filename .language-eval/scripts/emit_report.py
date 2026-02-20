@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-
 import argparse
 import hashlib
 import json
@@ -20,9 +19,10 @@ import platform
 import sys
 from pathlib import Path
 from typing import Any
-logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 import yaml
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 
 def _load(path: Path) -> dict[str, Any]:
