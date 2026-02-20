@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,8 @@ class CSVConnector:
     def load_data(
         self,
         csv_path: Path,
-        encoding: str = 'utf-8',
-        delimiter: str = ',',
+        encoding: str = "utf-8",
+        delimiter: str = ",",
     ) -> pd.DataFrame:
         """
         Load CSV file into DataFrame.
@@ -126,13 +126,13 @@ class CSVConnector:
                 continue
 
             try:
-                if dtype == 'float':
-                    df[col] = pd.to_numeric(df[col], errors='coerce').astype('float64')
-                elif dtype == 'int':
-                    df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64')
-                elif dtype == 'date':
-                    df[col] = pd.to_datetime(df[col], errors='coerce')
-                elif dtype == 'str':
+                if dtype == "float":
+                    df[col] = pd.to_numeric(df[col], errors="coerce").astype("float64")
+                elif dtype == "int":
+                    df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+                elif dtype == "date":
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                elif dtype == "str":
                     df[col] = df[col].astype(str)
             except Exception as e:
                 raise ValueError(f"Failed to convert column '{col}' to {dtype}: {e}") from e
@@ -142,7 +142,7 @@ class CSVConnector:
     def handle_missing_values(
         self,
         df: pd.DataFrame,
-        strategy: str = 'drop',
+        strategy: str = "drop",
         fill_value: float | None = None,
     ) -> pd.DataFrame:
         """
@@ -158,15 +158,15 @@ class CSVConnector:
         """
         df = df.copy()
 
-        if strategy == 'drop':
+        if strategy == "drop":
             df = df.dropna()
-        elif strategy == 'mean':
+        elif strategy == "mean":
             df = df.fillna(df.mean(numeric_only=True))
-        elif strategy == 'median':
+        elif strategy == "median":
             df = df.fillna(df.median(numeric_only=True))
-        elif strategy == 'forward_fill':
+        elif strategy == "forward_fill":
             df = df.ffill()
-        elif strategy == 'fill' and fill_value is not None:
+        elif strategy == "fill" and fill_value is not None:
             df = df.fillna(fill_value)
         else:
             raise ValueError(f"Unknown missing value strategy: {strategy}")
@@ -177,7 +177,7 @@ class CSVConnector:
         self,
         df: pd.DataFrame,
         column: str,
-        method: str = 'iqr',
+        method: str = "iqr",
         threshold: float = 3.0,
     ) -> pd.Series:
         """
@@ -194,7 +194,7 @@ class CSVConnector:
         """
         data = df[column].dropna()
 
-        if method == 'iqr':
+        if method == "iqr":
             Q1 = data.quantile(0.25)
             Q3 = data.quantile(0.75)
             IQR = Q3 - Q1
@@ -202,7 +202,7 @@ class CSVConnector:
             upper = Q3 + threshold * IQR
             return (df[column] < lower) | (df[column] > upper)
 
-        elif method == 'zscore':
+        elif method == "zscore":
             mean = data.mean()
             std = data.std()
             z_scores = np.abs((df[column] - mean) / std)
@@ -215,7 +215,7 @@ class CSVConnector:
         self,
         df: pd.DataFrame,
         column: str,
-        method: str = 'iqr',
+        method: str = "iqr",
         threshold: float = 3.0,
     ) -> pd.DataFrame:
         """
@@ -253,35 +253,35 @@ class CSVConnector:
         # Load data
         df = self.load_data(
             csv_path,
-            encoding=cfg.get('encoding', 'utf-8'),
-            delimiter=cfg.get('delimiter', ','),
+            encoding=cfg.get("encoding", "utf-8"),
+            delimiter=cfg.get("delimiter", ","),
         )
 
         # Map columns
-        if 'column_mapping' in cfg:
-            df = self.map_columns(df, cfg['column_mapping'])
+        if "column_mapping" in cfg:
+            df = self.map_columns(df, cfg["column_mapping"])
 
         # Convert types
-        if 'type_mapping' in cfg:
-            df = self.convert_types(df, cfg['type_mapping'])
+        if "type_mapping" in cfg:
+            df = self.convert_types(df, cfg["type_mapping"])
 
         # Handle missing values
-        if 'missing_values' in cfg:
-            mv_cfg = cfg['missing_values']
+        if "missing_values" in cfg:
+            mv_cfg = cfg["missing_values"]
             df = self.handle_missing_values(
                 df,
-                strategy=mv_cfg.get('strategy', 'drop'),
-                fill_value=mv_cfg.get('fill_value'),
+                strategy=mv_cfg.get("strategy", "drop"),
+                fill_value=mv_cfg.get("fill_value"),
             )
 
         # Filter outliers
-        if 'outlier_filtering' in cfg:
-            for col_cfg in cfg['outlier_filtering']:
+        if "outlier_filtering" in cfg:
+            for col_cfg in cfg["outlier_filtering"]:
                 df = self.filter_outliers(
                     df,
-                    column=col_cfg['column'],
-                    method=col_cfg.get('method', 'iqr'),
-                    threshold=col_cfg.get('threshold', 3.0),
+                    column=col_cfg["column"],
+                    method=col_cfg.get("method", "iqr"),
+                    threshold=col_cfg.get("threshold", 3.0),
                 )
 
         return df
