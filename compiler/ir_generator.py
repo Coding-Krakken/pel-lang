@@ -104,7 +104,22 @@ class IRGenerator:
         return node
 
     def generate_equation(self, assignment: Assignment) -> dict[str, Any]:
-        """Generate IR equation from assignment statement."""
+        """Generate IR equation from assignment statement.
+        
+        Automatically categorizes equations into three types based on indexing pattern:
+        - initial: x[0] = value (initial conditions at t=0)
+        - recurrence_current: x[t] = f(x[t], y[t]) (current timestep dependencies)
+        - recurrence_next: x[t+1] = f(x[t], y[t]) (next timestep recurrence relations)
+        - direct: x = value (scalar assignments)
+        
+        This categorization enables correct evaluation order in the runtime.
+        
+        Args:
+            assignment: AST Assignment node representing an equation
+            
+        Returns:
+            Dictionary containing equation IR with type, target, value, and dependencies
+        """
         equation_id = f"eq_{self.node_counter}"
         self.node_counter += 1
 

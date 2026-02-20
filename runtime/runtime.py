@@ -12,11 +12,15 @@ Reference implementation v0.1.0
 
 import argparse
 import json
+import logging
 import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -125,6 +129,11 @@ class PELRuntime:
             if eq["target"]["expr_type"] == "Indexing":
                 target_var = eq["target"]["expression"]["variable_name"]
             
+            # Validate target variable was extracted
+            if target_var is None:
+                logger.warning(f"Skipping equation with non-indexed target: {eq.get('equation_id', 'unknown')}")
+                continue
+            
             if eq["equation_type"] == "initial":
                 initial_eqs[target_var] = eq
             elif eq["equation_type"] == "recurrence_next":
@@ -150,6 +159,7 @@ class PELRuntime:
             # Evaluate current timestep equations (revenue[t] = customers[t] * price)
             # May need multiple passes if there are dependencies between current equations
             max_iterations = 10
+            converged = False
             for iteration in range(max_iterations):
                 any_updated = False
                 for var_name, eq in current_eqs.items():
@@ -163,12 +173,22 @@ class PELRuntime:
                             timeseries_results[var_name].append(value)
                             state[var_name] = timeseries_results[var_name]
                             any_updated = True
-                    except Exception:
-                        # Skip if we can't evaluate yet (missing dependencies)
+                    except (KeyError, IndexError) as e:
+                        # Skip if we can't evaluate yet (missing dependencies or out of bounds)
+                        logger.debug(f"Equation for '{var_name}' deferred at t={t}, iteration {iteration}: {e}")
+                        continue
+                    except Exception as e:
+                        # Log unexpected errors but continue
+                        logger.warning(f"Unexpected error evaluating equation for '{var_name}' at t={t}: {e}")
                         continue
                 
                 if not any_updated:
+                    converged = True
                     break  # All equations evaluated or can't make progress
+            
+            # Warn if convergence not reached
+            if not converged:
+                logger.warning(f"Equation evaluation did not converge in {max_iterations} iterations at t={t}. Some variables may have incorrect values.")
             
             # Fill in any missing values with 0
             for var_name in timeseries_results:
@@ -177,6 +197,7 @@ class PELRuntime:
                     continue
                 if t >= len(timeseries_results[var_name]):
                     # This shouldn't happen, but add a default value to prevent errors
+                    logger.warning(f"Variable '{var_name}' missing value at t={t}, defaulting to 0")
                     timeseries_results[var_name].append(0)
             
             # Update state again after evaluating current equations
@@ -221,11 +242,17 @@ class PELRuntime:
                                 "assumptions": assumptions,
                                 "reason": f"Fatal constraint '{constraint['name']}' violated at t={t}"
                             }
-                except Exception:
-                    # Skip constraints that can't be evaluated (e.g., out of bounds indexing)
+                except (KeyError, IndexError) as e:
+                    # Skip constraints that can't be evaluated (out of bounds indexing, missing variables)
+                    logger.debug(f"Constraint '{constraint['name']}' skipped at t={t}: {e}")
+                    pass
+                except Exception as e:
+                    # Log unexpected errors but continue
+                    logger.warning(f"Unexpected error evaluating constraint '{constraint['name']}' at t={t}: {e}")
                     pass
 
-            # Execute policies
+            # Execute policies in declaration order (per PEL specification)
+            # Policies are evaluated sequentially, with later policies seeing effects of earlier ones
             for policy in model.get("policies", []):
                 trigger_value = self.evaluate_expression(policy["trigger"]["condition"], state)
                 if trigger_value:
