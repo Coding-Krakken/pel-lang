@@ -11,11 +11,15 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 
 ## Modules
 
-### 1. `demand/` - Demand Forecasting 🔜
-- Lead generation models
-- Seasonality handling
-- Bass diffusion curves
-- Market saturation
+### 1. `demand/` - Demand Forecasting ✅ **IMPLEMENTED (PR-24)**
+- Seasonal demand multipliers
+- Lead generation from marketing spend
+- Funnel demand modeling
+- Price elasticity and competitive impact
+- Market saturation and Bass diffusion
+- Event-driven spikes and viral growth
+- Network effects and trend forecasting
+- **18 functions**: seasonal_multiplier, lead_generation, funnel_demand, elasticity_demand, market_saturation, competitor_impact, event_driven_spike, churn_demand_feedback, bass_diffusion, aggregate_demand, demand_decay, viral_coefficient, constrained_demand, addressable_segment, network_demand, demand_forecast, weighted_demand, and more
 
 ### 2. `funnel/` - Conversion Funnels ✅ **IMPLEMENTED**
 - Multi-stage conversion
@@ -24,11 +28,15 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
 - A/B test impact
 - Pre-built archetypes (SaaS, e-commerce, B2B sales)
 
-### 3. `pricing/` - Pricing Models 🔜
-- Elasticity curves
-- Willingness-to-pay distributions
-- Dynamic pricing
-- Tiered pricing logic
+### 3. `pricing/` - Pricing Models ✅ **IMPLEMENTED (PR-24)**
+- Price elasticity curves
+- Competitive and dynamic pricing
+- Discount impact and optimization
+- Tiered, bundle, and usage-based pricing
+- Freemium conversion modeling
+- Willingness-to-pay analysis
+- Value-based and psychological pricing
+- **18 functions**: elasticity_curve, competitive_pricing, dynamic_pricing, discount_impact, price_point_optimization, tiered_pricing_revenue, bundle_pricing, freemium_conversion, willingness_to_pay, reservation_price, value_based_pricing, penetration_pricing, price_skimming, psychological_anchor, usage_based_pricing, price_discrimination, cost_plus_pricing, and more
 
 ### 4. `unit_econ/` - Unit Economics ✅ **IMPLEMENTED**
 - LTV calculations (simple, discounted, cohort-based)
@@ -82,13 +90,17 @@ The PEL Standard Library provides battle-tested, reusable economic modeling comp
   - Ramp curve shape validation
   - @param/@return/@errors documentation
 
-### 9. `shocks/` - Scenario Library 🔜
-- Recession scenarios
-- Supply disruptions
-- Demand spikes
-- Platform risk events
+### 9. `shocks/` - Scenario & Risk Library ✅ **IMPLEMENTED (PR-24)**
+- Recession and macroeconomic shocks
+- Platform change and recovery modeling
+- Supply chain disruptions
+- Regulatory and competitive shocks
+- Interest rate and talent market impacts
+- Correlated and cascading failures
+- Value at Risk and black swan events
+- **15 functions**: recession_shock, platform_change_shock, supply_chain_disruption, regulatory_shock, competitor_disruption, macro_interest_rate_shock, talent_market_shock, demand_shock_correlated, combined_shock_impact, shock_recovery, value_at_risk, black_swan_event, conditional_shock, shock_duration_percentile, and more
 
-**Implementation Status:** 6 of 9 modules complete (67%)
+**Implementation Status:** ✅ **9 of 9 modules complete (100%)**
 
 ## Usage
 

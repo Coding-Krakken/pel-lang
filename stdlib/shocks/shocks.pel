@@ -1,0 +1,561 @@
+// PEL Standard Library: Shocks Module
+// Functions for modeling economic shocks, scenario analysis, and risk events
+
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic", "@Bounded", etc. comments to:
+//     @contract(Monotonic, Bounded(0.0, 1.0))
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 15 functions with contract annotations throughout this module
+
+// ============================================================================
+// Macroeconomic Shocks
+// ============================================================================
+
+/// Model recession impact on demand
+///
+/// @param baseline_demand - Demand under normal conditions (must be >= 0)
+/// @param recession_severity - Severity 0.0-1.0 (0=mild, 1=severe) (clamped)
+/// @param demand_sensitivity - How sensitive to recession 0.0-1.0 (clamped)
+/// @return Demand adjusted for recession impact
+///
+/// @errors Returns 0/1mo if baseline_demand < 0
+/// @example recession_shock(1000/1mo, 0.7, 0.5) = 650/1mo (70% severe, 50% sensitive, -35% demand)
+///
+/// Impact = severity * sensitivity (e.g., 0.7 * 0.5 = 35% reduction)
+/// Contracts: @Bounded(0, baseline_demand)
+func recession_shock(
+  baseline_demand: Rate per Month,
+  recession_severity: Fraction,
+  demand_sensitivity: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_severity = max(0.0, min(1.0, recession_severity))
+  var validated_sensitivity = max(0.0, min(1.0, demand_sensitivity))
+  
+  // Demand reduction = severity * sensitivity
+  var impact = validated_severity * validated_sensitivity
+  
+  return baseline_demand * (1.0 - impact)
+}
+
+/// Model platform change shock (API changes, algorithm updates, policy shifts)
+///
+/// @param baseline_metric - Metric under normal conditions (must be >= 0)
+/// @param change_severity - Impact severity 0.0-1.0 (clamped)
+/// @param adaptation_rate - Speed of recovery 0.0-1.0 (clamped)
+/// @param time_since_change - Time elapsed since change (must be >= 0)
+/// @return Metric value after platform change and partial recovery
+///
+/// @errors Returns 0/1mo if baseline < 0
+/// @example platform_change_shock(1000/1mo, 0.5, 0.2, 30d) = 794/1mo
+///
+/// Immediate drop then gradual recovery: impact * e^(-adaptation_rate * time)
+/// Contracts: @Bounded(baseline * (1-severity), baseline)
+func platform_change_shock(
+  baseline_metric: Rate per Month,
+  change_severity: Fraction,
+  adaptation_rate: Fraction,
+  time_since_change: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if baseline_metric < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if time_since_change < 0d {
+    return baseline_metric
+  }
+  
+  var validated_severity = max(0.0, min(1.0, change_severity))
+  var validated_adaptation = max(0.0, min(1.0, adaptation_rate))
+  
+  // Initial drop
+  var impacted_metric = baseline_metric * (1.0 - validated_severity)
+  
+  // Gradual recovery: baseline - (baseline - impacted) * e^(-adaptation * time)
+  var time_fraction = time_since_change / 1d
+  var e = 2.71828182845904523846
+  var recovery_factor = 1.0 - pow(e, -validated_adaptation * time_fraction)
+  
+  var drop_amount = baseline_metric - impacted_metric
+  
+  return impacted_metric + drop_amount * recovery_factor
+}
+
+/// Model supply chain disruption
+///
+/// @param baseline_capacity - Normal supply capacity (must be >= 0)
+/// @param disruption_severity - Severity 0.0-1.0 (0=minor, 1=complete) (clamped)
+/// @param duration - Duration of disruption (must be >= 0)
+/// @param current_time - Current time in disruption window (must be >= 0)
+/// @return Available capacity during disruption
+///
+/// @errors Returns baseline_capacity if timing invalid
+/// @example supply_chain_disruption(1000/1mo, 0.6, 14d, 7d) = 400/1mo (60% disruption)
+///
+/// Capacity drops during disruption window, returns to normal after
+/// Contracts: @Bounded(0, baseline_capacity)
+func supply_chain_disruption(
+  baseline_capacity: Rate per Month,
+  disruption_severity: Fraction,
+  duration: Duration<Day>,
+  current_time: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if baseline_capacity < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if duration < 0d {
+    return baseline_capacity
+  }
+  if current_time < 0d {
+    return baseline_capacity
+  }
+  
+  var validated_severity = max(0.0, min(1.0, disruption_severity))
+  
+  // Check if we're in disruption window
+  if current_time < duration {
+    // Active disruption (current_time >= 0d already checked above)
+    return baseline_capacity * (1.0 - validated_severity)
+  }
+  
+  // Outside disruption window
+  return baseline_capacity
+}
+
+/// Model regulatory shock impact
+///
+/// @param baseline_revenue - Revenue before regulation (must be >= 0)
+/// @param compliance_cost - Additional cost to comply (must be >= 0)
+/// @param market_restriction - Market access restricted 0.0-1.0 (clamped)
+/// @return Net revenue after regulatory impact
+///
+/// @errors Returns $0/1mo if baseline_revenue < 0
+/// @example regulatory_shock($100000/1mo, $15000/1mo, 0.2) = $65000/1mo
+///
+/// Impact = revenue * (1 - restriction) - compliance_cost
+/// Contracts: @Bounded(0, baseline_revenue)
+func regulatory_shock(
+  baseline_revenue: Currency<USD> per Month,
+  compliance_cost: Currency<USD> per Month,
+  market_restriction: Fraction
+) -> Currency<USD> per Month {
+  // Input validation
+  if baseline_revenue < $0 / 1mo {
+    return $0 / 1mo
+  }
+  if compliance_cost < $0 / 1mo {
+    return $0 / 1mo
+  }
+  
+  var validated_restriction = max(0.0, min(1.0, market_restriction))
+  
+  // Revenue after market restriction
+  var restricted_revenue = baseline_revenue * (1.0 - validated_restriction)
+  
+  // Subtract compliance cost
+  var net_revenue = restricted_revenue - compliance_cost
+  
+  // Ensure non-negative
+  return max($0 / 1mo, net_revenue)
+}
+
+/// Model competitor disruption (new entrant, price war, innovation)
+///
+/// @param your_market_share - Current market share 0.0-1.0 (clamped)
+/// @param disruption_strength - Strength of disruption 0.0-1.0 (clamped)
+/// @param defensive_moat - Strength of competitive moat 0.0-1.0 (clamped)
+/// @return Market share after competitive disruption
+///
+/// @errors Returns 0.0 if inputs invalid
+/// @example competitor_disruption(0.35, 0.6, 0.4) = 0.278 (6% share loss, moat reduces impact)
+///
+/// Share loss = disruption * (1 - moat), applied to current share
+/// Contracts: @Bounded(0.0, your_market_share)
+func competitor_disruption(
+  your_market_share: Fraction,
+  disruption_strength: Fraction,
+  defensive_moat: Fraction
+) -> Fraction {
+  var validated_share = max(0.0, min(1.0, your_market_share))
+  var validated_disruption = max(0.0, min(1.0, disruption_strength))
+  var validated_moat = max(0.0, min(1.0, defensive_moat))
+  
+  // Effective disruption after moat defense
+  var effective_disruption = validated_disruption * (1.0 - validated_moat)
+  
+  // Share loss
+  var share_loss = validated_share * effective_disruption
+  
+  return validated_share - share_loss
+}
+
+/// Model interest rate shock impact on costs
+///
+/// @param baseline_cost - Cost before rate change (must be >= 0)
+/// @param debt_ratio - Fraction of costs that are debt service 0.0-1.0 (clamped)
+/// @param rate_change - Interest rate change in percentage points (e.g., 0.02 = +2%)
+/// @return Cost after interest rate change
+///
+/// @errors Returns baseline_cost if baseline_cost < 0
+/// @example macro_interest_rate_shock($100000/1mo, 0.3, 0.02) = $100600/1mo
+///
+/// Cost increase = debt_portion * rate_change
+/// Contracts: @Bounded(0, Inf)
+func macro_interest_rate_shock(
+  baseline_cost: Currency<USD> per Month,
+  debt_ratio: Fraction,
+  rate_change: Fraction
+) -> Currency<USD> per Month {
+  // Input validation
+  if baseline_cost < $0 / 1mo {
+    return baseline_cost
+  }
+  
+  var validated_debt_ratio = max(0.0, min(1.0, debt_ratio))
+  
+  // Debt service portion
+  var debt_service = baseline_cost * validated_debt_ratio
+  
+  // Impact of rate change on debt service
+  var debt_increase = debt_service * rate_change
+  
+  return baseline_cost + debt_increase
+}
+
+/// Model talent market shock (hiring difficulty, wage inflation)
+///
+/// @param baseline_headcount_cost - Normal compensation costs (must be >= 0)
+/// @param market_tightness - Labor market tightness 0.0-1.0 (clamped)
+/// @param wage_elasticity - Wage sensitivity to tightness (must be >= 0)
+/// @return Adjusted compensation cost
+///
+/// @errors Returns baseline if baseline_headcount_cost < 0
+/// @example talent_market_shock($500000/1mo, 0.7, 0.5) = $675000/1mo (35% wage inflation)
+///
+/// Cost multiplier = 1 + (market_tightness * wage_elasticity)
+/// Contracts: @Bounded(baseline_headcount_cost, Inf)
+func talent_market_shock(
+  baseline_headcount_cost: Currency<USD> per Month,
+  market_tightness: Fraction,
+  wage_elasticity: Fraction
+) -> Currency<USD> per Month {
+  // Input validation
+  if baseline_headcount_cost < $0 / 1mo {
+    return baseline_headcount_cost
+  }
+  if wage_elasticity < 0.0 {
+    return baseline_headcount_cost
+  }
+  
+  var validated_tightness = max(0.0, min(1.0, market_tightness))
+  
+  // Wage inflation multiplier
+  var wage_multiplier = 1.0 + (validated_tightness * wage_elasticity)
+  
+  return baseline_headcount_cost * wage_multiplier
+}
+
+// ============================================================================
+// Correlated Shocks & Scenario Analysis
+// ============================================================================
+
+/// Model correlated demand shock across multiple segments
+///
+/// @param baseline_demands - Array of segment demands (must be non-empty)
+/// @param shock_severity - Overall shock severity 0.0-1.0 (clamped)
+/// @param correlation - Inter-segment correlation 0.0-1.0 (clamped)
+/// @param segment_sensitivities - Sensitivity per segment (must match demands length)
+/// @return Shocked demand per segment
+///
+/// @errors Returns empty array if inputs invalid or length mismatch
+/// @example demand_shock_correlated([100/1mo, 200/1mo], 0.5, 0.8, [0.6, 0.4])
+///
+/// Applies correlated shock across segments
+/// Contracts: @Bounded(0, baseline_demands[i]) for each segment
+func demand_shock_correlated(
+  baseline_demands: Array<Rate per Month>,
+  shock_severity: Fraction,
+  correlation: Fraction,
+  segment_sensitivities: Array<Fraction>
+) -> Array<Rate per Month> {
+  // Input validation
+  if baseline_demands.length == 0 {
+    return []
+  }
+  if baseline_demands.length != segment_sensitivities.length {
+    return []
+  }
+  
+  var validated_severity = max(0.0, min(1.0, shock_severity))
+  var validated_correlation = max(0.0, min(1.0, correlation))
+  
+  var shocked_demands: Array<Rate per Month> = []
+  
+  for i in 0..baseline_demands.length - 1 {
+    var sensitivity = max(0.0, min(1.0, segment_sensitivities[i]))
+    
+    // Impact = severity * sensitivity * (1 + correlation_effect)
+    // Higher correlation means shocks move together
+    var base_impact = validated_severity * sensitivity
+    var correlated_impact = base_impact * (1.0 + validated_correlation * 0.5)
+    var final_impact = min(1.0, correlated_impact)
+    
+    shocked_demands[i] = baseline_demands[i] * (1.0 - final_impact)
+  }
+  
+  return shocked_demands
+}
+
+/// Calculate combined impact of multiple simultaneous shocks
+///
+/// @param baseline_value - Value under normal conditions (must be >= 0)
+/// @param shock_impacts - Array of shock impact factors (e.g., 0.9 = 10% reduction) (must be non-empty)
+/// @param correlation - How much shocks amplify each other 0.0-1.0 (clamped)
+/// @return Value after combined shock impact
+///
+/// @errors Returns baseline_value if shock_impacts empty
+/// @example combined_shock_impact(1000/1mo, [0.9, 0.8, 0.95], 0.3) ≈ 650/1mo
+///
+/// Combines multiple shocks with correlation adjustment
+/// Contracts: @Bounded(0, baseline_value)
+func combined_shock_impact(
+  baseline_value: Rate per Month,
+  shock_impacts: Array<Fraction>,
+  correlation: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_value < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if shock_impacts.length == 0 {
+    return baseline_value
+  }
+  
+  var validated_correlation = max(0.0, min(1.0, correlation))
+  
+  // Multiplicative shock composition
+  var cumulative_multiplier = 1.0
+  for i in 0..shock_impacts.length - 1 {
+    var impact = max(0.0, shock_impacts[i])
+    cumulative_multiplier = cumulative_multiplier * impact
+  }
+  
+  // Correlation amplification: more correlation = stronger combined effect
+  var correlation_amplification = 1.0 - validated_correlation * 0.2
+  cumulative_multiplier = cumulative_multiplier * correlation_amplification
+  
+  return baseline_value * cumulative_multiplier
+}
+
+/// Model shock recovery trajectory
+///
+/// @param shocked_value - Value immediately after shock (must be >= 0)
+/// @param pre_shock_value - Value before shock (must be >= 0)
+/// @param recovery_rate - Recovery speed 0.0-1.0 (clamped, higher = faster)
+/// @param time_elapsed - Time since shock (must be >= 0)
+/// @return Value after partial recovery
+///
+/// @errors Returns shocked_value if inputs invalid
+/// @example shock_recovery(700/1mo, 1000/1mo, 0.15, 20d) = 893/1mo
+///
+/// Exponential recovery: shocked + (pre_shock - shocked) * (1 - e^(-rate * time))
+/// Contracts: @Bounded(shocked_value, pre_shock_value)
+func shock_recovery(
+  shocked_value: Rate per Month,
+  pre_shock_value: Rate per Month,
+  recovery_rate: Fraction,
+  time_elapsed: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if shocked_value < 0 / 1mo {
+    return shocked_value
+  }
+  if pre_shock_value < 0 / 1mo {
+    return shocked_value
+  }
+  if time_elapsed < 0d {
+    return shocked_value
+  }
+  
+  var validated_rate = max(0.0, min(1.0, recovery_rate))
+  
+  // Recovery gap
+  var recovery_gap = pre_shock_value - shocked_value
+  
+  if recovery_gap <= 0 / 1mo {
+    return shocked_value  // Already at or above pre-shock level
+  }
+  
+  // Exponential recovery
+  var time_fraction = time_elapsed / 1d
+  var e = 2.71828182845904523846
+  var recovery_progress = 1.0 - pow(e, -validated_rate * time_fraction)
+  
+  return shocked_value + recovery_gap * recovery_progress
+}
+
+/// Calculate value at risk (VaR) for shock scenario
+///
+/// @param baseline_value - Expected value (must be >= 0)
+/// @param shock_probability - Likelihood of shock 0.0-1.0 (clamped)
+/// @param shock_magnitude - Impact if shock occurs 0.0-1.0 (clamped)
+/// @return Expected loss from shock scenario
+///
+/// @errors Returns 0/1mo if baseline_value < 0
+/// @example value_at_risk(1000000/1mo, 0.1, 0.4) = $40000/1mo (10% chance of 40% loss)
+///
+/// VaR = probability * magnitude * baseline_value
+/// Contracts: @Bounded(0, baseline_value)
+func value_at_risk(
+  baseline_value: Rate per Month,
+  shock_probability: Fraction,
+  shock_magnitude: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_value < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_probability = max(0.0, min(1.0, shock_probability))
+  var validated_magnitude = max(0.0, min(1.0, shock_magnitude))
+  
+  return baseline_value * validated_probability * validated_magnitude
+}
+
+/// Model black swan event (extreme low-probability, high-impact shock)
+///
+/// @param baseline_metric - Normal value (must be >= 0)
+/// @param tail_risk_multiplier - Impact multiplier for tail event (must be >= 0)
+/// @param triggered - Whether black swan has occurred (1.0 = yes, 0.0 = no)
+/// @return Value after black swan event
+///
+/// @errors Returns baseline_metric if baseline_metric < 0
+/// @example black_swan_event(1000/1mo, 0.1, 1.0) = 100/1mo (90% collapse)
+///
+/// Used for stress testing extreme scenarios
+/// Contracts: @Bounded(0, baseline_metric)
+func black_swan_event(
+  baseline_metric: Rate per Month,
+  tail_risk_multiplier: Fraction,
+  triggered: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_metric < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if tail_risk_multiplier < 0.0 {
+    return baseline_metric
+  }
+  
+  var is_triggered = max(0.0, min(1.0, triggered))
+  
+  if is_triggered > 0.5 {
+    // Black swan triggered
+    return baseline_metric * tail_risk_multiplier
+  }
+  
+  // Normal conditions
+  return baseline_metric
+}
+
+/// Calculate conditional shock (shock B given shock A occurred)
+///
+/// @param baseline_value - Value under normal conditions (must be >= 0)
+/// @param primary_shock_impact - Impact of first shock 0.0-1.0 (clamped)
+/// @param conditional_shock_impact - Impact of second shock given first 0.0-1.0 (clamped)
+/// @param primary_occurred - Whether primary shock happened (1.0 = yes, 0.0 = no)
+/// @return Value after conditional shock cascade
+///
+/// @errors Returns baseline_value if baseline_value < 0
+/// @example conditional_shock(1000/1mo, 0.3, 0.5, 1.0) = 350/1mo
+///
+/// Models cascading failures (e.g., supply shock → demand shock)
+/// Contracts: @Bounded(0, baseline_value)
+func conditional_shock(
+  baseline_value: Rate per Month,
+  primary_shock_impact: Fraction,
+  conditional_shock_impact: Fraction,
+  primary_occurred: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_value < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_primary = max(0.0, min(1.0, primary_shock_impact))
+  var validated_conditional = max(0.0, min(1.0, conditional_shock_impact))
+  var occurred = max(0.0, min(1.0, primary_occurred))
+  
+  if occurred < 0.5 {
+    // Primary shock didn't occur
+    return baseline_value
+  }
+  
+  // Primary shock occurred
+  var after_primary = baseline_value * (1.0 - validated_primary)
+  
+  // Conditional shock applies to already-shocked value
+  var after_conditional = after_primary * (1.0 - validated_conditional)
+  
+  return after_conditional
+}
+
+/// Calculate shock duration percentile
+///
+/// @param median_duration - Median shock duration (50th percentile) (must be >= 0)
+/// @param duration_spread - Variability in duration (must be >= 0)
+/// @param percentile - Percentile to calculate 0.0-1.0 (clamped)
+/// @return Duration at given percentile
+///
+/// @errors Returns median_duration if median < 0
+/// @example shock_duration_percentile(30d, 10d, 0.9) ≈ 43d (90th percentile)
+///
+/// Uses normal distribution approximation
+/// Contracts: @Bounded(0d, Inf)
+func shock_duration_percentile(
+  median_duration: Duration<Day>,
+  duration_spread: Duration<Day>,
+  percentile: Fraction
+) -> Duration<Day> {
+  // Input validation
+  if median_duration < 0d {
+    return median_duration
+  }
+  if duration_spread < 0d {
+    return median_duration
+  }
+  
+  var validated_percentile = max(0.0, min(1.0, percentile))
+  
+  // Approximate inverse normal CDF with piecewise function
+  // Work backwards from highest to lowest to avoid else-if syntax
+  var z_score = 1.64
+  
+  if validated_percentile <= 0.9 {
+    z_score = 1.28
+  }
+  if validated_percentile <= 0.75 {
+    z_score = 0.67
+  }
+  if validated_percentile <= 0.5 {
+    z_score = 0.0
+  }
+  if validated_percentile <= 0.25 {
+    z_score = -0.67
+  }
+  if validated_percentile <= 0.1 {
+    z_score = -1.28
+  }
+  
+  var duration = median_duration + duration_spread * z_score
+  
+  // Ensure non-negative
+  return max(0d, duration)
+}

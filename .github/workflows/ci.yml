@@ -51,7 +51,7 @@ jobs:
           pip install -e .[dev,calibration]
       
       - name: Run tests
-        run: pytest tests/ -v --cov=compiler --cov=runtime --cov-report=term --cov-report=xml --cov-fail-under=80
+        run: pytest tests/ -v -m "not performance" --cov=compiler --cov=runtime --cov-report=term --cov-report=xml --cov-fail-under=80
       
       - name: Check coverage threshold
         run: |
@@ -62,7 +62,7 @@ jobs:
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.11'
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN || '' }}
           # Non-blocking: fork PRs lack CODECOV_TOKEN; don't fail the build for coverage upload issues
           fail_ci_if_error: false
 

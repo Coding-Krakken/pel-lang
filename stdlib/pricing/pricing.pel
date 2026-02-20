@@ -1,0 +1,694 @@
+// PEL Standard Library: Pricing Module
+// Functions for pricing strategy, elasticity, and revenue optimization
+
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic", "@Bounded", etc. comments to:
+//     @contract(Monotonic, Bounded(0.0, 1.0))
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 18 functions with contract annotations throughout this module
+
+// ============================================================================
+// Core Pricing Calculations
+// ============================================================================
+
+/// Calculate demand at different price points (elasticity curve)
+///
+/// @param baseline_price - Reference price point (must be > 0)
+/// @param new_price - New price to evaluate (must be >= 0)
+/// @param baseline_demand - Demand at baseline price (must be >= 0)
+/// @param price_elasticity - Price elasticity coefficient (typically negative)
+/// @return Demand at new price point
+///
+/// @errors Returns 0/1mo if baseline_price <= 0
+/// @example elasticity_curve($100, $120, 1000/1mo, -1.5) = 729/1mo (-20% price, -27% demand)
+///
+/// Formula: demand_new = demand_base * (price_new/price_base)^elasticity
+/// Contracts: @Bounded(0, Inf)
+func elasticity_curve(
+  baseline_price: Currency<USD>,
+  new_price: Currency<USD>,
+  baseline_demand: Rate per Month,
+  price_elasticity: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_price <= $0 {
+    return 0 / 1mo
+  }
+  if new_price < $0 {
+    return 0 / 1mo
+  }
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  // Price ratio
+  var price_ratio = new_price / baseline_price
+  
+  // Demand multiplier = price_ratio^elasticity
+  var demand_multiplier = pow(price_ratio, price_elasticity)
+  
+  return baseline_demand * demand_multiplier
+}
+
+/// Calculate competitive pricing response
+///
+/// @param your_price - Your current price (must be >= 0)
+/// @param competitor_price - Competitor's price (must be >= 0)
+/// @param baseline_demand - Demand when prices equal (must be >= 0)
+/// @param sensitivity - Price sensitivity coefficient 0.0-1.0 (clamped)
+/// @return Demand adjusted for competitive pricing
+///
+/// @errors Returns baseline_demand if prices invalid
+/// @example competitive_pricing($100, $90, 1000/1mo, 0.6) = 940/1mo (10% higher price, -6% demand)
+///
+/// Lower relative price increases demand (anti-monotonic to price)
+/// Contracts: @Bounded(0, Inf)
+func competitive_pricing(
+  your_price: Currency<USD>,
+  competitor_price: Currency<USD>,
+  baseline_demand: Rate per Month,
+  sensitivity: Fraction
+) -> Rate per Month {
+  // Input validation
+  if your_price < $0 {
+    return baseline_demand
+  }
+  if competitor_price < $0 {
+    return baseline_demand
+  }
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if competitor_price <= $0 {
+    return baseline_demand  // No competition to compare against
+  }
+  
+  var validated_sensitivity = max(0.0, min(1.0, sensitivity))
+  
+  // Price disadvantage: (your_price - competitor_price) / competitor_price
+  var price_delta_pct = (your_price - competitor_price) / competitor_price
+  
+  // Demand impact = 1 - (sensitivity * price_delta)
+  var demand_multiplier = 1.0 - (validated_sensitivity * price_delta_pct)
+  
+  // Ensure non-negative demand
+  return baseline_demand * max(0.0, demand_multiplier)
+}
+
+/// Dynamic pricing based on demand and utilization
+///
+/// @param base_price - Standard price (must be > 0)
+/// @param current_utilization - Capacity utilization 0.0-∞ (can exceed 1.0)
+/// @param target_utilization - Target utilization 0.0-1.0 (clamped)
+/// @param adjustment_rate - Price adjustment sensitivity 0.0-1.0 (clamped)
+/// @return Dynamically adjusted price
+///
+/// @errors Returns base_price if base_price <= 0
+/// @example dynamic_pricing($100, 0.9, 0.75, 0.3) = $106 (15% over target, +6% price)
+///
+/// Higher utilization increases price to throttle demand
+/// Contracts: @Bounded(0, Inf)
+func dynamic_pricing(
+  base_price: Currency<USD>,
+  current_utilization: Fraction,
+  target_utilization: Fraction,
+  adjustment_rate: Fraction
+) -> Currency<USD> {
+  // Input validation
+  if base_price <= $0 {
+    return base_price
+  }
+  
+  var validated_target = max(0.0, min(1.0, target_utilization))
+  var validated_adjustment = max(0.0, min(1.0, adjustment_rate))
+  var validated_utilization = max(0.0, current_utilization)
+  
+  // Utilization delta
+  var utilization_delta = validated_utilization - validated_target
+  
+  // Price adjustment = base * (1 + adjustment_rate * utilization_delta)
+  var price_multiplier = 1.0 + validated_adjustment * utilization_delta
+  
+  // Ensure non-negative price
+  return base_price * max(0.0, price_multiplier)
+}
+
+/// Calculate revenue impact of discount
+///
+/// @param base_price - Price before discount (must be > 0)
+/// @param discount_pct - Discount percentage 0.0-1.0 (clamped)
+/// @param baseline_demand - Demand without discount (must be >= 0)
+/// @param demand_lift - Demand increase from discount 0.0-∞
+/// @return Revenue after discount
+///
+/// @errors Returns $0 if base_price <= 0
+/// @example discount_impact($100, 0.2, 1000/1mo, 0.3) = $104000 (20% off, 30% demand lift)
+///
+/// Revenue = (price * (1-discount)) * demand * (1+lift)
+/// Contracts: @Bounded(0, Inf)
+func discount_impact(
+  base_price: Currency<USD>,
+  discount_pct: Fraction,
+  baseline_demand: Rate per Month,
+  demand_lift: Fraction
+) -> Currency<USD> per Month {
+  // Input validation
+  if base_price <= $0 {
+    return $0 / 1mo
+  }
+  if baseline_demand < 0 / 1mo {
+    return $0 / 1mo
+  }
+  
+  var validated_discount = max(0.0, min(1.0, discount_pct))
+  var validated_lift = max(0.0, demand_lift)
+  
+  var discounted_price = base_price * (1.0 - validated_discount)
+  var boosted_demand = baseline_demand * (1.0 + validated_lift)
+  
+  return discounted_price * boosted_demand
+}
+
+/// Find optimal price point to maximize revenue
+///
+/// @param price_points - Array of prices to test (must be non-empty)
+/// @param baseline_price - Reference price (must be > 0)
+/// @param baseline_demand - Demand at reference price (must be >= 0)
+/// @param elasticity - Price elasticity (typically negative)
+/// @return Index of optimal price point (max revenue)
+///
+/// @errors Returns -1 if inputs invalid or arrays empty
+/// @example price_point_optimization([$80, $100, $120], $100, 1000/1mo, -1.2) = 1
+///
+/// Evaluates revenue at each price point, returns index of maximum
+/// Contracts: @Bounded(-1, price_points.length - 1)
+func price_point_optimization(
+  price_points: Array<Currency<USD>>,
+  baseline_price: Currency<USD>,
+  baseline_demand: Rate per Month,
+  elasticity: Fraction
+) -> Int {
+  // Input validation
+  if price_points.length == 0 {
+    return -1
+  }
+  if baseline_price <= $0 {
+    return -1
+  }
+  if baseline_demand < 0 / 1mo {
+    return -1
+  }
+  
+  var max_revenue = $0 / 1mo
+  var best_index = 0
+  
+  for i in 0..price_points.length - 1 {
+    if price_points[i] < $0 {
+      continue  // Skip invalid prices
+    }
+    
+    // Calculate demand at this price using elasticity curve
+    var price_ratio = price_points[i] / baseline_price
+    var demand_multiplier = pow(price_ratio, elasticity)
+    var demand = baseline_demand * demand_multiplier
+    
+    var revenue = price_points[i] * demand
+    
+    if revenue > max_revenue {
+      max_revenue = revenue
+      best_index = i
+    }
+  }
+  
+  return best_index
+}
+
+/// Calculate revenue from tiered pricing
+///
+/// @param usage - Customer usage level (must be >= 0)
+/// @param tier_limits - Array of tier boundaries (must be sorted ascending)
+/// @param tier_prices - Price per unit in each tier (must match tier_limits length + 1)
+/// @return Total revenue for usage
+///
+/// @errors Returns $0 if inputs invalid or length mismatch
+/// @example tiered_pricing_revenue(150, [0, 100, 200], [$1, $0.80, $0.60]) = $130
+///
+/// Classic tiered/graduated pricing (like AWS, utilities)
+/// Contracts: @Monotonic, @Bounded(0, Inf)
+func tiered_pricing_revenue(
+  usage: Fraction,
+  tier_limits: Array<Fraction>,
+  tier_prices: Array<Currency<USD>>
+) -> Currency<USD> {
+  // Input validation
+  if usage < 0.0 {
+    return $0
+  }
+  if tier_limits.length == 0 {
+    return $0
+  }
+  if tier_prices.length == 0 {
+    return $0
+  }
+  if tier_prices.length != tier_limits.length + 1 {
+    return $0  // Length mismatch
+  }
+  
+  var revenue = $0
+  var remaining_usage = usage
+  
+  // Process each tier
+  for i in 0..tier_limits.length - 1 {
+    if remaining_usage <= 0.0 {
+      break
+    }
+    
+    var tier_start = tier_limits[i]
+    var tier_end = tier_limits[i + 1]
+    var tier_width = tier_end - tier_start
+    
+    // Usage in this tier
+    var tier_usage = min(remaining_usage, tier_width)
+    
+    // Revenue from this tier
+    revenue = revenue + tier_usage * tier_prices[i]
+    
+    remaining_usage = remaining_usage - tier_usage
+  }
+  
+  // Handle overflow tier (beyond last limit)
+  if remaining_usage > 0.0 {
+    revenue = revenue + remaining_usage * tier_prices[tier_limits.length]
+  }
+  
+  return revenue
+}
+
+/// Calculate bundle pricing value
+///
+/// @param individual_prices - Array of standalone prices (must be non-empty)
+/// @param bundle_discount - Discount for buying bundle 0.0-1.0 (clamped)
+/// @return Bundle price after discount
+///
+/// @errors Returns $0 if array empty
+/// @example bundle_pricing([$50, $30, $20], 0.15) = $85 (15% bundle discount)
+///
+/// Bundle price = sum(prices) * (1 - discount)
+/// Contracts: @Bounded(0, sum(individual_prices))
+func bundle_pricing(
+  individual_prices: Array<Currency<USD>>,
+  bundle_discount: Fraction
+) -> Currency<USD> {
+  // Input validation
+  if individual_prices.length == 0 {
+    return $0
+  }
+  
+  var validated_discount = max(0.0, min(1.0, bundle_discount))
+  
+  var total_price = sum(individual_prices)
+  
+  return total_price * (1.0 - validated_discount)
+}
+
+/// Model freemium-to-paid conversion
+///
+/// @param free_users - Number of free users (must be >= 0)
+/// @param conversion_rate - Free-to-paid conversion 0.0-1.0 (clamped)
+/// @param paid_price - Price of paid tier (must be >= 0)
+/// @return Monthly revenue from conversions
+///
+/// @errors Returns $0/1mo if inputs invalid
+/// @example freemium_conversion(10000, 0.03, $29) = $8700/1mo
+///
+/// Revenue = free_users * conversion_rate * paid_price
+/// Contracts: @Monotonic, @Bounded(0, free_users * paid_price)
+func freemium_conversion(
+  free_users: Count,
+  conversion_rate: Fraction,
+  paid_price: Currency<USD>
+) -> Currency<USD> per Month {
+  // Input validation
+  if free_users < 0 {
+    return $0 / 1mo
+  }
+  if paid_price < $0 {
+    return $0 / 1mo
+  }
+  
+  var validated_conversion = max(0.0, min(1.0, conversion_rate))
+  
+  var paid_users = free_users * validated_conversion
+  
+  return paid_users * paid_price / 1mo
+}
+
+/// Calculate willingness-to-pay quantile
+///
+/// @param wtp_median - Median WTP (50th percentile) (must be >= 0)
+/// @param wtp_spread - Spread/variance in WTP (must be >= 0)
+/// @param quantile - Quantile to calculate 0.0-1.0 (clamped)
+/// @return WTP at given quantile
+///
+/// @errors Returns $0 if median or spread invalid
+/// @example willingness_to_pay($100, $30, 0.9) ≈ $138 (90th percentile WTP)
+///
+/// Uses normal distribution approximation: WTP = median + Z * spread
+/// Z-scores: 0.1→-1.28, 0.5→0, 0.9→1.28
+/// Contracts: @Bounded(0, Inf)
+func willingness_to_pay(
+  wtp_median: Currency<USD>,
+  wtp_spread: Currency<USD>,
+  quantile: Fraction
+) -> Currency<USD> {
+  // Input validation
+  if wtp_median < $0 {
+    return $0
+  }
+  if wtp_spread < $0 {
+    return $0
+  }
+  
+  var validated_quantile = max(0.0, min(1.0, quantile))
+  
+  // Approximate inverse normal CDF with simple piecewise function
+  // For production, use probit/inverse normal tables
+  // Work backwards from highest to lowest to avoid else-if syntax
+  var z_score = 1.64
+  
+  if validated_quantile <= 0.9 {
+    z_score = 1.28
+  }
+  if validated_quantile <= 0.75 {
+    z_score = 0.67
+  }
+  if validated_quantile <= 0.5 {
+    z_score = 0.0
+  }
+  if validated_quantile <= 0.25 {
+    z_score = -0.67
+  }
+  if validated_quantile <= 0.1 {
+    z_score = -1.28
+  }
+  
+  var wtp = wtp_median + wtp_spread * z_score
+  
+  // Ensure non-negative
+  return max($0, wtp)
+}
+
+// ============================================================================
+// Advanced Pricing Models
+// ============================================================================
+
+/// Calculate reservation price (maximum WTP before customer walks)
+///
+/// @param value_delivered - Perceived value to customer (must be >= 0)
+/// @param next_best_alternative - Price of competitor product (must be >= 0)
+/// @param switching_cost - Cost to switch providers (must be >= 0)
+/// @return Reservation price (max customer will pay)
+///
+/// @errors Returns $0 if inputs invalid
+/// @example reservation_price($150, $100, $20) = $170 (value-based ceiling)
+///
+/// Reservation price = min(value, alternative + switching_cost)
+/// Contracts: @Bounded(0, Inf)
+func reservation_price(
+  value_delivered: Currency<USD>,
+  next_best_alternative: Currency<USD>,
+  switching_cost: Currency<USD>
+) -> Currency<USD> {
+  // Input validation
+  if value_delivered < $0 {
+    return $0
+  }
+  if next_best_alternative < $0 {
+    return $0
+  }
+  if switching_cost < $0 {
+    return $0
+  }
+  
+  var competitor_threshold = next_best_alternative + switching_cost
+  
+  // Customer won't pay more than value OR more than switching cost
+  return min(value_delivered, competitor_threshold)
+}
+
+/// Calculate price with value-based pricing
+///
+/// @param cost_to_serve - Cost to deliver product/service (must be >= 0)
+/// @param value_delivered - Value created for customer (must be >= 0)
+/// @param value_capture_rate - Fraction of value to capture 0.0-1.0 (clamped)
+/// @return Value-based price
+///
+/// @errors Returns cost_to_serve if value < cost
+/// @example value_based_pricing($40, $200, 0.4) = $80 (capture 40% of $200 value)
+///
+/// Price = cost + (value - cost) * capture_rate
+/// Contracts: @Bounded(cost_to_serve, value_delivered)
+func value_based_pricing(
+  cost_to_serve: Currency<USD>,
+  value_delivered: Currency<USD>,
+  value_capture_rate: Fraction
+) -> Currency<USD> {
+  // Input validation
+  if cost_to_serve < $0 {
+    return $0
+  }
+  if value_delivered < $0 {
+    return $0
+  }
+  
+  var validated_capture = max(0.0, min(1.0, value_capture_rate))
+  
+  var value_surplus = value_delivered - cost_to_serve
+  
+  if value_surplus < $0 {
+    return cost_to_serve  // Cannot price below cost
+  }
+  
+  return cost_to_serve + value_surplus * validated_capture
+}
+
+/// Calculate penetration pricing impact
+///
+/// @param market_price - Current market equilibrium price (must be > 0)
+/// @param penetration_discount - Discount to gain share 0.0-1.0 (clamped)
+/// @param share_gained - Market share gained per % discount (must be >= 0)
+/// @return Estimated market share gain
+///
+/// @errors Returns 0.0 if market_price <= 0
+/// @example penetration_pricing($100, 0.2, 0.5) = 0.1 (20% discount → 10% share gain)
+///
+/// Share gain = penetration_discount * share_gained
+/// Contracts: @Bounded(0.0, 1.0)
+func penetration_pricing(
+  market_price: Currency<USD>,
+  penetration_discount: Fraction,
+  share_gained: Fraction
+) -> Fraction {
+  // Input validation
+  if market_price <= $0 {
+    return 0.0
+  }
+  if share_gained < 0.0 {
+    return 0.0
+  }
+  
+  var validated_discount = max(0.0, min(1.0, penetration_discount))
+  
+  var share_increase = validated_discount * share_gained
+  
+  // Cap at 100% share
+  return min(1.0, share_increase)
+}
+
+/// Calculate price skimming revenue over time
+///
+/// @param launch_price - Initial premium price (must be > 0)
+/// @param final_price - Eventual market price (must be > 0)
+/// @param decay_rate - Rate of price decline 0.0-1.0 (clamped)
+/// @param time_period - Time since launch (must be >= 0)
+/// @return Current price after decay
+///
+/// @errors Returns final_price if launch_price <= 0
+/// @example price_skimming($200, $100, 0.05, 12d) = $154.49
+///
+/// Price = final + (launch - final) * e^(-decay * time)
+/// Contracts: @Bounded(final_price, launch_price)
+func price_skimming(
+  launch_price: Currency<USD>,
+  final_price: Currency<USD>,
+  decay_rate: Fraction,
+  time_period: Duration<Day>
+) -> Currency<USD> {
+  // Input validation
+  if launch_price <= $0 {
+    return final_price
+  }
+  if final_price <= $0 {
+    return final_price
+  }
+  if time_period < 0d {
+    return launch_price
+  }
+  
+  var validated_decay = max(0.0, min(1.0, decay_rate))
+  
+  var price_premium = launch_price - final_price
+  
+  // Exponential decay
+  var time_fraction = time_period / 1d
+  var e = 2.71828182845904523846
+  var decay_factor = pow(e, -validated_decay * time_fraction)
+  
+  return final_price + price_premium * decay_factor
+}
+
+/// Calculate psychological pricing anchor effect
+///
+/// @param reference_price - Anchor price shown first (must be >= 0)
+/// @param actual_price - Actual price offered (must be >= 0)
+/// @param anchor_strength - Strength of anchoring bias 0.0-1.0 (clamped)
+/// @return Perceived value multiplier (1.0 = no effect)
+///
+/// @errors Returns 1.0 if either price invalid
+/// @example psychological_anchor($150, $99, 0.5) = 1.26 ($150 anchor makes $99 seem 26% better)
+///
+/// Higher reference price increases perceived value
+/// Contracts: @Bounded(0.0, Inf)
+func psychological_anchor(
+  reference_price: Currency<USD>,
+  actual_price: Currency<USD>,
+  anchor_strength: Fraction
+) -> Fraction {
+  // Input validation
+  if reference_price < $0 {
+    return 1.0
+  }
+  if actual_price < $0 {
+    return 1.0
+  }
+  if reference_price <= $0 {
+    return 1.0
+  }
+  
+  var validated_strength = max(0.0, min(1.0, anchor_strength))
+  
+  var price_ratio = actual_price / reference_price
+  
+  // Perceived value boost when actual < reference
+  var anchor_effect = 1.0
+  if actual_price < reference_price {
+    var discount = 1.0 - price_ratio
+    anchor_effect = 1.0 + discount * validated_strength
+  }
+  
+  return anchor_effect
+}
+
+/// Calculate revenue with usage-based pricing
+///
+/// @param base_fee - Fixed monthly fee (must be >= 0)
+/// @param usage_volume - Metered usage amount (must be >= 0)
+/// @param price_per_unit - Price per usage unit (must be >= 0)
+/// @return Total monthly revenue
+///
+/// @errors Returns $0/1mo if any input invalid
+/// @example usage_based_pricing($50, 1000, $0.10) = $150/1mo
+///
+/// Revenue = base_fee + usage * price_per_unit
+/// Contracts: @Monotonic, @Bounded(base_fee, Inf)
+func usage_based_pricing(
+  base_fee: Currency<USD>,
+  usage_volume: Fraction,
+  price_per_unit: Currency<USD>
+) -> Currency<USD> per Month {
+  // Input validation
+  if base_fee < $0 {
+    return $0 / 1mo
+  }
+  if usage_volume < 0.0 {
+    return $0 / 1mo
+  }
+  if price_per_unit < $0 {
+    return $0 / 1mo
+  }
+  
+  var usage_revenue = usage_volume * price_per_unit
+  
+  return (base_fee + usage_revenue) / 1mo
+}
+
+/// Calculate price discrimination revenue (versioning strategy)
+///
+/// @param high_value_segment - Size of premium segment (must be >= 0)
+/// @param low_value_segment - Size of budget segment (must be >= 0)
+/// @param premium_price - Price for high-value version (must be >= 0)
+/// @param basic_price - Price for low-value version (must be >= 0)
+/// @return Total revenue from price discrimination
+///
+/// @errors Returns $0/1mo if any input invalid
+/// @example price_discrimination(1000, 5000, $100, $40) = $300000/1mo
+///
+/// Revenue = high_segment * premium + low_segment * basic
+/// Contracts: @Monotonic, @Bounded(0, Inf)
+func price_discrimination(
+  high_value_segment: Count,
+  low_value_segment: Count,
+  premium_price: Currency<USD>,
+  basic_price: Currency<USD>
+) -> Currency<USD> per Month {
+  // Input validation
+  if high_value_segment < 0 {
+    return $0 / 1mo
+  }
+  if low_value_segment < 0 {
+    return $0 / 1mo
+  }
+  if premium_price < $0 {
+    return $0 / 1mo
+  }
+  if basic_price < $0 {
+    return $0 / 1mo
+  }
+  
+  var premium_revenue = high_value_segment * premium_price
+  var basic_revenue = low_value_segment * basic_price
+  
+  return (premium_revenue + basic_revenue) / 1mo
+}
+
+/// Calculate cost-plus pricing
+///
+/// @param cost - Total cost to produce/deliver (must be >= 0)
+/// @param target_margin - Target profit margin 0.0-1.0 (clamped)
+/// @return Price with target margin
+///
+/// @errors Returns cost if cost < 0
+/// @example cost_plus_pricing($60, 0.4) = $100 (40% margin)
+///
+/// Price = cost / (1 - margin)
+/// Contracts: @Bounded(cost, Inf)
+func cost_plus_pricing(
+  cost: Currency<USD>,
+  target_margin: Fraction
+) -> Currency<USD> {
+  // Input validation
+  if cost < $0 {
+    return cost
+  }
+  
+  var validated_margin = max(0.0, min(0.99, target_margin))  // Cap at 99% to avoid division issues
+  
+  // Prevent division by zero
+  if validated_margin >= 1.0 {
+    return cost * 1000.0  // Very high price for 100% margin
+  }
+  
+  return cost / (1.0 - validated_margin)
+}

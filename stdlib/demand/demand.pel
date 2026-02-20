@@ -1,0 +1,612 @@
+// PEL Standard Library: Demand Module
+// Functions for demand forecasting, seasonality, and market dynamics
+
+// TODO(v0.8.0): Replace comment-based contract annotations with @contract syntax
+//   When @contract attribute parsing is implemented, convert all functions with
+//   "Contracts: @Monotonic", "@Bounded", etc. comments to:
+//     @contract(Monotonic, Bounded(0.0, 1.0))
+//     func function_name(...) -> T { ... }
+//   This enables runtime contract validation and better compiler error messages.
+//   See: 18 functions with contract annotations throughout this module
+
+// ============================================================================
+// Core Demand Forecasting
+// ============================================================================
+
+/// Calculate seasonal demand multiplier for given period
+///
+/// @param month - Month number (1-12, clamped to valid range)
+/// @param seasonality_amplitude - Strength of seasonal effect 0.0-1.0 (clamped)
+/// @param peak_month - Month of peak demand (1-12, clamped to valid range)
+/// @return Seasonal multiplier (range: 1-amplitude to 1+amplitude)
+///
+/// @errors Returns 1.0 (no seasonality) if inputs are invalid
+/// @example seasonal_multiplier(12, 0.3, 12) ≈ 1.3 (30% boost in December)
+///
+/// Uses sinusoidal curve centered on peak_month
+/// Contracts: @Bounded(1-amplitude, 1+amplitude)
+func seasonal_multiplier(
+  month: Int,
+  seasonality_amplitude: Fraction,
+  peak_month: Int
+) -> Fraction {
+  // Input validation
+  var validated_month = max(1, min(12, month))
+  var validated_peak = max(1, min(12, peak_month))
+  var validated_amplitude = max(0.0, min(1.0, seasonality_amplitude))
+  
+  // Calculate phase shift so peak occurs at peak_month
+  // Using cosine wave: peak at 0, trough at π
+  var pi = 3.14159265358979323846
+  var phase_offset = (validated_month - validated_peak) * 2 * pi / 12
+  
+  // Cosine gives values from -1 to 1
+  var seasonal_component = cos(phase_offset)
+  
+  // Scale to [1-amplitude, 1+amplitude]
+  return 1.0 + validated_amplitude * seasonal_component
+}
+
+/// Generate inbound leads based on marketing spend and efficiency
+///
+/// @param marketing_spend - Marketing budget allocation (must be >= 0)
+/// @param cpl - Cost per lead (must be > 0)
+/// @param efficiency - Marketing efficiency 0.0-1.0 (clamped to valid range)
+/// @return Lead volume generated
+///
+/// @errors Returns 0 if cpl <= 0 or marketing_spend < 0
+/// @example lead_generation($10000, $50, 0.9) = 180 leads
+///
+/// Higher spend and efficiency yield more leads (monotonic)
+/// Contracts: @Monotonic, @Bounded(0, Inf)
+func lead_generation(
+  marketing_spend: Currency<USD>,
+  cpl: Currency<USD>,
+  efficiency: Fraction
+) -> Count {
+  // Input validation
+  if cpl <= $0 {
+    return 0  // Cannot generate leads with invalid CPL
+  }
+  if marketing_spend < $0 {
+    return 0  // Negative spend is invalid
+  }
+  
+  var validated_efficiency = max(0.0, min(1.0, efficiency))
+  
+  // Calculate leads: (spend / cost_per_lead) * efficiency
+  var raw_leads = (marketing_spend / cpl) * validated_efficiency
+  
+  // Round to integer count
+  return round(raw_leads)
+}
+
+/// Calculate demand flowing through a funnel stage
+///
+/// @param top_of_funnel - Initial demand entering funnel (must be >= 0)
+/// @param conversion_rate - Stage conversion rate 0.0-1.0 (clamped)
+/// @param stage_duration - Time to convert through stage (must be >= 0)
+/// @return Demand exiting stage per month
+///
+/// @errors Returns 0/1mo if inputs are invalid
+/// @example funnel_demand(1000, 0.25, 7d) ≈ 107/1mo (25% convert in 1 week)
+///
+/// Higher conversion yields more demand (monotonic)
+/// Contracts: @Monotonic, @Bounded(0, top_of_funnel)
+func funnel_demand(
+  top_of_funnel: Count,
+  conversion_rate: Fraction,
+  stage_duration: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if top_of_funnel < 0 {
+    return 0 / 1mo
+  }
+  if stage_duration <= 0d {
+    return 0 / 1mo  // Zero duration means no throughput
+  }
+  
+  var validated_conversion = max(0.0, min(1.0, conversion_rate))
+  
+  // Calculate converted volume
+  var converted_count = top_of_funnel * validated_conversion
+  
+  // Convert to rate: customers per month
+  // Duration in days, need to convert to monthly rate
+  var days_per_month = 30.0
+  var duration_months = stage_duration / (days_per_month * 1d)
+  
+  if duration_months <= 0.0 {
+    return 0 / 1mo
+  }
+  
+  return converted_count / duration_months / 1mo
+}
+
+/// Calculate demand response to price changes (price elasticity)
+///
+/// @param baseline_demand - Demand at baseline price (must be >= 0)
+/// @param price_change_pct - Percentage price change, e.g., 0.1 = 10% increase
+/// @param price_elasticity - Elasticity coefficient (typically negative for normal goods)
+/// @return Adjusted demand after price change
+///
+/// @errors Returns 0/1mo if baseline_demand < 0
+/// @example elasticity_demand(1000/1mo, 0.1, -1.5) = 850/1mo (10% price increase, -15% demand)
+///
+/// Formula: new_demand = baseline_demand * (1 + elasticity * price_change)
+/// Contracts: @Bounded(0, Inf)
+func elasticity_demand(
+  baseline_demand: Rate per Month,
+  price_change_pct: Fraction,
+  price_elasticity: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  // Calculate demand multiplier: 1 + (elasticity * price_change)
+  var demand_multiplier = 1.0 + (price_elasticity * price_change_pct)
+  
+  // Ensure non-negative result (demand cannot be negative)
+  var result = baseline_demand * max(0.0, demand_multiplier)
+  
+  return result
+}
+
+/// Model market saturation effect on demand
+///
+/// @param potential_market - Total addressable market size (must be >= 0)
+/// @param current_penetration - Market penetration 0.0-1.0 (clamped)
+/// @param saturation_rate - Rate at which saturation reduces growth 0.0-1.0 (clamped)
+/// @return Remaining market opportunity as fraction
+///
+/// @errors Returns 0.0 if potential_market <= 0
+/// @example market_saturation(1000000, 0.6, 0.8) = 0.16 (84% saturated)
+///
+/// Higher penetration yields lower growth headroom (anti-monotonic)
+/// Contracts: @Bounded(0.0, 1.0)
+func market_saturation(
+  potential_market: Count,
+  current_penetration: Fraction,
+  saturation_rate: Fraction
+) -> Fraction {
+  // Input validation
+  if potential_market <= 0 {
+    return 0.0
+  }
+  
+  var validated_penetration = max(0.0, min(1.0, current_penetration))
+  var validated_saturation = max(0.0, min(1.0, saturation_rate))
+  
+  // Remaining opportunity = (1 - penetration) ^ saturation_rate
+  // Saturation_rate controls how quickly the market closes
+  return pow(1.0 - validated_penetration, validated_saturation)
+}
+
+/// Calculate competitive impact on demand
+///
+/// @param baseline_demand - Demand without competitive pressure (must be >= 0)
+/// @param competitor_share - Competitor market share 0.0-1.0 (clamped)
+/// @param competitive_intensity - Strength of competitive effect 0.0-1.0 (clamped)
+/// @return Demand adjusted for competitive pressure
+///
+/// @errors Returns 0/1mo if baseline_demand < 0
+/// @example competitor_impact(1000/1mo, 0.4, 0.6) = 760/1mo (40% comp share, 24% reduction)
+///
+/// Higher competition yields lower demand (anti-monotonic)
+/// Contracts: @Bounded(0, baseline_demand)
+func competitor_impact(
+  baseline_demand: Rate per Month,
+  competitor_share: Fraction,
+  competitive_intensity: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_share = max(0.0, min(1.0, competitor_share))
+  var validated_intensity = max(0.0, min(1.0, competitive_intensity))
+  
+  // Impact = competitor_share * competitive_intensity
+  var demand_reduction = validated_share * validated_intensity
+  
+  return baseline_demand * (1.0 - demand_reduction)
+}
+
+/// Model event-driven demand spikes (product launches, holidays, etc.)
+///
+/// @param baseline_demand - Normal demand level (must be >= 0)
+/// @param event_multiplier - Spike magnitude, e.g., 3.0 = 3x demand (must be >= 0)
+/// @param event_duration - Duration of spike effect (must be >= 0)
+/// @param current_period - Current time period (must be >= 0)
+/// @param event_start - When spike begins (must be >= 0)
+/// @return Demand adjusted for event spike
+///
+/// @errors Returns baseline_demand if any duration/timing is invalid
+/// @example event_driven_spike(100/1mo, 2.5, 7d, 5d, 0d) = 250/1mo (2.5x spike)
+///
+/// Event active when: event_start <= current_period < event_start + event_duration
+/// Contracts: @Bounded(baseline_demand, baseline_demand * event_multiplier)
+func event_driven_spike(
+  baseline_demand: Rate per Month,
+  event_multiplier: Fraction,
+  event_duration: Duration<Day>,
+  current_period: Duration<Day>,
+  event_start: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if event_duration <= 0d {
+    return baseline_demand
+  }
+  if event_multiplier < 0.0 {
+    return baseline_demand
+  }
+  if current_period < 0d {
+    return baseline_demand
+  }
+  if event_start < 0d {
+    return baseline_demand
+  }
+  
+  // Check if we're in the event window
+  var event_end = event_start + event_duration
+  
+  if current_period >= event_start {
+    if current_period < event_end {
+      // Apply spike multiplier
+      return baseline_demand * event_multiplier
+    }
+  }
+  
+  // Outside event window, return baseline
+  return baseline_demand
+}
+
+/// Model feedback loop between churn and demand
+///
+/// @param baseline_demand - Demand without churn feedback (must be >= 0)
+/// @param churn_rate - Current churn rate 0.0-1.0 (clamped)
+/// @param feedback_strength - How much churn affects demand 0.0-1.0 (clamped)
+/// @return Adjusted demand incorporating churn feedback
+///
+/// @errors Returns 0/1mo if baseline_demand < 0
+/// @example churn_demand_feedback(1000/1mo, 0.15, 0.5) = 925/1mo (15% churn reduces demand 7.5%)
+///
+/// Higher churn yields lower demand via negative word-of-mouth
+/// Contracts: @Bounded(0, baseline_demand)
+func churn_demand_feedback(
+  baseline_demand: Rate per Month,
+  churn_rate: Fraction,
+  feedback_strength: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_churn = max(0.0, min(1.0, churn_rate))
+  var validated_feedback = max(0.0, min(1.0, feedback_strength))
+  
+  // Demand reduction = churn_rate * feedback_strength
+  var reduction_factor = validated_churn * validated_feedback
+  
+  return baseline_demand * (1.0 - reduction_factor)
+}
+
+// ============================================================================
+// Advanced Demand Models
+// ============================================================================
+
+/// Bass diffusion model for new product adoption
+///
+/// @param innovation_rate - Innovation coefficient (p) - adopters from advertising (0.0-1.0)
+/// @param imitation_rate - Imitation coefficient (q) - adopters from word-of-mouth (0.0-1.0)
+/// @param market_potential - Total addressable market (must be > 0)
+/// @param current_adopters - Current cumulative adopters (must be >= 0)
+/// @return New adopters in next period
+///
+/// @errors Returns 0 if market_potential <= 0
+/// @example bass_diffusion(0.03, 0.38, 10000, 2000) ≈ 608 new adopters
+///
+/// Classic innovation diffusion model (Rogers, Bass)
+/// Contracts: @Bounded(0, market_potential)
+func bass_diffusion(
+  innovation_rate: Fraction,
+  imitation_rate: Fraction,
+  market_potential: Count,
+  current_adopters: Count
+) -> Count {
+  // Input validation
+  if market_potential <= 0 {
+    return 0
+  }
+  if current_adopters < 0 {
+    return 0
+  }
+  
+  var validated_p = max(0.0, min(1.0, innovation_rate))
+  var validated_q = max(0.0, min(1.0, imitation_rate))
+  var validated_current = min(current_adopters, market_potential)
+  
+  // Remaining market
+  var remaining = market_potential - validated_current
+  
+  if remaining <= 0 {
+    return 0  // Market fully saturated
+  }
+  
+  // Bass model: dN/dt = (p + q*N/M) * (M - N)
+  // where p=innovation, q=imitation, M=potential, N=current
+  var adoption_rate = validated_p + validated_q * (validated_current / market_potential)
+  
+  var new_adopters = adoption_rate * remaining
+  
+  return round(new_adopters)
+}
+
+/// Calculate total demand from multiple channels
+///
+/// @param channel_demands - Array of demand from each channel (may be empty)
+/// @return Total aggregated demand across all channels
+///
+/// @errors Returns 0/1mo if array is empty
+/// @example aggregate_demand([100/1mo, 200/1mo, 150/1mo]) = 450/1mo
+///
+/// Simple sum of all channels
+/// Contracts: @Bounded(0, sum(channel_demands))
+func aggregate_demand(
+  channel_demands: Array<Rate per Month>
+) -> Rate per Month {
+  // Input validation
+  if channel_demands.length == 0 {
+    return 0 / 1mo
+  }
+  
+  return sum(channel_demands)
+}
+
+/// Model demand with time decay (for one-time events, promotions)
+///
+/// @param peak_demand - Demand at event peak (must be >= 0)
+/// @param decay_rate - Exponential decay rate 0.0-1.0 (clamped)
+/// @param time_since_peak - Time elapsed since peak (must be >= 0)
+/// @return Demand after time decay
+///
+/// @errors Returns 0/1mo if peak_demand < 0 or time < 0
+/// @example demand_decay(1000/1mo, 0.1, 10d) ≈ 368/1mo (e^-1 decay)
+///
+/// Exponential decay: demand = peak * e^(-decay_rate * time)
+/// Contracts: @Bounded(0, peak_demand)
+func demand_decay(
+  peak_demand: Rate per Month,
+  decay_rate: Fraction,
+  time_since_peak: Duration<Day>
+) -> Rate per Month {
+  // Input validation
+  if peak_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if time_since_peak < 0d {
+    return 0 / 1mo
+  }
+  
+  var validated_decay = max(0.0, min(1.0, decay_rate))
+  
+  // Convert time to dimensionless multiplier
+  var time_fraction = time_since_peak / 1d
+  
+  // Exponential decay: e^(-decay_rate * time)
+  var e = 2.71828182845904523846  // Euler's number (19 digits precision)
+  var decay_factor = pow(e, -validated_decay * time_fraction)
+  
+  return peak_demand * decay_factor
+}
+
+/// Calculate viral coefficient (k-factor) for viral growth
+///
+/// @param invites_per_user - Average invites sent per user (must be >= 0)
+/// @param invite_conversion - Invite-to-signup conversion 0.0-1.0 (clamped)
+/// @return Viral coefficient (k > 1 means viral growth)
+///
+/// @errors Returns 0.0 if invites_per_user < 0
+/// @example viral_coefficient(5.0, 0.25) = 1.25 (viral growth)
+///
+/// k = invites_per_user * conversion_rate
+/// k > 1: viral growth, k < 1: sub-viral, k = 1: replacement
+/// Contracts: @Bounded(0.0, Inf)
+func viral_coefficient(
+  invites_per_user: Fraction,
+  invite_conversion: Fraction
+) -> Fraction {
+  // Input validation
+  if invites_per_user < 0.0 {
+    return 0.0
+  }
+  
+  var validated_conversion = max(0.0, min(1.0, invite_conversion))
+  
+  return invites_per_user * validated_conversion
+}
+
+/// Model demand with capacity constraints (queuing/backlog)
+///
+/// @param unconstrained_demand - Demand without capacity limits (must be >= 0)
+/// @param capacity_limit - Maximum serviceable demand (must be >= 0)
+/// @param backlog_conversion - Fraction of backlog that converts 0.0-1.0 (clamped)
+/// @return Actual demand served (may be less than unconstrained)
+///
+/// @errors Returns 0/1mo if inputs are negative
+/// @example constrained_demand(1000/1mo, 800/1mo, 0.5) = 900/1mo (200 backlog, 50% converts)
+///
+/// Excess demand forms backlog, some converts later
+/// Contracts: @Bounded(0, unconstrained_demand)
+func constrained_demand(
+  unconstrained_demand: Rate per Month,
+  capacity_limit: Rate per Month,
+  backlog_conversion: Fraction
+) -> Rate per Month {
+  // Input validation
+  if unconstrained_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if capacity_limit < 0 / 1mo {
+    return 0 / 1mo
+  }
+  
+  var validated_conversion = max(0.0, min(1.0, backlog_conversion))
+  
+  // If demand fits in capacity, serve all
+  if unconstrained_demand <= capacity_limit {
+    return unconstrained_demand
+  }
+  
+  // Otherwise, serve capacity + portion of backlog
+  var backlog = unconstrained_demand - capacity_limit
+  var converted_backlog = backlog * validated_conversion
+  
+  return capacity_limit + converted_backlog
+}
+
+/// Calculate addressable market segment
+///
+/// @param total_market - Total market size (must be >= 0)
+/// @param segment_fraction - Fraction of market addressable 0.0-1.0 (clamped)
+/// @param penetration_rate - Expected penetration 0.0-1.0 (clamped)
+/// @return Achievable demand in segment
+///
+/// @errors Returns 0 if total_market < 0
+/// @example addressable_segment(1000000, 0.3, 0.15) = 45000
+///
+/// TAM = total * segment * penetration
+/// Contracts: @Bounded(0, total_market)
+func addressable_segment(
+  total_market: Count,
+  segment_fraction: Fraction,
+  penetration_rate: Fraction
+) -> Count {
+  // Input validation
+  if total_market < 0 {
+    return 0
+  }
+  
+  var validated_segment = max(0.0, min(1.0, segment_fraction))
+  var validated_penetration = max(0.0, min(1.0, penetration_rate))
+  
+  var addressable = total_market * validated_segment * validated_penetration
+  
+  return round(addressable)
+}
+
+/// Model demand with network effects
+///
+/// @param baseline_demand - Demand without network effects (must be >= 0)
+/// @param network_size - Current user/customer base (must be >= 0)
+/// @param network_coefficient - Strength of network effect (must be >= 0)
+/// @return Demand boosted by network effects
+///
+/// @errors Returns 0/1mo if baseline < 0
+/// @example network_demand(100/1mo, 10000, 0.0001) = 200/1mo (network doubles demand)
+///
+/// Metcalfe's Law variant: value ~ network_size^network_coefficient
+/// Contracts: @Monotonic, @Bounded(baseline_demand, Inf)
+func network_demand(
+  baseline_demand: Rate per Month,
+  network_size: Count,
+  network_coefficient: Fraction
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if network_size < 0 {
+    return baseline_demand
+  }
+  if network_coefficient < 0.0 {
+    return baseline_demand
+  }
+  
+  // Network effect multiplier = 1 + coefficient * network_size
+  var network_multiplier = 1.0 + network_coefficient * network_size
+  
+  return baseline_demand * network_multiplier
+}
+
+/// Calculate demand forecast with trend component
+///
+/// @param baseline_demand - Current demand level (must be >= 0)
+/// @param trend_rate - Growth/decline rate per period (e.g., 0.05 = 5% growth)
+/// @param periods_ahead - Number of periods to forecast (must be >= 0, capped at 100)
+/// @return Forecasted demand
+///
+/// @errors Returns baseline if periods <= 0
+/// @example demand_forecast(1000/1mo, 0.05, 12) ≈ 1796/1mo (5% monthly growth, 12 months)
+///
+/// Exponential trend: demand * (1 + trend)^periods
+/// Contracts: @Bounded(0, Inf)
+func demand_forecast(
+  baseline_demand: Rate per Month,
+  trend_rate: Fraction,
+  periods_ahead: Int
+) -> Rate per Month {
+  // Input validation
+  if baseline_demand < 0 / 1mo {
+    return 0 / 1mo
+  }
+  if periods_ahead <= 0 {
+    return baseline_demand
+  }
+  
+  // Cap periods to prevent overflow
+  var safe_periods = min(periods_ahead, 100)
+  
+  var growth_multiplier = pow(1.0 + trend_rate, safe_periods)
+  
+  return baseline_demand * growth_multiplier
+}
+
+/// Calculate weighted average demand across scenarios
+///
+/// @param demands - Array of demand scenarios (must be non-empty)
+/// @param probabilities - Probability weights for each scenario (must match demands length)
+/// @return Weighted average demand
+///
+/// @errors Returns 0/1mo if arrays are empty or mismatched
+/// @example weighted_demand([100/1mo, 200/1mo, 300/1mo], [0.2, 0.5, 0.3]) = 210/1mo
+///
+/// Probabilities should sum to 1.0, but normalized if not
+/// Contracts: @Bounded(min(demands), max(demands))
+func weighted_demand(
+  demands: Array<Rate per Month>,
+  probabilities: Array<Fraction>
+) -> Rate per Month {
+  // Input validation
+  if demands.length == 0 {
+    return 0 / 1mo
+  }
+  if probabilities.length == 0 {
+    return 0 / 1mo
+  }
+  if demands.length != probabilities.length {
+    return 0 / 1mo
+  }
+  
+  // Normalize probabilities
+  var prob_sum = sum(probabilities)
+  if prob_sum <= 0.0 {
+    return 0 / 1mo
+  }
+  
+  // Calculate weighted sum
+  var weighted_sum: Rate per Month = 0 / 1mo
+  for i in 0..demands.length - 1 {
+    var normalized_prob = probabilities[i] / prob_sum
+    weighted_sum = weighted_sum + demands[i] * normalized_prob
+  }
+  
+  return weighted_sum
+}
