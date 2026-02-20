@@ -17,7 +17,7 @@ def test_seasonal_multiplier():
 
     param seasonality: Fraction = 0.3 {
         source: "historical_data",
-        method: "derived",  
+        method: "derived",
         confidence: 0.9
     }
 
