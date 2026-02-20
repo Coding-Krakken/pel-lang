@@ -9,10 +9,10 @@ platform:
   python: "3.11"
 commands:
   conformance: "python -m pytest tests/conformance -q"
-  security: "bash .language-eval/scripts/run_suite.sh --target {target} --suite security --outdir {outdir}"
-  performance: "bash .language-eval/scripts/run_suite.sh --target {target} --suite performance --outdir {outdir} --repeat {repeat} --warmup {warmup}"
-  tooling: "bash .language-eval/scripts/run_suite.sh --target {target} --suite tooling --outdir {outdir}"
-  human_factors: "bash .language-eval/scripts/run_suite.sh --target {target} --suite human_factors --outdir {outdir}"
+  security: ".language-eval/scripts/run_suite.sh --target {target} --suite security --outdir {outdir}"
+  performance: ".language-eval/scripts/run_suite.sh --target {target} --suite performance --outdir {outdir} --repeat {repeat} --warmup {warmup}"
+  tooling: ".language-eval/scripts/run_suite.sh --target {target} --suite tooling --outdir {outdir}"
+  human_factors: ".language-eval/scripts/run_suite.sh --target {target} --suite human_factors --outdir {outdir}"
 enabled_suites:
   - conformance
   - security
