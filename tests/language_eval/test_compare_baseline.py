@@ -7,6 +7,7 @@
 
 """Tests for compare_baseline.py: regression detection and scope awareness."""
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -131,12 +132,53 @@ class TestScopeAwareness:
 class TestBaselineNotFound:
     """Test behavior when baseline file is missing."""
 
-    def test_baseline_missing_returns_safe_comparison(self):
-        """Verify graceful handling when baseline file doesn't exist."""
-        # This would test the baseline_found: false logic
-        # compare_baseline.py should return a comparison with no regressions
-        # when baseline is missing
-        pass
+    def test_baseline_missing_fails(self, tmp_path):
+        """Verify missing baseline is treated as an error."""
+        target_dir = tmp_path / ".language-eval" / "targets"
+        target_dir.mkdir(parents=True)
+        target_path = target_dir / "target.yaml"
+        target_path.write_text(
+            "\n".join(
+                [
+                    "target_id: t1",
+                    "baseline: baselines/missing.json",
+                    "thresholds:",
+                    "  regression_tolerance_pct: 5.0",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        normalized_path = tmp_path / "normalized.json"
+        normalized_path.write_text(
+            '{"target_id": "t1", "suites": [], "metrics": {"category_inputs": {}}}\n',
+            encoding="utf-8",
+        )
+        scorecard_path = tmp_path / "scorecard.json"
+        scorecard_path.write_text('{"overall_score": 0.0, "category_scores": {}}\n', encoding="utf-8")
+
+        out_path = tmp_path / "comparison.json"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(Path(".language-eval/scripts/compare_baseline.py")),
+                "--target",
+                str(target_path),
+                "--current",
+                str(normalized_path),
+                "--scorecard",
+                str(scorecard_path),
+                "--out",
+                str(out_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode != 0
+        assert "Baseline not found" in (result.stderr + result.stdout)
 
 
 if __name__ == "__main__":

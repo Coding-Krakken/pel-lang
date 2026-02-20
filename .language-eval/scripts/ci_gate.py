@@ -130,11 +130,19 @@ def main() -> int:
     _validate_with_schema(schema_dir / "report.schema.json", report_dir / "report.json")
 
     normalized = _load(report_dir / "results.normalized.json")
-    found_suites = {suite["name"] for suite in normalized.get("suites", [])}
+    suites_payload = normalized.get("suites", [])
+    found_suites = {suite["name"] for suite in suites_payload}
     required_suites = set(target.get("required_suites", []))
     missing_suites = sorted(required_suites - found_suites)
     if missing_suites:
         raise SystemExit(f"Missing required suite outputs: {missing_suites}")
+
+    status_by_suite = {suite.get("name"): suite.get("status", "fail") for suite in suites_payload}
+    failed_required = sorted(
+        suite for suite in required_suites if status_by_suite.get(suite, "fail") != "pass"
+    )
+    if failed_required:
+        raise SystemExit(f"Required suites failed: {failed_required}")
 
     comparison_file = report_dir / "comparison.json"
     if comparison_file.exists() and not args.determinism_only:

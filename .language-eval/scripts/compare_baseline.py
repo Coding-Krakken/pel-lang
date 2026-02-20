@@ -56,7 +56,7 @@ def _resolve_path(path_value: str, target_path: Path) -> Path:
 def _evaluated_categories(executed_suites: set[str]) -> set[str]:
     evaluated: set[str] = set()
     for category, dependencies in CATEGORY_SUITE_DEPENDENCIES.items():
-        if executed_suites.intersection(dependencies):
+        if dependencies.issubset(executed_suites):
             evaluated.add(category)
     return evaluated
 
@@ -76,19 +76,7 @@ def main() -> int:
 
     baseline_path = _resolve_path(str(target.get("baseline", "")), target_path)
     if not baseline_path.exists():
-        payload = {
-            "baseline": str(baseline_path),
-            "baseline_found": False,
-            "regression_scope": "none",
-            "evaluated_categories": [],
-            "skipped_categories": sorted(CATEGORY_SUITE_DEPENDENCIES),
-            "deltas": {},
-            "regressions": [],
-        }
-        Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        print(f"Baseline not found: {baseline_path} (non-fatal)")
-        print(f"Wrote {args.out}")
-        return 0
+        raise SystemExit(f"Baseline not found: {baseline_path}")
 
     baseline = _load(baseline_path)
     tolerance_pct = float(target.get("thresholds", {}).get("regression_tolerance_pct", 0.0))
