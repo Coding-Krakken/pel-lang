@@ -162,3 +162,5 @@ PEL is dual licensed:
 - Commercial: [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md)
 
 For commercial licensing, contact: `davidtraversmailbox@gmail.com`
+
+<!-- Devin access verification test -->
